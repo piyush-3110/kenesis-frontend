@@ -29,7 +29,7 @@ const TopCreators = () => {
       </p>
 
       {/* Creator Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:px-24 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 mx-auto md:grid-cols-2 lg:px-24 lg:grid-cols-4 place-items-center gap-6">
         {sortedCreators.map((creator, index) => (
           <CreatorCard
             key={index}
