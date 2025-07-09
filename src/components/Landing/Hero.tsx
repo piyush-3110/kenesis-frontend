@@ -50,7 +50,7 @@ const Hero: React.FC = () => {
           alt="Kenesis Banner Models"
           width={650}
           height={400}
-          className="w-full max-w-[650px] object-contain"
+          className="w-full  max-w-[650px] object-contain"
           priority
         />
       </div>
