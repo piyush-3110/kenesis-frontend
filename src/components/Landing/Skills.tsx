@@ -53,7 +53,7 @@ const Skills = () => {
     backgroundImage: 'linear-gradient(270deg, #0036F6 0%, #FFFFFF 73.61%)',
   }}
 >
-  <h2 className="bg-black rounded-full px-6 py-2 font-poppins text-[25px] font-medium leading-[53.87px] text-white">
+  <h2 className="bg-black rounded-full px-6 py-2 font-poppins text-[18px] md:text-[25px] font-medium leading-[53.87px] text-white">
    Develop a new skill wherever you are
   </h2>
 </div>

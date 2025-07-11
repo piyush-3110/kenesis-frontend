@@ -5,7 +5,7 @@ import React from 'react';
 
 const Hero: React.FC = () => {
   return (
-    <section className="relative flex flex-col items-center text-center px-4 pt-28 sm:pt-32 md:pt-40 max-w-screen-xl mx-auto overflow-hidden">
+    <section className="relative flex flex-col items-center text-center px-4 pt-28 sm:pt-40 md:pt-40 max-w-screen-xl mx-auto overflow-hidden">
       {/* Grid Background */}
       <div className="absolute inset-0 opacity-60">
         <div 
