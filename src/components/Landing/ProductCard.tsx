@@ -27,16 +27,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ title, author, price, link })
         />
       </div>
 
-      <div className="p-3 pt-4 flex justify-between items-start">
-        <div className="text-left">
-          <h3 className="text-white font-poppins font-semibold text-[17.54px] leading-none mb-1">
-            {title}
+      <div className="p-6 flex justify-between items-start">
+        <div className="flex flex-col items-start  ">
+          <h3 className="text-white font-poppins font-semibold text-[17.54px] leading-tight mb-1 truncate w-full">
+            {title.length > 15 ? `${title.substring(0, 15)}...` : title}
           </h3>
           <p className="text-white font-poppins font-medium text-[10.36px]">
             {author}
           </p>
         </div>
-        <p className="text-white font-poppins font-semibold text-[17.54px]">
+        <p className="text-white font-poppins font-semibold text-[17.54px] flex-shrink-0">
           {price}
         </p>
       </div>
