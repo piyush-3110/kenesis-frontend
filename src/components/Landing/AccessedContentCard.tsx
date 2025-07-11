@@ -16,7 +16,19 @@ const AccessedContentCard: React.FC<AccessedContentCardProps> = ({ title }) => {
       }}
     >
       {/* Inner content layer with solid bg */}
-      <div className="bg-[#000526] rounded-md px-10 py-4 text-center">
+      <div 
+        className="bg-[#000526] rounded-md px-10 py-4 text-center transition-all duration-300 ease-in-out cursor-pointer"
+        style={{
+          background: '#000526',
+          transition: 'all 0.3s ease-in-out'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'linear-gradient(0deg, #0C0A27 0.06%, #0036F6 100.06%)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = '#000526';
+        }}
+      >
         <h3 className="font-poppins font-medium text-white text-xl mb-3">{title}</h3>
 
         <div

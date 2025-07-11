@@ -133,16 +133,16 @@ const Skills = () => {
         {/* Text Section */}
         <div className="lg:col-span-1 text-center lg:text-left">
           <h3 
-            className="text-white font-inter font-bold text-[20px] leading-[18px] mb-2"
+            className="text-white font-inter font-bold text-[20px] leading-[18px] mb-6"
             style={{ fontWeight: 700 }}
           >
-            Start Selling Today
+           Your Knowledge has value
           </h3>
           <p 
-            className="text-white font-inter font-normal text-[16px] leading-[15px] mb-6"
+            className="text-white font-inter font-normal text-[16px] leading-[25px] mb-6"
             style={{ fontWeight: 400 }}
           >
-            Join thousands of creators earning on our platform
+         Turn what you know into a digital product and sell it to millions of people around the world.
           </p>
           <Link 
             href="/sell"

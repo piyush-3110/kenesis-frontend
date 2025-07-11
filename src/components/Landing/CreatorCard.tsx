@@ -13,7 +13,7 @@ type Creator = {
 const CreatorCard: React.FC<Creator> = ({ name, totalSales, avatar, rank }) => {
   return (
     <div
-      className="p-[1px] rounded-xl w-full h-full max-w-xs relative"
+      className="p-[1px] rounded-xl w-full h-full max-w-lg relative"
       style={{
         backgroundImage: 'linear-gradient(90deg, #0680FF 0%, #022ED2 100%)',
       }}
@@ -24,9 +24,9 @@ const CreatorCard: React.FC<Creator> = ({ name, totalSales, avatar, rank }) => {
       </div>
 
       {/* Inner Content with pure black bg */}
-      <div className="flex flex-col items-center text-center p-6 bg-black rounded-xl">
+      <div className="flex flex-col items-center  text-center  p-8 bg-black rounded-xl">
         {/* Avatar */}
-        <div className="w-24 h-24 mb-4 rounded-full overflow-hidden">
+        <div className="w-28 h-28 mb-4 rounded-full overflow-hidden">
           <Image
             src={avatar}
             alt={name}
