@@ -1,3 +1,5 @@
+import AllProducts from '@/components/Landing/AllProducts'
+import BestSeller from '@/components/Landing/BestSeller'
 import Hero from '@/components/Landing/Hero'
 import MostAccessedContent from '@/components/Landing/MostAccessedContent'
 import TopCreators from '@/components/Landing/TopCreators'
@@ -9,6 +11,8 @@ const page = () => {
       <Hero/>
       <TopCreators/>
       <MostAccessedContent/>
+      <BestSeller/>
+      <AllProducts/>
     </div>
   )
 }
