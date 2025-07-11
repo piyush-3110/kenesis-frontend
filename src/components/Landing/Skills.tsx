@@ -25,6 +25,24 @@ const skillsData = [
   }
 ];
 
+const sellCardsData = [
+  {
+    icon: '/images/landing/icon11.png',
+    title: 'Easy Setup',
+    subtitle: 'Quick and simple product setup'
+  },
+  {
+    icon: '/images/landing/icon12.png',
+    title: 'Global Reach',
+    subtitle: 'Sell to customers worldwide'
+  },
+  {
+    icon: '/images/landing/icon13.png',
+    title: 'Secure Payments',
+    subtitle: 'Safe and encrypted transactions'
+  }
+];
+
 const Skills = () => {
   return (
     <section className="max-w-7xl mx-auto px-4 py-20 text-center">
@@ -55,7 +73,7 @@ const Skills = () => {
               background: 'linear-gradient(270deg, #0036F6 0%, #FFFFFF 73.61%)',
             }}
           >
-            <div className="bg-[#000526] rounded-lg p-6 transition-all duration-300 group-hover:bg-[#0147F6] h-full">
+            <div className="bg-[#000526] py-12 rounded-lg p-6 transition-all duration-300 group-hover:bg-[#0147F6] h-full">
               {/* Icons with dotted line */}
               <div className="flex items-center justify-center mb-6">
                 <div className="w-12 h-12 flex items-center justify-center">
@@ -69,7 +87,7 @@ const Skills = () => {
                 </div>
                 
                 {/* Dotted line */}
-                <div className="mx-4 w-8 border-t-2 border-dotted border-white"></div>
+                <div className="mx-4 w-5 border-t-2 border-dotted border-white"></div>
                 
                 <div className="w-12 h-12 flex items-center justify-center">
                   <Image
@@ -85,13 +103,13 @@ const Skills = () => {
               {/* Text Content */}
               <div className="text-center">
                 <h3 
-                  className="text-white font-inter font-bold text-[15px] leading-[18px] mb-2"
+                  className="text-white font-inter font-bold text-[20px] leading-[18px] mb-2"
                   style={{ fontWeight: 700 }}
                 >
                   {skill.title}
                 </h3>
                 <p 
-                  className="text-white font-inter font-normal text-[11px] leading-[15px]"
+                  className="text-white font-inter font-normal text-[15px] leading-[15px]"
                   style={{ fontWeight: 400 }}
                 >
                   {skill.subtitle}
@@ -109,6 +127,75 @@ const Skills = () => {
       >
         All Products {"->"}
       </Link>
+
+      {/* Sell Section */}
+      <div className="mt-20 grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
+        {/* Text Section */}
+        <div className="lg:col-span-1 text-center lg:text-left">
+          <h3 
+            className="text-white font-inter font-bold text-[20px] leading-[18px] mb-2"
+            style={{ fontWeight: 700 }}
+          >
+            Start Selling Today
+          </h3>
+          <p 
+            className="text-white font-inter font-normal text-[16px] leading-[15px] mb-6"
+            style={{ fontWeight: 400 }}
+          >
+            Join thousands of creators earning on our platform
+          </p>
+          <Link 
+            href="/sell"
+            className="inline-block bg-white hover:bg-gray-100 text-black font-poppins font-semibold text-lg px-8 py-4 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+          >
+            I want to sell
+          </Link>
+        </div>
+
+        {/* Cards Section */}
+        <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-6">
+          {sellCardsData.map((card, index) => (
+            <div
+              key={index}
+              className="relative p-[1px]  rounded-lg transition-all duration-300 group"
+              style={{
+                background: 'linear-gradient(270deg, #0036F6 0%, #FFFFFF 73.61%)',
+              }}
+            >
+              <div className="bg-[#000526] rounded-lg p-8 transition-all duration-300 group-hover:bg-[#0147F6] h-full">
+                {/* Icon */}
+                <div className="flex justify-center mb-6">
+                  <div className="w-16 h-16 flex items-center justify-center">
+                    <Image
+                      src={card.icon}
+                      alt="sell feature icon"
+                      width={64}
+                      height={64}
+                      className="object-contain"
+                    />
+                  </div>
+                </div>
+
+                {/* Text Content - Left Aligned */}
+                <div className="text-left">
+                  <h3 
+                    className="text-white font-inter font-bold text-[20px] leading-[18px] mb-2"
+                    style={{ fontWeight: 700 }}
+                  >
+                    {card.title}
+                  </h3>
+                  <p 
+                    className="text-white font-inter font-normal text-[15px] leading-[15px]"
+                    style={{ fontWeight: 400 }}
+                  >
+                    {card.subtitle}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   );
 };
