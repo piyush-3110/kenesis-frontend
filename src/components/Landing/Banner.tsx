@@ -46,7 +46,7 @@ const Banner: React.FC<BannerProps> = ({ title, buttonText, buttonLink }) => {
       {/* Content */}
       <div className="relative z-10 text-center  mx-auto">
         <h1 className="font-poppins text-white mb-8">
-          <div className="text-[25px] md:text-[64px] lg:text-[72px] font-semibold leading-tight mb-2">
+          <div className="text-[25px] md:text-[64px] lg:text-[64px] font-semibold leading-tight mb-2">
             {title.boldWord1 ? (
               <>
                 {title.line1.replace(title.boldWord1, '').trim()}{' '}
@@ -56,7 +56,7 @@ const Banner: React.FC<BannerProps> = ({ title, buttonText, buttonLink }) => {
               title.line1
             )}
           </div>
-          <div className="text-[25px] md:text-[64px] lg:text-[72px] font-semibold leading-tight">
+          <div className="text-[25px] md:text-[64px] lg:text-[64px] font-semibold leading-tight">
             {title.boldWord2 ? (
               <>
                 <span className="font-bold">{title.boldWord2}{" "}</span>

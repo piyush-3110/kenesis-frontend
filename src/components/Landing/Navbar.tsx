@@ -36,7 +36,7 @@ const Navbar: React.FC = () => {
       )}
     >
       <div
-        className="flex items-center justify-between px-4 py-6 md:px-8 bg-[#0A071A]"
+        className="flex items-center justify-between px-4 py-4 md:py-6 md:px-8 bg-[#0A071A]"
         style={{
           borderBottom: '1.2px solid',
           borderImageSource:
@@ -52,20 +52,20 @@ const Navbar: React.FC = () => {
             width={100}
             height={120}
             priority
-            className='h-8 w-36'
+            className='h-6 w-24 md:h-8 md:w-36'
           />
           {/* <span className="text-white font-serif font-semibold px-2 text-xl montserrat-custom">Kenesis</span> */}
         </Link>
 
         {/* Right side: Login button */}
         <button
-          className="flex   items-center space-x-2 text-white font-medium text-lg px-6 py-3 rounded-full transition hover:opacity-90"
+          className="flex   items-center space-x-2 text-white font-medium text-sm md:text-lg px-6 py-3 rounded-full transition hover:opacity-90"
           style={{
             background:
               'linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)',
           }}
         >
-          <Wallet size={24} />
+          <Wallet size={20} />
           <span>Login</span>
         </button>
       </div>

@@ -169,7 +169,7 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="relative w-full bg-gradient-to-b from-[#000526] to-[#000315] border-t border-[#022ED2] py-10 px-4 mt-20 overflow-hidden">
+    <footer className="relative w-full bg-gradient-to-b from-[#000526] to-[#000315] border-t border-[#022ED2] py-10 px-12 mt-20 overflow-hidden">
       {/* Animated Canvas Background */}
       <canvas 
         ref={canvasRef}
