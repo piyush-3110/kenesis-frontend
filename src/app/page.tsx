@@ -3,6 +3,7 @@ import Banner from '@/components/Landing/Banner'
 import BestSeller from '@/components/Landing/BestSeller'
 import Hero from '@/components/Landing/Hero'
 import MostAccessedContent from '@/components/Landing/MostAccessedContent'
+import Skills from '@/components/Landing/Skills'
 import TopCreators from '@/components/Landing/TopCreators'
 import React from 'react'
 
@@ -24,7 +25,9 @@ const page = () => {
         buttonText="Start Now"
         buttonLink="/get-started"
       />
-            <Banner
+      <Skills/>
+
+      <Banner
         title={{
           line1: "Infoproducts, rewards, and freedom",
           boldWord1: "freedom",
