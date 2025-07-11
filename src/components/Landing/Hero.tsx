@@ -7,6 +7,7 @@ const Hero: React.FC = () => {
   return (
     <section className="flex flex-col items-center text-center px-4 pt-28 sm:pt-32 md:pt-40 max-w-screen-xl mx-auto">
       {/* Heading */}
+      
       <div className="mb-6">
         <h1 className="text-white font-poppins text-[32px] sm:text-[48px] md:text-[64px] lg:text-[90px] leading-none font-normal">
           Your upgrade starts here
