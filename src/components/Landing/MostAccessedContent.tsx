@@ -30,7 +30,7 @@ const MostAccessedContent: React.FC = () => {
 
       {/* Subheading */}
       <p className="font-poppins text-[20px] sm:text-[16px] md:text-[24px] font-normal leading-[45.6px] text-white mb-12">
-        THE WORLD'S LARGEST WEB3 PLATFORM FOR DIGITAL PRODUCTS
+        THE WORLD&apos;S LARGEST WEB3 PLATFORM FOR DIGITAL PRODUCTS
       </p>
 
       {/* Cards */}

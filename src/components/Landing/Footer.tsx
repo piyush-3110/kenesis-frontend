@@ -224,7 +224,7 @@ const Footer = () => {
           </div>
         </div>
       </div>
-      <div className="relative z-10 mt-8 max-w-7xl mx-auto flex flex-col md:flex-row items-center md:items-start justify-between gap-8 text-lg text-white opacity-60 font-poppins">
+      <div className="relative z-10 mt-8 text-center text-lg text-white opacity-60 font-poppins">
         <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-blue-600 bg-clip-text text-transparent animate-pulse">
           © 2025 - Kenesis - All rights reserved.
         </span>

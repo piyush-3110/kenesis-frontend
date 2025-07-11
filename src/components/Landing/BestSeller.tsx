@@ -1,9 +1,11 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import Slider from 'react-slick';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import CourseCard from './CourseCard';
+import Link from 'next/link';
 
 const sellers = [
 	{
@@ -56,7 +58,7 @@ const useScreenWidth = () => {
 	return width;
 };
 
-const NextArrow = ({ onClick }: any) => (
+const NextArrow = ({ onClick }: { onClick?: () => void }) => (
 	<div
 		onClick={onClick}
 		className="absolute z-10 right-[-20px] top-1/2 transform -translate-y-1/2 bg-[#01155B] w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
@@ -65,7 +67,7 @@ const NextArrow = ({ onClick }: any) => (
 	</div>
 );
 
-const PrevArrow = ({ onClick }: any) => (
+const PrevArrow = ({ onClick }: { onClick?: () => void }) => (
 	<div
 		onClick={onClick}
 		className="absolute z-10 left-[-20px] top-1/2 transform -translate-y-1/2 bg-[#01155B] w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
@@ -115,12 +117,12 @@ const BestSeller = () => {
 					);
 				})}
 			</Slider>
-	<a
+	<Link
   href="/"
   className="block w-fit mx-auto hover:bg-blue-900  mt-10 px-7 py-4 text-lg font-semibold rounded-full border-1 bg-transparent"
 >
   See More
-</a>
+</Link>
 		</section>
 	);
 };
