@@ -28,17 +28,17 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
   const [isSortOpen, setIsSortOpen] = useState(false);
 
   // Default sort options (fallback if not provided)
-  const defaultSortOptions = [
-    { value: 'most-relevant', label: 'Most relevant' },
-    { value: 'a-z', label: 'A to Z' },
-    { value: 'z-a', label: 'Z to A' },
-    { value: 'price-low-high', label: 'Price low to high' },
-    { value: 'price-high-low', label: 'Price high to low' },
-    { value: 'rating-high-low', label: 'Highest rated' },
-    { value: 'newest', label: 'Newest first' },
-    { value: 'video-first', label: 'Video courses first' },
-    { value: 'document-first', label: 'Documents first' },
-  ];
+  // const defaultSortOptions = [
+  //   { value: 'most-relevant', label: 'Most relevant' },
+  //   { value: 'a-z', label: 'A to Z' },
+  //   { value: 'z-a', label: 'Z to A' },
+  //   { value: 'price-low-high', label: 'Price low to high' },
+  //   { value: 'price-high-low', label: 'Price high to low' },
+  //   { value: 'rating-high-low', label: 'Highest rated' },
+  //   { value: 'newest', label: 'Newest first' },
+  //   { value: 'video-first', label: 'Video courses first' },
+  //   { value: 'document-first', label: 'Documents first' },
+  // ];
 
   const getCurrentSortLabel = () => {
     return sortOptions.find(option => option.value === sortBy)?.label || 'Most relevant';
