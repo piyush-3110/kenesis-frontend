@@ -167,12 +167,15 @@ export async function fetchProducts(
 
   // Apply category filter
   if (filters.category && filters.category !== 'all' && filters.category !== '') {
+    console.log('Applying category filter:', filters.category); // Debug log
     filteredProducts = filteredProducts.filter(product => {
       // Convert product category to ID format for comparison
       const productCategoryId = product.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
-      const filterCategoryId = filters.category!.toLowerCase();
+      const filterCategoryId = filters.category!.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
+      console.log(`Comparing: ${productCategoryId} === ${filterCategoryId}`); // Debug log
       return productCategoryId === filterCategoryId;
     });
+    console.log('Filtered products count:', filteredProducts.length); // Debug log
   }
 
   // Apply price range filter
@@ -255,13 +258,16 @@ export async function fetchProducts(
 export async function fetchCategories(): Promise<Category[]> {
   await simulateDelay(200);
   
-  // First, let's get all unique categories from products
+  // First, get all unique categories from products
   const productCategories = [...new Set(mockProducts.map(product => product.category))];
+  console.log('Product categories found:', productCategories); // Debug log
   
   // Create categories based on actual product data
   const dynamicCategories: Category[] = productCategories.map(categoryName => {
     const id = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
     const count = mockProducts.filter(product => product.category === categoryName).length;
+    
+    console.log(`Category: ${categoryName} -> ID: ${id}, Count: ${count}`); // Debug log
     
     return {
       id,
@@ -270,7 +276,10 @@ export async function fetchCategories(): Promise<Category[]> {
     };
   });
 
-  return dynamicCategories.filter(category => category.count > 0);
+  const validCategories = dynamicCategories.filter(category => category.count > 0);
+  console.log('Valid categories:', validCategories); // Debug log
+  
+  return validCategories;
 }
 
 /**
