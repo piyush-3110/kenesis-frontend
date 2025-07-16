@@ -45,7 +45,7 @@ const sellCardsData = [
 
 const Skills = () => {
   return (
-    <section className="max-w-7xl mx-auto px-4 py-20 text-center">
+    <section className="max-w-7xl mx-auto px-4 md:px-16 py-20 text-center">
       {/* Header */}
       <div
   className="inline-block p-[2.07px] rounded-full mb-4"

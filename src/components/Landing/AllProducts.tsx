@@ -52,7 +52,7 @@ const AllProducts: React.FC = () => {
   const productsToShow = mockProducts[selectedCategory].slice(0, 8);
 
   return (
-    <section className="max-w-7xl mx-auto px-4 py-20 text-center">
+    <section className="max-w-7xl mx-auto px-4 md:px-20 py-20 text-center">
       {/* Heading */}
       <h2 className="font-poppins text-[38px] font-semibold leading-[100%] text-white mb-10">
         All Products

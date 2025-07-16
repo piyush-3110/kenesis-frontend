@@ -31,12 +31,12 @@ const Navbar: React.FC = () => {
   return (
     <nav
       className={clsx(
-        'fixed top-0 left-0 w-full z-50 transition-transform duration-300',
+        'fixed top-0 left-0 w-full z-50 transition-transform duration-300 ',
         !isVisible && '-translate-y-full'
       )}
     >
       <div
-        className="flex items-center justify-between px-4 py-4 md:py-6 md:px-8 bg-[#0A071A]"
+        className="flex items-center justify-between px-4 py-4 md:py-6 md:px-24 bg-[#0A071A]"
         style={{
           borderBottom: '1.2px solid',
           borderImageSource:
