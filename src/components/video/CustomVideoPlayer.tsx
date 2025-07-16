@@ -79,7 +79,6 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [bufferedRanges, setBufferedRanges] = useState<TimeRanges | null>(null);
   const [showDocuments, setShowDocuments] = useState(false);
 
@@ -183,7 +182,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   }, [isPlaying]);
 
   // Play/Pause toggle
-  const togglePlayPause = () => {
+  const togglePlayPause = useCallback(() => {
     if (!videoRef.current) return;
 
     if (isPlaying) {
@@ -191,7 +190,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     } else {
       videoRef.current.play();
     }
-  };
+  }, [isPlaying]);
 
   // Seek functionality with immediate UI update
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -215,19 +214,19 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   };
 
   // Skip forward/backward with immediate UI update
-  const skipForward = () => {
+  const skipForward = useCallback(() => {
     if (!videoRef.current) return;
     const newTime = Math.min(videoRef.current.currentTime + 10, duration);
     videoRef.current.currentTime = newTime;
     setCurrentTime(newTime); // Immediate UI update
-  };
+  }, [duration]);
 
-  const skipBackward = () => {
+  const skipBackward = useCallback(() => {
     if (!videoRef.current) return;
     const newTime = Math.max(videoRef.current.currentTime - 10, 0);
     videoRef.current.currentTime = newTime;
     setCurrentTime(newTime); // Immediate UI update
-  };
+  }, []);
 
   // Volume control - horizontal slider
   const handleVolumeChange = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -244,7 +243,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
   };
 
   // Mute/Unmute
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (!videoRef.current) return;
 
     if (isMuted) {
@@ -254,10 +253,10 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
       videoRef.current.volume = 0;
       setIsMuted(true);
     }
-  };
+  }, [isMuted, volume]);
 
   // Fullscreen toggle
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
 
     if (!isFullscreen) {
@@ -269,7 +268,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         document.exitFullscreen();
       }
     }
-  };
+  }, [isFullscreen]);
 
   // Change playback speed with smooth progress updates
   const changePlaybackSpeed = (speed: number) => {
@@ -420,7 +419,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [togglePlayPause, skipBackward, skipForward, toggleMute, toggleFullscreen]);
 
   // Mouse move handler for showing controls
   const handleMouseMove = () => {

@@ -15,7 +15,6 @@ interface CourseContentViewerProps {
 
 const CourseContentViewer: React.FC<CourseContentViewerProps> = ({
   content,
-  progress,
   onContentSelect,
   onMarkComplete,
 }) => {
@@ -259,7 +258,7 @@ const CourseContentViewer: React.FC<CourseContentViewerProps> = ({
                               {selectedContent.title}
                             </h4>
                             <p className="text-gray-400 mb-6">
-                              Click "View Document" to open in full-screen viewer
+                              Click &quot;View Document&quot; to open in full-screen viewer
                             </p>
                             
                             {/* Document Attachments */}

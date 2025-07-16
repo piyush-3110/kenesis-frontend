@@ -144,7 +144,7 @@ export function useMarketplace() {
     console.log('Filters changed, reloading products:', filters); // Debug log
     resetPagination();
     loadProducts(1, false);
-  }, [filters.category, filters.priceRange?.min, filters.priceRange?.max, filters.sortBy, debouncedSearchQuery, loadProducts, resetPagination]);
+  }, [filters, debouncedSearchQuery, loadProducts, resetPagination]);
 
   // Load categories and initial data on mount
   useEffect(() => {

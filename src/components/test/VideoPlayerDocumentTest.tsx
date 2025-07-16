@@ -414,7 +414,7 @@ const VideoPlayerDocumentTest: React.FC = () => {
             
             <div className="mt-4"><strong>Document-Only Content:</strong></div>
             <ul className="list-disc list-inside ml-4 space-y-1">
-              <li>Use the "Document-Only Content" tab for courses without video</li>
+              <li>Use the &quot;Document-Only Content&quot; tab for courses without video</li>
               <li>Click documents to open and verify they load correctly</li>
               <li>Test with different document types and sizes</li>
             </ul>

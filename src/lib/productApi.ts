@@ -5,7 +5,8 @@ import { Product } from '@/types/Product';
 const CURRENT_USER_ID = 'user-123';
 
 // Mock reviews data
-const generateMockReviews = (productId: string): Review[] => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const generateMockReviews = (_productId: string): Review[] => {
   const reviewsData = [
     {
       id: 'rev-1',
@@ -399,7 +400,7 @@ function createExtendedProduct(product: Product): ExtendedProduct {
 /**
  * Submit a new review
  */
-export async function submitReview(productId: string, rating: number, comment: string): Promise<Review> {
+export async function submitReview(_productId: string, rating: number, comment: string): Promise<Review> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
 
@@ -421,7 +422,8 @@ export async function submitReview(productId: string, rating: number, comment: s
 /**
  * Like/unlike a review
  */
-export async function toggleReviewLike(reviewId: string): Promise<{ liked: boolean; likes: number }> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function toggleReviewLike(_reviewId: string): Promise<{ liked: boolean; likes: number }> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -446,7 +448,8 @@ export async function markContentComplete(productId: string, contentId: string):
 /**
  * Purchase a course
  */
-export async function purchaseCourse(productId: string): Promise<{ success: boolean; message: string }> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function purchaseCourse(_productId: string): Promise<{ success: boolean; message: string }> {
   // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 1000));
 

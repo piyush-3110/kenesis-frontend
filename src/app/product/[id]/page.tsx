@@ -2,12 +2,12 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { ExtendedProduct, Review } from '@/types/Review';
+import { ExtendedProduct } from '@/types/Review';
 import { fetchExtendedProduct, submitReview, toggleReviewLike, markContentComplete, purchaseCourse } from '@/lib/productApi';
 import Navbar from '@/components/Landing/Navbar';
 import ReviewsRatings from '@/components/product/ReviewsRatings';
 import CourseContentViewer from '@/components/product/CourseContentViewer';
-import { ArrowLeft, Star, Award, Play, FileText, ShoppingCart, CheckCircle, Clock, Users } from 'lucide-react';
+import { ArrowLeft, Star, Award, Play, FileText, ShoppingCart, CheckCircle, Users } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 

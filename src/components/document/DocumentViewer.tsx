@@ -7,12 +7,7 @@ import {
   Download, 
   ExternalLink, 
   Eye,
-  Maximize,
-  X,
-  ZoomIn,
-  ZoomOut,
-  RotateCw
-} from 'lucide-react';
+  X} from 'lucide-react';
 
 interface DocumentAttachment {
   id: string;

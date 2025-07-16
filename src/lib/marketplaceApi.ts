@@ -79,49 +79,6 @@ const generateMockProducts = (): Product[] => {
 
 const mockProducts = generateMockProducts();
 
-const mockCategories: Category[] = [
-  {
-    id: 'marketing-sales',
-    name: 'Marketing and sales',
-    count: 0 // Will be calculated dynamically
-  },
-  {
-    id: 'design-photography',
-    name: 'Design and photography', 
-    count: 0 // Will be calculated dynamically
-  },
-  {
-    id: 'finance-business',
-    name: 'Finance and business',
-    count: 0 // Will be calculated dynamically
-  },
-  {
-    id: 'academic-teaching',
-    name: 'Academic teaching and study',
-    count: 0 // Will be calculated dynamically
-  },
-  {
-    id: 'career-development',
-    name: 'Career and personal development',
-    count: 0 // Will be calculated dynamically
-  },
-  {
-    id: 'music-arts',
-    name: 'Music and arts',
-    count: 0 // Will be calculated dynamically
-  },
-  {
-    id: 'cooking-gastronomy',
-    name: 'Cooking and gastronomy',
-    count: 0 // Will be calculated dynamically
-  },
-  {
-    id: 'uncategorized',
-    name: 'Uncategorized',
-    count: 0 // Will be calculated dynamically
-  }
-];
-
 // Simulate network delay
 const simulateDelay = (ms: number = 800) => new Promise(resolve => setTimeout(resolve, ms));
 
