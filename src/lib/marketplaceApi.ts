@@ -83,42 +83,42 @@ const mockCategories: Category[] = [
   {
     id: 'marketing-sales',
     name: 'Marketing and sales',
-    count: 25 // Adjusted to match actual mock data
+    count: 0 // Will be calculated dynamically
   },
   {
     id: 'design-photography',
-    name: 'Design and photography',
-    count: 13 // Adjusted to match actual mock data
+    name: 'Design and photography', 
+    count: 0 // Will be calculated dynamically
   },
   {
     id: 'finance-business',
     name: 'Finance and business',
-    count: 12 // Adjusted to match actual mock data
+    count: 0 // Will be calculated dynamically
   },
   {
     id: 'academic-teaching',
     name: 'Academic teaching and study',
-    count: 150
+    count: 0 // Will be calculated dynamically
   },
   {
     id: 'career-development',
     name: 'Career and personal development',
-    count: 120
+    count: 0 // Will be calculated dynamically
   },
   {
     id: 'music-arts',
     name: 'Music and arts',
-    count: 85
+    count: 0 // Will be calculated dynamically
   },
   {
     id: 'cooking-gastronomy',
     name: 'Cooking and gastronomy',
-    count: 65
+    count: 0 // Will be calculated dynamically
   },
   {
     id: 'uncategorized',
     name: 'Uncategorized',
-    count: 50
+    count: 0 // Will be calculated dynamically
   }
 ];
 
@@ -168,9 +168,10 @@ export async function fetchProducts(
   // Apply category filter
   if (filters.category && filters.category !== 'all' && filters.category !== '') {
     filteredProducts = filteredProducts.filter(product => {
-      // Convert category name to ID format for comparison
-      const productCategoryId = product.category.toLowerCase().replace(/\s+/g, '-');
-      return productCategoryId === filters.category;
+      // Convert product category to ID format for comparison
+      const productCategoryId = product.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
+      const filterCategoryId = filters.category!.toLowerCase();
+      return productCategoryId === filterCategoryId;
     });
   }
 
@@ -249,11 +250,27 @@ export async function fetchProducts(
 
 /**
  * Fetch categories
- * This simulates a backend API call to get all available categories
+ * This simulates a backend API call to get all available categories with product counts
  */
 export async function fetchCategories(): Promise<Category[]> {
   await simulateDelay(200);
-  return mockCategories;
+  
+  // First, let's get all unique categories from products
+  const productCategories = [...new Set(mockProducts.map(product => product.category))];
+  
+  // Create categories based on actual product data
+  const dynamicCategories: Category[] = productCategories.map(categoryName => {
+    const id = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
+    const count = mockProducts.filter(product => product.category === categoryName).length;
+    
+    return {
+      id,
+      name: categoryName,
+      count
+    };
+  });
+
+  return dynamicCategories.filter(category => category.count > 0);
 }
 
 /**

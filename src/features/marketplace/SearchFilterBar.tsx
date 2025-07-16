@@ -54,94 +54,106 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
     <div className="bg-[#0A071A] border-b border-gray-800">
       {/* Top Row: Navigation and Controls */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
-        <div className="flex items-center gap-4 md:gap-6 mb-6">
-          {/* Back Button */}
-          <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
-            <ArrowLeft size={20} className="group-hover:transform group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Back</span>
-          </Link>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 md:gap-6 mb-6">
+          {/* Top row for mobile: Back and Home buttons */}
+          <div className="flex items-center justify-between w-full sm:w-auto sm:gap-4">
+            {/* Back Button */}
+            <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
+              <ArrowLeft size={20} className="group-hover:transform group-hover:-translate-x-1 transition-transform" />
+              <span className="font-medium text-sm sm:text-base">Back</span>
+            </Link>
+
+            {/* Home Button - Show on mobile */}
+            <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group sm:hidden">
+              <Home size={20} className="group-hover:transform group-hover:scale-110 transition-transform" />
+              <span className="font-medium text-sm">Home</span>
+            </Link>
+          </div>
 
           {/* Search Bar with Gradient Border */}
-          <div className="flex-1 max-w-2xl">
+          <div className="flex-1 w-full sm:max-w-2xl">
             <div className="p-[1px] rounded-lg" style={{
               background: 'linear-gradient(180deg, #0680FF 0%, #022ED2 88.45%)'
             }}>
-              <div className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ${
+              <div className={`flex items-center gap-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-300 ${
                 isSearchFocused 
                   ? 'bg-gray-900 shadow-lg shadow-blue-500/20' 
                   : 'bg-black hover:bg-gray-900'
               }`}>
-                <Search size={20} className="text-gray-400 flex-shrink-0" />
+                <Search size={18} className="text-gray-400 flex-shrink-0" />
                 <input
                   type="text"
-                  placeholder="Search for courses, instructors, topics..."
+                  placeholder="Search courses, instructors..."
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   onFocus={() => setIsSearchFocused(true)}
                   onBlur={() => setIsSearchFocused(false)}
-                  className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none text-base"
+                  className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none text-sm sm:text-base"
                 />
               </div>
             </div>
           </div>
 
-          {/* Sort Dropdown with Gradient Border */}
-          <div className="relative">
-            <div className="p-[1px] rounded-lg" style={{
-              background: 'linear-gradient(180deg, #0680FF 0%, #022ED2 88.45%)'
-            }}>
-              <button
-                onClick={() => setIsSortOpen(!isSortOpen)}
-                className="flex items-center gap-3 px-4 py-3 bg-black hover:bg-gray-900 text-white rounded-lg transition-all duration-300 min-w-[180px] justify-between font-medium"
-              >
-                <span className="truncate">
-                  Sort: {getCurrentSortLabel()}
-                </span>
-                <ChevronDown size={16} className={`transition-transform duration-300 flex-shrink-0 ${isSortOpen ? 'rotate-180' : ''}`} />
-              </button>
+          {/* Sort Dropdown and Home Button Row */}
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+            {/* Sort Dropdown with Gradient Border */}
+            <div className="relative flex-1 sm:flex-none">
+              <div className="p-[1px] rounded-lg" style={{
+                background: 'linear-gradient(180deg, #0680FF 0%, #022ED2 88.45%)'
+              }}>
+                <button
+                  onClick={() => setIsSortOpen(!isSortOpen)}
+                  className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-black hover:bg-gray-900 text-white rounded-lg transition-all duration-300 w-full sm:min-w-[160px] justify-between font-medium text-sm sm:text-base"
+                >
+                  <span className="truncate">
+                    <span className="hidden sm:inline">Sort: </span>{getCurrentSortLabel()}
+                  </span>
+                  <ChevronDown size={14} className={`transition-transform duration-300 flex-shrink-0 ${isSortOpen ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              {isSortOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div 
+                    className="fixed inset-0 bg-black/50 z-40"
+                    onClick={() => setIsSortOpen(false)}
+                  />
+                  
+                  <div className="absolute top-full mt-2 right-0 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 min-w-[200px] sm:min-w-[220px] max-h-80 overflow-y-auto">
+                    {sortOptions.map((option, index) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          onSortChange(option.value);
+                          setIsSortOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-800 transition-colors font-medium text-sm sm:text-base ${
+                          sortBy === option.value ? 'text-blue-400 bg-gray-800' : 'text-white'
+                        } ${index === 0 ? 'rounded-t-lg' : ''} ${
+                          index === sortOptions.length - 1 ? 'rounded-b-lg' : ''
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
-            {isSortOpen && (
-              <>
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 bg-black/50 z-40"
-                  onClick={() => setIsSortOpen(false)}
-                />
-                
-                <div className="absolute top-full mt-2 right-0 bg-gray-900 border border-gray-700 rounded-lg shadow-2xl z-50 min-w-[220px] max-h-80 overflow-y-auto">
-                  {sortOptions.map((option, index) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        onSortChange(option.value);
-                        setIsSortOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-3 hover:bg-gray-800 transition-colors font-medium ${
-                        sortBy === option.value ? 'text-blue-400 bg-gray-800' : 'text-white'
-                      } ${index === 0 ? 'rounded-t-lg' : ''} ${
-                        index === sortOptions.length - 1 ? 'rounded-b-lg' : ''
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+            {/* Home Button - Desktop only */}
+            <Link href="/" className="hidden sm:flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
+              <Home size={20} className="group-hover:transform group-hover:scale-110 transition-transform" />
+              <span className="font-medium hidden md:inline">Home</span>
+            </Link>
           </div>
-
-          {/* Home Button */}
-          <Link href="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors group">
-            <Home size={20} className="group-hover:transform group-hover:scale-110 transition-transform" />
-            <span className="font-medium hidden md:inline">Home</span>
-          </Link>
         </div>
 
         {/* Bottom Row: Category and Results Info */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 pt-4 border-t border-gray-800">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-gray-800">
           {/* Left: Category Info */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-gray-400 text-sm">Showing results for:</span>
             <span className="text-white font-semibold bg-gray-800 px-3 py-1 rounded-full text-sm">
               {selectedCategory ? formatCategoryName(selectedCategory) : 'All Categories'}
@@ -149,7 +161,7 @@ const SearchFilterBar: React.FC<SearchFilterBarProps> = ({
           </div>
 
           {/* Right: Results Count */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 justify-center sm:justify-end">
             <span className="text-gray-400 text-sm">Found</span>
             <span className="text-white font-bold text-lg">
               {resultCount.toLocaleString()}

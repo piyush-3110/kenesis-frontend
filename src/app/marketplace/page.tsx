@@ -91,7 +91,7 @@ const MarketplacePage: React.FC = () => {
         />
 
         {/* Content Area */}
-        <div className="flex">
+        <div className="flex flex-col lg:flex-row min-h-screen">
           {/* Sidebar */}
           <Sidebar
             categories={categories}
@@ -104,14 +104,16 @@ const MarketplacePage: React.FC = () => {
           />
 
           {/* Product Grid */}
-          <ProductGrid 
-            products={products} 
-            loading={loading}
-            loadingMore={loadingMore}
-            hasNextPage={hasNextPage}
-            lastProductElementCallback={lastProductElementCallback}
-            totalCount={totalCount}
-          />
+          <div className="flex-1 w-full overflow-hidden">
+            <ProductGrid 
+              products={products} 
+              loading={loading}
+              loadingMore={loadingMore}
+              hasNextPage={hasNextPage}
+              lastProductElementCallback={lastProductElementCallback}
+              totalCount={totalCount}
+            />
+          </div>
         </div>
       </div>
     </div>

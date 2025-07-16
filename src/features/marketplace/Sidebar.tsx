@@ -70,7 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const sidebarContent = (
-    <div className="h-full  backdrop-blur-xl bg-opacity-95 overflow-y-auto">
+    <div className="h-full bg-[#0A071A] backdrop-blur-xl bg-opacity-95 overflow-y-auto">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-700">
         <h1 className="text-white text-lg font-semibold flex items-center gap-2">
@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-white text-xl font-semibold">Categories</h2>
+            <h2 className="text-white text-lg lg:text-xl font-semibold">Categories</h2>
             <ChevronUp size={20} className="text-gray-400" />
           </div>
           
@@ -104,11 +104,11 @@ const Sidebar: React.FC<SidebarProps> = ({
             {visibleCategories.map((category) => (
               <div 
                 key={category.id}
-                className="flex items-center gap-3 group cursor-pointer"
+                className="flex items-center gap-3 group cursor-pointer p-2 rounded-lg hover:bg-gray-800/50 transition-colors"
                 onClick={() => handleCategoryClick(category.id)}
               >
                 {/* Custom Checkbox */}
-                <div className="relative">
+                <div className="relative flex-shrink-0">
                   <input
                     type="checkbox"
                     checked={selectedCategory === category.id}
@@ -125,11 +125,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
                 
                 {/* Category Info */}
-                <div className="flex-1 flex items-center justify-between">
-                  <span className="text-gray-300 group-hover:text-white transition-colors font-medium">
+                <div className="flex-1 flex items-center justify-between min-w-0">
+                  <span className="text-gray-300 group-hover:text-white transition-colors font-medium text-sm lg:text-base truncate">
                     {formatCategoryName(category.name)}
                   </span>
-                  <span className="text-gray-500 text-sm">
+                  <span className="text-gray-500 text-sm flex-shrink-0 ml-2">
                     ({category.count.toLocaleString()})
                   </span>
                 </div>
@@ -141,7 +141,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {categories.length > 6 && (
             <button
               onClick={() => setShowAllCategories(!showAllCategories)}
-              className="mt-4 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors border border-gray-600 rounded-full px-4 py-2 hover:border-blue-500"
+              className="mt-4 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors border border-gray-600 rounded-full px-4 py-2 hover:border-blue-500 w-full lg:w-auto"
             >
               {showAllCategories ? 'See less' : 'See more'}
             </button>
@@ -165,7 +165,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               step={1}
             />
             
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handlePriceChange}
                 className="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-sm lg:text-base"
@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 w-80 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none lg:w-80 lg:flex-shrink-0
+        fixed inset-y-0 left-0 w-80 sm:w-96 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none lg:w-80 xl:w-96 lg:flex-shrink-0
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {sidebarContent}

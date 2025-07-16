@@ -141,9 +141,10 @@ export function useMarketplace() {
 
   // Load products when filters change
   useEffect(() => {
+    console.log('Filters changed, reloading products:', filters); // Debug log
     resetPagination();
     loadProducts(1, false);
-  }, [filters.category, filters.priceRange, filters.sortBy, debouncedSearchQuery, loadProducts, resetPagination]);
+  }, [filters.category, filters.priceRange?.min, filters.priceRange?.max, filters.sortBy, debouncedSearchQuery, loadProducts, resetPagination]);
 
   // Load categories and initial data on mount
   useEffect(() => {
@@ -154,7 +155,12 @@ export function useMarketplace() {
 
   // Filter update functions
   const updateFilters = useCallback((newFilters: Partial<MarketplaceFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    console.log('Updating filters:', newFilters); // Debug log
+    setFilters(prev => {
+      const updated = { ...prev, ...newFilters };
+      console.log('Updated filters:', updated); // Debug log
+      return updated;
+    });
   }, []);
 
   const clearFilters = useCallback(() => {

@@ -74,7 +74,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <div className="flex-1 p-3 md:p-6">
+    <div className="flex-1 p-3 sm:p-4 md:p-6 w-full overflow-hidden">
       {/* Results count */}
       <div className="mb-4 md:mb-6">
         <p className="text-gray-400 text-sm md:text-base">
@@ -83,7 +83,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       </div>
 
       {/* Products grid with better spacing */}
-      <div className="space-y-3 md:space-y-4 lg:space-y-6">
+      <div className="space-y-3 md:space-y-4 lg:space-y-6 w-full">
         {products.map((product, index) => {
           // Add ref to last product for infinite scroll
           const isLast = index === products.length - 1;
@@ -92,7 +92,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
             <div
               key={product.id}
               ref={isLast ? lastProductElementCallback : null}
-              className="animate-fade-in"
+              className="animate-fade-in w-full"
               style={{
                 animationDelay: `${(index % 10) * 0.1}s`
               }}
