@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { Filter } from 'lucide-react';
-import { useMarketplace } from '@/features/marketplace/useMarketplace';
-import Sidebar from '@/features/marketplace/Sidebar';
-import SearchFilterBar from '@/features/marketplace/SearchFilterBar';
-import ProductGrid from '@/features/marketplace/ProductGrid';
+import { useMarketplace } from '@/app/marketplace/hooks/useMarketplace';
+import Sidebar from '@/app/marketplace/components/Sidebar';
+import SearchFilterBar from '@/app/marketplace/components/SearchFilterBar';
+import ProductGrid from '@/app/marketplace/components/ProductGrid';
 import Navbar from '@/components/Landing/Navbar';
 
 const MarketplacePage: React.FC = () => {
@@ -26,11 +26,16 @@ const MarketplacePage: React.FC = () => {
   } = useMarketplace();
 
   const handleCategoryChange = (categoryId?: string) => {
-    updateFilters({ category: categoryId });
+    updateFilters({ category: categoryId || 'all' });
   };
 
   const handlePriceRangeChange = (priceRange: { min: number; max: number; currency: string }) => {
-    updateFilters({ priceRange });
+    updateFilters({ 
+      priceRange: { 
+        min: priceRange.min, 
+        max: priceRange.max 
+      } 
+    });
   };
 
   const handleSearchChange = (searchQuery: string) => {
@@ -38,7 +43,7 @@ const MarketplacePage: React.FC = () => {
   };
 
   const handleSortChange = (sortBy: string) => {
-    updateFilters({ sortBy });
+    updateFilters({ sortBy: sortBy as any });
   };
 
   if (error) {
@@ -85,7 +90,7 @@ const MarketplacePage: React.FC = () => {
           sortBy={filters.sortBy}
           selectedCategory={filters.category}
           resultCount={totalCount}
-          sortOptions={sortOptions}
+          sortOptions={sortOptions as any}
           onSearchChange={handleSearchChange}
           onSortChange={handleSortChange}
         />
@@ -96,7 +101,11 @@ const MarketplacePage: React.FC = () => {
           <Sidebar
             categories={categories}
             selectedCategory={filters.category}
-            priceRange={filters.priceRange}
+            priceRange={filters.priceRange ? {
+              min: filters.priceRange.min,
+              max: filters.priceRange.max,
+              currency: 'USD'
+            } : undefined}
             onCategoryChange={handleCategoryChange}
             onPriceRangeChange={handlePriceRangeChange}
             isMobileOpen={isMobileSidebarOpen}
