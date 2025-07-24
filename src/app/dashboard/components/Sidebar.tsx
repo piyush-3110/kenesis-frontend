@@ -179,18 +179,21 @@ const Sidebar: React.FC<SidebarProps> = ({
       <aside
         className={cn(
           'fixed left-0 top-0 h-full z-50 transition-all duration-300',
-          'border-r border-transparent',
+          'border-r',
           // Desktop styles
           'lg:relative lg:translate-x-0',
           // Mobile styles
           'lg:block',
           isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          // Width - use proper responsive classes
           isCollapsed 
-            ? `w-[${DASHBOARD_CONFIG.SIDEBAR_COLLAPSED_WIDTH}px]` 
-            : `w-[${DASHBOARD_CONFIG.SIDEBAR_WIDTH}px]`,
+            ? 'w-16 lg:w-20' // Collapsed width
+            : 'w-64 lg:w-72 xl:w-80', // Full width with responsive scaling
           className
         )}
         style={{
+          background: DASHBOARD_COLORS.PRIMARY_BG,
+          borderRight: '1px solid transparent',
           borderImage: 'linear-gradient(180deg, #0680FF 0%, #010519 88.45%) 1',
         }}
       >
