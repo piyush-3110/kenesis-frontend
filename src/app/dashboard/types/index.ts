@@ -47,6 +47,7 @@ export interface Transaction {
   timestamp: Date;
   status: 'completed' | 'pending' | 'failed';
   type: 'deposit' | 'withdrawal' | 'transfer';
+  userWallet: string;
 }
 
 export interface DashboardState {
