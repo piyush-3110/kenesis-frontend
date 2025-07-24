@@ -1,12 +1,12 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { useMarketplaceStore } from '@/app/marketplace/store/useMarketplaceStore';
-import { Product, PaginatedResponse } from '@/app/marketplace/types';
+import { Product, ApiPaginatedResponse, MarketplaceFilters } from '@/app/marketplace/types';
 import { MARKETPLACE_CONFIG, SORT_OPTIONS } from '@/app/marketplace/constants';
 import { useDebounce } from '@/hooks/useDebounce';
 
 // Mock API service - in production this would be a real API
 const marketplaceApi = {
-  async getProducts(filters: any, page: number): Promise<PaginatedResponse<Product>> {
+  async getProducts(filters: MarketplaceFilters, page: number): Promise<ApiPaginatedResponse<Product>> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
@@ -26,7 +26,6 @@ const marketplaceApi = {
 
 export function useMarketplace() {
   const {
-    products,
     filteredProducts,
     categories,
     loading,
@@ -35,7 +34,6 @@ export function useMarketplace() {
     currentPage,
     totalPages,
     hasMore,
-    setProducts,
     setFilteredProducts,
     setCategories,
     setLoading,
@@ -48,12 +46,20 @@ export function useMarketplace() {
     setSearchQuery,
   } = useMarketplaceStore();
 
+  // Infinite scroll setup
+  const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
   const debouncedSearchQuery = useDebounce(filters.searchQuery, MARKETPLACE_CONFIG.SEARCH_DEBOUNCE_MS);
 
   // Load products with current filters and pagination
   const loadProducts = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
-      setLoading(true);
+      if (append) {
+        setIsFetchingNextPage(true);
+      } else {
+        setLoading(true);
+      }
       setError(null);
 
       const response = await marketplaceApi.getProducts({
@@ -69,15 +75,16 @@ export function useMarketplace() {
         setFilteredProducts(response.data);
       }
 
-      setCurrentPage(response.pagination.currentPage);
+      setCurrentPage(response.pagination.page);
       setTotalPages(response.pagination.totalPages);
-      setHasMore(response.pagination.hasMore);
+      setHasMore(response.pagination.hasNextPage);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load products';
       setError(errorMessage);
       console.error('Error loading products:', err);
     } finally {
       setLoading(false);
+      setIsFetchingNextPage(false);
     }
   }, [filters, debouncedSearchQuery, filteredProducts, setLoading, setError, setFilteredProducts, setCurrentPage, setTotalPages, setHasMore]);
 
@@ -93,13 +100,31 @@ export function useMarketplace() {
 
   // Load more products (infinite scroll)
   const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
+    if (!loading && hasMore && !isFetchingNextPage) {
       loadProducts(currentPage + 1, true);
     }
-  }, [loading, hasMore, currentPage, loadProducts]);
+  }, [loading, hasMore, currentPage, loadProducts, isFetchingNextPage]);
+
+  // Intersection observer for infinite scroll
+  const lastProductElementCallback = useCallback((node: HTMLDivElement | null) => {
+    if (loading || isFetchingNextPage) return;
+    
+    if (observerRef.current) observerRef.current.disconnect();
+    
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        loadMore();
+      }
+    }, {
+      threshold: 0.1,
+      rootMargin: '100px'
+    });
+    
+    if (node) observerRef.current.observe(node);
+  }, [loading, isFetchingNextPage, hasMore, loadMore]);
 
   // Update filters and reload
-  const handleFiltersChange = useCallback((newFilters: any) => {
+  const handleFiltersChange = useCallback((newFilters: Partial<MarketplaceFilters>) => {
     updateFilters(newFilters);
   }, [updateFilters]);
 
@@ -121,7 +146,7 @@ export function useMarketplace() {
   // Reload products when filters change
   useEffect(() => {
     loadProducts(1, false);
-  }, [filters, debouncedSearchQuery]);
+  }, [filters, debouncedSearchQuery, loadProducts]);
 
   return {
     // Data
@@ -130,7 +155,7 @@ export function useMarketplace() {
     
     // State
     loading,
-    loadingMore: loading && currentPage > 1, // Additional loading state for pagination
+    loadingMore: isFetchingNextPage, // Proper loading state for pagination
     error,
     currentPage,
     totalPages,
@@ -149,7 +174,7 @@ export function useMarketplace() {
     resetFilters: handleResetFilters,
     setSearchQuery: handleSearch,
     
-    // Compatibility
-    lastProductElementCallback: () => {}, // Placeholder for now
+    // Infinite scroll
+    lastProductElementCallback,
   };
 }

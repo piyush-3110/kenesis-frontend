@@ -39,7 +39,7 @@ export const resetAllStores = () => {
 };
 
 // Store persistence utility (for localStorage)
-export const persistStore = (storeName: string, state: any) => {
+export const persistStore = (storeName: string, state: unknown) => {
   try {
     localStorage.setItem(`kenesis_${storeName}`, JSON.stringify(state));
   } catch (error) {

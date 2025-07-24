@@ -6,6 +6,14 @@ interface BreadcrumbItem {
   current?: boolean;
 }
 
+interface SearchResult {
+  id: string;
+  title: string;
+  type: 'product' | 'user' | 'content';
+  url: string;
+  description?: string;
+}
+
 interface NavigationState {
   // Current page info
   currentPage: string;
@@ -17,7 +25,7 @@ interface NavigationState {
   
   // Search state
   globalSearchQuery: string;
-  searchResults: any[];
+  searchResults: SearchResult[];
   searchLoading: boolean;
   
   // Actions
@@ -25,12 +33,12 @@ interface NavigationState {
   setBreadcrumbs: (breadcrumbs: BreadcrumbItem[]) => void;
   addToHistory: (path: string) => void;
   setGlobalSearchQuery: (query: string) => void;
-  setSearchResults: (results: any[]) => void;
+  setSearchResults: (results: SearchResult[]) => void;
   setSearchLoading: (loading: boolean) => void;
   clearSearch: () => void;
 }
 
-export const useNavigationStore = create<NavigationState>((set, get) => ({
+export const useNavigationStore = create<NavigationState>((set) => ({
   // Initial state
   currentPage: '',
   pageTitle: '',

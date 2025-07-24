@@ -33,7 +33,8 @@ const MarketplacePage: React.FC = () => {
     updateFilters({ 
       priceRange: { 
         min: priceRange.min, 
-        max: priceRange.max 
+        max: priceRange.max,
+        currency: priceRange.currency
       } 
     });
   };
@@ -43,7 +44,7 @@ const MarketplacePage: React.FC = () => {
   };
 
   const handleSortChange = (sortBy: string) => {
-    updateFilters({ sortBy: sortBy as any });
+    updateFilters({ sortBy: sortBy as 'popularity' | 'price-low' | 'price-high' | 'newest' });
   };
 
   if (error) {
@@ -90,7 +91,7 @@ const MarketplacePage: React.FC = () => {
           sortBy={filters.sortBy}
           selectedCategory={filters.category}
           resultCount={totalCount}
-          sortOptions={sortOptions as any}
+          sortOptions={sortOptions.map(option => ({ value: option.value, label: option.label }))}
           onSearchChange={handleSearchChange}
           onSortChange={handleSortChange}
         />

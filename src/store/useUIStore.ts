@@ -37,7 +37,7 @@ interface UIState {
   clearToasts: () => void;
 }
 
-export const useUIStore = create<UIState>((set, get) => ({
+export const useUIStore = create<UIState>((set) => ({
   // Initial state
   globalLoading: false,
   modals: {

@@ -12,7 +12,7 @@ interface AsyncState<T> {
  */
 export function useAsync<T>(
   asyncFunction: () => Promise<T>,
-  dependencies: any[] = []
+  dependencies: React.DependencyList = []
 ): AsyncState<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,16 +66,16 @@ export function useAsync<T>(
 export function useApi<T>(
   url: string,
   options?: RequestInit,
-  dependencies: any[] = []
-): AsyncState<T> & { cache: Map<string, any> } {
-  const cacheRef = useRef(new Map<string, any>());
+  dependencies: React.DependencyList = []
+): AsyncState<T> & { cache: Map<string, T> } {
+  const cacheRef = useRef(new Map<string, T>());
   
   const asyncFunction = async (): Promise<T> => {
     const cacheKey = `${url}_${JSON.stringify(options)}`;
     
     // Check cache first
     if (cacheRef.current.has(cacheKey)) {
-      return cacheRef.current.get(cacheKey);
+      return cacheRef.current.get(cacheKey)!;
     }
     
     const response = await fetch(url, {
@@ -109,7 +109,7 @@ export function useApi<T>(
 /**
  * Hook for handling form submissions
  */
-export function useAsyncSubmit<T, P = any>(
+export function useAsyncSubmit<T, P = unknown>(
   submitFunction: (data: P) => Promise<T>
 ) {
   const [data, setData] = useState<T | null>(null);

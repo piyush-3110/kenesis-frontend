@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ExtendedProduct, Review, CourseContent } from '@/app/product/types';
+import { ExtendedProduct, Review, CourseContent } from '../types';
 
 interface ProductState {
   // Product data
@@ -42,7 +42,7 @@ interface ProductState {
   reset: () => void;
 }
 
-export const useProductStore = create<ProductState>((set, get) => ({
+export const useProductStore = create<ProductState>((set) => ({
   // Initial state
   product: null,
   reviews: [],

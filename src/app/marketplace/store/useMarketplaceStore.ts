@@ -1,15 +1,5 @@
 import { create } from 'zustand';
-import { Product } from '@/app/marketplace/types';
-
-interface MarketplaceFilters {
-  category: string;
-  priceRange: {
-    min: number;
-    max: number;
-  } | null;
-  sortBy: 'popularity' | 'price-low' | 'price-high' | 'newest';
-  searchQuery: string;
-}
+import { Product, MarketplaceFilters } from '../types';
 
 interface MarketplaceState {
   // Products data
@@ -48,12 +38,12 @@ interface MarketplaceState {
 
 const initialFilters: MarketplaceFilters = {
   category: 'all',
-  priceRange: null,
+  priceRange: undefined,
   sortBy: 'popularity',
   searchQuery: '',
 };
 
-export const useMarketplaceStore = create<MarketplaceState>((set, get) => ({
+export const useMarketplaceStore = create<MarketplaceState>((set) => ({
   // Initial state
   products: [],
   filteredProducts: [],

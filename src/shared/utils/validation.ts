@@ -81,7 +81,7 @@ export const isValidPhoneNumber = (phone: string): boolean => {
 /**
  * Validate required fields in an object
  */
-export const validateRequiredFields = <T extends Record<string, any>>(
+export const validateRequiredFields = <T extends Record<string, unknown>>(
   data: T,
   requiredFields: (keyof T)[]
 ): { isValid: boolean; missingFields: string[] } => {
