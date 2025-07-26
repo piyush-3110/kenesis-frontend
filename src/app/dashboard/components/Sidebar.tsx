@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { SidebarProps } from '../types';
 import { useDashboardStore } from '../store/useDashboardStore';
 import { 
@@ -25,6 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onMobileClose,
   onItemClick,
 }) => {
+  const router = useRouter();
   const {
     selectedMenuItem,
     user,
@@ -58,7 +60,13 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleViewProfile = () => {
-    console.log('View profile clicked');
+    // Navigate to profile page
+    router.push('/dashboard/profile');
+    
+    // Close mobile sidebar if open
+    if (isMobileOpen) {
+      onMobileClose?.();
+    }
   };
 
   const sidebarContent = (
