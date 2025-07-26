@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Inter, Poppins } from 'next/font/google';
 import ConditionalLayout from "@/components/ConditionalLayout";
+import NextTopLoader from 'nextjs-toploader';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -38,6 +39,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${poppins.variable} antialiased bg-[#000526] text-white font-sans`}
       >
+        <NextTopLoader
+          color="#0680FF"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={true}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #0680FF,0 0 5px #0680FF"
+        />
         <ConditionalLayout>
           {children}
         </ConditionalLayout>
