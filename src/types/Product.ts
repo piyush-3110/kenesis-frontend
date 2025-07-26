@@ -11,6 +11,10 @@ export interface Product {
   category: string;
   type: 'video' | 'document';
   createdAt: string;
+  isPurchased?: boolean; // New field to track purchase status
+  purchaseDate?: string; // When the user purchased this product
+  accessLevel?: 'full' | 'preview' | 'none'; // Access level for the user
+  topics?: string[]; // Course curriculum/topics preview for unpurchased courses
 }
 
 export interface Category {
