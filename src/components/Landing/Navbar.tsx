@@ -58,8 +58,9 @@ const Navbar: React.FC = () => {
         </Link>
 
         {/* Right side: Login button */}
-        <button
-          className="flex   items-center space-x-2 text-white font-medium text-sm md:text-lg px-6 py-3 rounded-full transition hover:opacity-90"
+        <Link
+          href="/auth"
+          className="flex items-center space-x-2 text-white font-medium text-sm md:text-lg px-6 py-3 rounded-full transition hover:opacity-90"
           style={{
             background:
               'linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)',
@@ -67,7 +68,7 @@ const Navbar: React.FC = () => {
         >
           <Wallet size={20} />
           <span>Login</span>
-        </button>
+        </Link>
       </div>
     </nav>
   );
