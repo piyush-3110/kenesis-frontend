@@ -113,7 +113,7 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     id: 'affiliate-products',
     label: 'Affiliate Products',
     icon: ShoppingCart,
-    href: '/dashboard/affiliate-products',
+    href: '/dashboard/my-affiliations',
   },
   {
     id: 'sales',
