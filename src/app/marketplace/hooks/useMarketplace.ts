@@ -6,13 +6,15 @@ import { useDebounce } from '@/hooks/useDebounce';
 
 // Mock API service - in production this would be a real API
 const marketplaceApi = {
-  async getProducts(filters: MarketplaceFilters, page: number): Promise<ApiPaginatedResponse<Product>> {
+  async getProducts(filters: MarketplaceFilters, page: number, limit: number = MARKETPLACE_CONFIG.PRODUCTS_PER_PAGE): Promise<ApiPaginatedResponse<Product>> {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Import existing marketplace API for now
     const { fetchProducts } = await import('@/lib/marketplaceApi');
-    return fetchProducts(filters, page);
+    const result = await fetchProducts(filters, page, limit);
+    
+    return result;
   },
 
   async getCategories() {
@@ -48,6 +50,7 @@ export function useMarketplace() {
 
   // Infinite scroll setup
   const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
+  const [totalCount, setTotalCount] = useState(0); // Add state for total count
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   const debouncedSearchQuery = useDebounce(filters.searchQuery, MARKETPLACE_CONFIG.SEARCH_DEBOUNCE_MS);
@@ -78,6 +81,7 @@ export function useMarketplace() {
       setCurrentPage(response.pagination.page);
       setTotalPages(response.pagination.totalPages);
       setHasMore(response.pagination.hasNextPage);
+      setTotalCount(response.pagination.total); // Set total count from API response
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load products';
       setError(errorMessage);
@@ -161,7 +165,7 @@ export function useMarketplace() {
     totalPages,
     hasMore,
     hasNextPage: hasMore, // Alias for compatibility
-    totalCount: filteredProducts.length, // Approximate count
+    totalCount: totalCount, // Use actual total count from API
     
     // Filters
     filters,
