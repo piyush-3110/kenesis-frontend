@@ -15,7 +15,11 @@ const generateMockProducts = (): Product[] => {
       image: '/images/landing/product.png',
       category: 'Marketing and sales',
       type: 'video',
-      createdAt: '2024-01-15'
+      createdAt: '2024-01-15',
+      isPurchased: true,
+      purchaseDate: '2024-01-20',
+      accessLevel: 'full',
+      topics: ['Digital Marketing Fundamentals', 'Social Media Strategy', 'Google Ads Mastery', 'Analytics & Conversion Optimization']
     },
     {
       id: '2',
@@ -29,7 +33,10 @@ const generateMockProducts = (): Product[] => {
       image: '/images/landing/product.png',
       category: 'Design and photography',
       type: 'document',
-      createdAt: '2024-02-20'
+      createdAt: '2024-02-20',
+      isPurchased: false,
+      accessLevel: 'preview',
+      topics: ['Instagram Post Templates', 'Story Design Layouts', 'Brand Kit Setup', 'Canva Pro Features']
     },
     {
       id: '3',
@@ -43,21 +50,290 @@ const generateMockProducts = (): Product[] => {
       image: '/images/landing/product.png',
       category: 'Marketing and sales',
       type: 'video',
-      createdAt: '2024-03-10'
+      createdAt: '2024-03-10',
+      isPurchased: true,
+      purchaseDate: '2024-03-15',
+      accessLevel: 'full',
+      topics: ['Consultant Sales Strategy', 'Online Program Development', 'Customer Acquisition', 'Revenue Optimization']
+    },
+    {
+      id: '4',
+      title: 'Advanced Web Development with React & Next.js',
+      description: 'Master modern web development with React, Next.js, and TypeScript. Build production-ready applications with advanced patterns and best practices.',
+      author: 'Alex Rodriguez',
+      price: 149.00,
+      currency: 'USD',
+      rating: 4.8,
+      totalRatings: 203,
+      image: '/images/landing/product.png',
+      category: 'Programming and development',
+      type: 'video',
+      createdAt: '2024-01-05',
+      isPurchased: false,
+      accessLevel: 'preview',
+      topics: ['React Hooks & Context', 'Next.js App Router', 'TypeScript Integration', 'Server Components', 'Performance Optimization']
+    },
+    {
+      id: '5',
+      title: 'Photography Masterclass: From Beginner to Pro',
+      description: 'Learn professional photography techniques, lighting, composition, and post-processing. Includes hands-on projects and real-world assignments.',
+      author: 'Emma Johnson',
+      price: 89.00,
+      currency: 'USD',
+      rating: 4.7,
+      totalRatings: 167,
+      image: '/images/landing/product.png',
+      category: 'Design and photography',
+      type: 'video',
+      createdAt: '2024-02-12',
+      isPurchased: true,
+      purchaseDate: '2024-02-18',
+      accessLevel: 'full',
+      topics: ['Camera Fundamentals', 'Composition Rules', 'Natural Light Photography', 'Portrait Techniques', 'Post-Processing Workflow']
+    },
+    {
+      id: '6',
+      title: 'UI/UX Design Complete Guide',
+      description: 'Comprehensive guide to user interface and user experience design. Learn design principles, prototyping, and user research methodologies.',
+      author: 'Michael Chen',
+      price: 79.00,
+      currency: 'USD',
+      rating: 4.6,
+      totalRatings: 89,
+      image: '/images/landing/product.png',
+      category: 'Design and photography',
+      type: 'document',
+      createdAt: '2024-01-28',
+      isPurchased: false,
+      accessLevel: 'none',
+      topics: ['Design Thinking Process', 'User Research Methods', 'Wireframing & Prototyping', 'Usability Testing', 'Design Systems']
+    },
+    {
+      id: '7',
+      title: 'Cryptocurrency Trading Strategies',
+      description: 'Learn proven cryptocurrency trading strategies, technical analysis, and risk management. Includes live trading examples and market analysis.',
+      author: 'David Kim',
+      price: 199.00,
+      currency: 'USD',
+      rating: 4.5,
+      totalRatings: 124,
+      image: '/images/landing/product.png',
+      category: 'Finance and investment',
+      type: 'video',
+      createdAt: '2024-03-01',
+      isPurchased: true,
+      purchaseDate: '2024-03-05',
+      accessLevel: 'full',
+      topics: ['Technical Analysis', 'Risk Management', 'Trading Psychology', 'Market Indicators', 'Portfolio Strategies']
+    },
+    {
+      id: '8',
+      title: 'Mindfulness and Meditation Course',
+      description: 'Discover inner peace through mindfulness and meditation practices. Includes guided meditations, stress reduction techniques, and daily routines.',
+      author: 'Lisa Parker',
+      price: 45.00,
+      currency: 'USD',
+      rating: 4.9,
+      totalRatings: 312,
+      image: '/images/landing/product.png',
+      category: 'Health, wellness and beauty',
+      type: 'video',
+      createdAt: '2024-01-10',
+      isPurchased: false,
+      accessLevel: 'preview',
+      topics: ['Mindfulness Fundamentals', 'Breathing Techniques', 'Body Scan Meditation', 'Stress Management', 'Daily Practice Routines']
+    },
+    {
+      id: '9',
+      title: 'Business Strategy and Leadership',
+      description: 'Essential business strategy and leadership skills for modern entrepreneurs. Learn to build and lead successful teams and organizations.',
+      author: 'Robert Wilson',
+      price: 299.00,
+      currency: 'USD',
+      rating: 4.8,
+      totalRatings: 156,
+      image: '/images/landing/product.png',
+      category: 'Business and entrepreneurship',
+      type: 'document',
+      createdAt: '2024-02-05',
+      isPurchased: false,
+      accessLevel: 'none',
+      topics: ['Strategic Planning', 'Leadership Fundamentals', 'Team Building', 'Decision Making', 'Performance Management']
+    },
+    {
+      id: '10',
+      title: 'Social Media Marketing 2024',
+      description: 'Up-to-date social media marketing strategies for Instagram, TikTok, YouTube, and LinkedIn. Includes content creation and audience growth tactics.',
+      author: 'Rachel Adams',
+      price: 67.00,
+      currency: 'USD',
+      rating: 4.7,
+      totalRatings: 198,
+      image: '/images/landing/product.png',
+      category: 'Marketing and sales',
+      type: 'video',
+      createdAt: '2024-03-08',
+      isPurchased: true,
+      purchaseDate: '2024-03-12',
+      accessLevel: 'full',
+      topics: ['Social Media Strategy', 'Content Creation', 'Instagram Growth', 'LinkedIn Marketing', 'TikTok Trends']
+    },
+    {
+      id: '11',
+      title: 'Python Programming Fundamentals',
+      description: 'Learn Python from scratch with hands-on projects. Covers variables, functions, data structures, and object-oriented programming concepts.',
+      author: 'Dr. James Mitchell',
+      price: 129.00,
+      currency: 'USD',
+      rating: 4.8,
+      totalRatings: 278,
+      image: '/images/landing/product.png',
+      category: 'Programming and development',
+      type: 'video',
+      createdAt: '2024-01-25',
+      isPurchased: false,
+      accessLevel: 'none',
+      topics: ['Python Syntax & Variables', 'Control Structures', 'Functions & Modules', 'Object-Oriented Programming', 'File Handling & APIs']
+    },
+    {
+      id: '12',
+      title: 'E-commerce Store Setup Guide',
+      description: 'Complete guide to setting up and running a successful e-commerce store. Includes Shopify, WooCommerce, and payment gateway setup.',
+      author: 'Jennifer Lee',
+      price: 89.00,
+      currency: 'USD',
+      rating: 4.6,
+      totalRatings: 142,
+      image: '/images/landing/product.png',
+      category: 'Business and entrepreneurship',
+      type: 'document',
+      createdAt: '2024-02-14',
+      isPurchased: true,
+      purchaseDate: '2024-02-20',
+      accessLevel: 'full',
+      topics: ['E-commerce Platforms', 'Payment Processing', 'Inventory Management', 'SEO for E-commerce', 'Customer Service']
+    },
+    {
+      id: '13',
+      title: 'Fitness and Nutrition Masterclass',
+      description: 'Comprehensive fitness and nutrition program. Includes workout plans, meal prep guides, and sustainable lifestyle changes.',
+      author: 'Marcus Williams',
+      price: 79.00,
+      currency: 'USD',
+      rating: 4.9,
+      totalRatings: 489,
+      image: '/images/landing/product.png',
+      category: 'Health, wellness and beauty',
+      type: 'video',
+      createdAt: '2024-03-02',
+      isPurchased: false,
+      accessLevel: 'preview',
+      topics: ['Nutrition Science Basics', 'Meal Planning & Prep', 'Home Workout Routines', 'Supplement Guide', 'Lifestyle Transformation']
+    },
+    {
+      id: '14',
+      title: 'Stock Market Analysis & Trading',
+      description: 'Learn fundamental and technical analysis for stock trading. Includes risk management strategies and portfolio optimization techniques.',
+      author: 'Sarah Thompson',
+      price: 249.00,
+      currency: 'USD',
+      rating: 4.7,
+      totalRatings: 167,
+      image: '/images/landing/product.png',
+      category: 'Finance and investment',
+      type: 'video',
+      createdAt: '2024-01-18',
+      isPurchased: true,
+      purchaseDate: '2024-01-25',
+      accessLevel: 'full',
+      topics: ['Technical Analysis', 'Fundamental Analysis', 'Risk Management', 'Trading Strategies', 'Portfolio Optimization']
+    },
+    {
+      id: '15',
+      title: 'Graphic Design with Adobe Creative Suite',
+      description: 'Master Photoshop, Illustrator, and InDesign. Create professional designs for print and digital media with advanced techniques.',
+      author: 'Carlos Rodriguez',
+      price: 159.00,
+      currency: 'USD',
+      rating: 4.8,
+      totalRatings: 223,
+      image: '/images/landing/product.png',
+      category: 'Design and photography',
+      type: 'video',
+      createdAt: '2024-02-28',
+      isPurchased: false,
+      accessLevel: 'preview',
+      topics: ['Photoshop Mastery', 'Illustrator Vector Design', 'InDesign Layout', 'Color Theory', 'Print vs Digital Design']
     }
   ];
 
-  // Generate additional products for testing
+  // Generate additional products for testing with mixed purchase states
   const additionalProducts: Product[] = Array.from({ length: 47 }, (_, i) => {
     // Use deterministic values for consistency
     const priceOptions = [49, 79, 99, 149, 199, 249, 299, 349, 399, 449];
     const ratingOptions = [3.0, 3.5, 4.0, 4.2, 4.5, 4.7, 4.8, 4.9, 5.0];
     
+    // Create a mix of purchase states for testing
+    const purchaseState = (() => {
+      const stateIndex = i % 5;
+      switch (stateIndex) {
+        case 0: // Purchased with full access
+          return {
+            isPurchased: true,
+            purchaseDate: new Date(2024, (i % 12), Math.min(28, (i % 28) + 1)).toISOString().split('T')[0],
+            accessLevel: 'full' as const
+          };
+        case 1: // Not purchased, preview available
+          return {
+            isPurchased: false,
+            accessLevel: 'preview' as const
+          };
+        case 2: // Not purchased, no access
+          return {
+            isPurchased: false,
+            accessLevel: 'none' as const
+          };
+        case 3: // Purchased with full access (recent)
+          return {
+            isPurchased: true,
+            purchaseDate: '2024-03-15',
+            accessLevel: 'full' as const
+          };
+        default: // Not purchased, preview available
+          return {
+            isPurchased: false,
+            accessLevel: 'preview' as const
+          };
+      }
+    })();
+
+    // Generate topic titles based on course type
+    const generateTopics = (courseType: string, index: number) => {
+      const topicSets = {
+        'Digital Marketing': [
+          'SEO Fundamentals', 'Content Marketing Strategy', 'Social Media Advertising', 'Email Marketing Automation', 'Analytics & ROI Tracking'
+        ],
+        'Web Design': [
+          'HTML5 & CSS3 Mastery', 'Responsive Design Principles', 'JavaScript Frameworks', 'UX/UI Best Practices', 'Design Tools & Workflow'
+        ],
+        'Business Strategy': [
+          'Market Analysis', 'Competitive Research', 'Financial Planning', 'Team Leadership', 'Growth Strategies'
+        ],
+        'Photography': [
+          'Camera Settings & Controls', 'Composition Techniques', 'Lighting Fundamentals', 'Post-Processing', 'Portfolio Development'
+        ]
+      };
+      
+      const topics = topicSets[courseType as keyof typeof topicSets] || topicSets['Digital Marketing'];
+      // Return 3-5 topics per course
+      return topics.slice(0, 3 + (index % 3));
+    };
+
+    const courseType = i % 4 === 0 ? 'Digital Marketing' : i % 4 === 1 ? 'Web Design' : i % 4 === 2 ? 'Business Strategy' : 'Photography';
+    
     return {
-      id: `${i + 4}`,
-      title: `${i % 3 === 0 ? 'Advanced' : i % 3 === 1 ? 'Complete' : 'Professional'} ${
-        i % 4 === 0 ? 'Digital Marketing' : i % 4 === 1 ? 'Web Design' : i % 4 === 2 ? 'Business Strategy' : 'Photography'
-      } Course ${i + 4}`,
+      id: `${i + 16}`, // Start from 16 since base products go up to 15
+      title: `${i % 3 === 0 ? 'Advanced' : i % 3 === 1 ? 'Complete' : 'Professional'} ${courseType} Course ${i + 16}`,
       description: `Comprehensive course covering ${i % 4 === 0 ? 'digital marketing strategies, SEO, and social media' : 
         i % 4 === 1 ? 'modern web design principles, UI/UX, and responsive layouts' : 
         i % 4 === 2 ? 'business development, entrepreneurship, and growth strategies' : 
@@ -68,9 +344,15 @@ const generateMockProducts = (): Product[] => {
       rating: ratingOptions[i % ratingOptions.length],
       totalRatings: 20 + (i * 7) % 300, // Deterministic rating count
       image: '/images/landing/product.png',
-      category: i % 4 === 0 || i % 4 === 2 ? 'Marketing and sales' : i % 4 === 1 ? 'Design and photography' : 'Finance and business',
+      category: i % 6 === 0 ? 'Marketing and sales' : 
+                i % 6 === 1 ? 'Design and photography' : 
+                i % 6 === 2 ? 'Programming and development' :
+                i % 6 === 3 ? 'Business and entrepreneurship' :
+                i % 6 === 4 ? 'Health, wellness and beauty' : 'Finance and investment',
       type: i % 2 === 0 ? 'video' as const : 'document' as const,
-      createdAt: new Date(2024, (i % 12), Math.min(28, (i % 28) + 1)).toISOString().split('T')[0]
+      createdAt: new Date(2024, (i % 12), Math.min(28, (i % 28) + 1)).toISOString().split('T')[0],
+      topics: generateTopics(courseType, i),
+      ...purchaseState
     };
   });
 
@@ -106,7 +388,7 @@ export interface PaginatedResponse<T> {
 export async function fetchProducts(
   filters: MarketplaceFilters = {},
   page: number = 1,
-  limit: number = 10
+  limit: number = 20 // Increased default to show more products
 ): Promise<PaginatedResponse<Product>> {
   await simulateDelay();
 
@@ -124,15 +406,12 @@ export async function fetchProducts(
 
   // Apply category filter
   if (filters.category && filters.category !== 'all' && filters.category !== '') {
-    console.log('Applying category filter:', filters.category); // Debug log
     filteredProducts = filteredProducts.filter(product => {
       // Convert product category to ID format for comparison
       const productCategoryId = product.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
       const filterCategoryId = filters.category!.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
-      console.log(`Comparing: ${productCategoryId} === ${filterCategoryId}`); // Debug log
       return productCategoryId === filterCategoryId;
     });
-    console.log('Filtered products count:', filteredProducts.length); // Debug log
   }
 
   // Apply price range filter
@@ -217,14 +496,11 @@ export async function fetchCategories(): Promise<Category[]> {
   
   // First, get all unique categories from products
   const productCategories = [...new Set(mockProducts.map(product => product.category))];
-  console.log('Product categories found:', productCategories); // Debug log
   
   // Create categories based on actual product data
   const dynamicCategories: Category[] = productCategories.map(categoryName => {
     const id = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
     const count = mockProducts.filter(product => product.category === categoryName).length;
-    
-    console.log(`Category: ${categoryName} -> ID: ${id}, Count: ${count}`); // Debug log
     
     return {
       id,
@@ -234,7 +510,6 @@ export async function fetchCategories(): Promise<Category[]> {
   });
 
   const validCategories = dynamicCategories.filter(category => category.count > 0);
-  console.log('Valid categories:', validCategories); // Debug log
   
   return validCategories;
 }
