@@ -1,5 +1,5 @@
 export const MARKETPLACE_CONFIG = {
-  PRODUCTS_PER_PAGE: 12,
+  PRODUCTS_PER_PAGE: 20, // Increased from 12 to show more products initially
   SEARCH_DEBOUNCE_MS: 300,
   PRICE_RANGE: {
     MIN: 0,
