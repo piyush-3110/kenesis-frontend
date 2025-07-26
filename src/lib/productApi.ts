@@ -374,18 +374,20 @@ function createExtendedProduct(product: Product): ExtendedProduct {
   const reviews = generateMockReviews(product.id);
   const reviewSummary = generateReviewSummary(reviews);
   
-  // Mock purchase data - in real app this would come from backend
-  const purchasedBy = ['user-123', 'user-456', 'user-789']; // Mock user IDs who purchased
-  const hasAccess = purchasedBy.includes(CURRENT_USER_ID);
+  // Use the actual product purchase data instead of hardcoded values
+  const hasAccess = product.isPurchased || false;
   
   const courseAccess: CourseAccess = {
     hasAccess,
-    purchaseDate: hasAccess ? '2024-12-15T00:00:00Z' : undefined,
+    purchaseDate: hasAccess && product.purchaseDate ? product.purchaseDate : undefined,
     progress: hasAccess ? 40 : undefined,
     lastWatched: hasAccess ? '2025-01-10T00:00:00Z' : undefined,
   };
 
   const content = hasAccess ? generateMockCourseContent(product.type) : undefined;
+
+  // Generate a mock list of purchasers for UI display
+  const purchasedBy = hasAccess ? [CURRENT_USER_ID] : [];
 
   return {
     ...product,
