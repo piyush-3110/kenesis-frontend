@@ -4,33 +4,51 @@ import React, { useState } from 'react';
 import { Mail, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useAuthStore } from '@/store/useAuthStore';
 
 /**
  * ForgotPasswordPage Component
  * Password reset page following the website's design theme
+ * Note: Backend doesn't have forgot password endpoint yet,
+ * so this is a placeholder implementation
  */
 const ForgotPasswordPage: React.FC = () => {
-  const { forgotPassword, loading, error, clearError } = useAuthStore();
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      await forgotPassword(email);
+      setLoading(true);
+      setError(null);
+
+      // TODO: Implement when backend provides forgot password endpoint
+      // Simulate API call for now
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       setIsEmailSent(true);
     } catch (error) {
+      setError('Failed to send reset email. Please try again.');
       console.error('Forgot password error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResendEmail = async () => {
     try {
-      await forgotPassword(email);
+      setLoading(true);
+      setError(null);
+
+      // TODO: Implement when backend provides forgot password endpoint
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
+      setError('Failed to resend reset email. Please try again.');
       console.error('Resend email error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
