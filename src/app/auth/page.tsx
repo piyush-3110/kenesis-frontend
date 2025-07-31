@@ -5,16 +5,26 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Wallet } from 'lucide-react'
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store/useAuthStore';
+import { useAuthActions, useIsAuthenticated } from '@/store/useAuthStore';
 
 /**
  * AuthPage Component
  * Modern login/signup page with Web3 theme
- * Follows the website's gradient and dark theme design
+ * Integrates with backend API following security guidelines
  */
 const AuthPage: React.FC = () => {
   const router = useRouter();
-  const { login, signup, loading, error, clearError, isAuthenticated } = useAuthStore();
+  const isAuthenticated = useIsAuthenticated();
+  const {
+    login,
+    register,
+    loginLoading,
+    registerLoading,
+    loginError,
+    registerError,
+    clearLoginError,
+    clearRegisterError,
+  } = useAuthActions();
   
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -25,9 +35,14 @@ const AuthPage: React.FC = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
+    username: '',
+    bio: '',
     agreeToTerms: false,
   });
+
+  // Get current loading and error states
+  const loading = isSignup ? registerLoading : loginLoading;
+  const error = isSignup ? registerError : loginError;
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -38,8 +53,9 @@ const AuthPage: React.FC = () => {
 
   // Clear errors when component mounts or auth mode changes
   useEffect(() => {
-    clearError();
-  }, [isSignup, clearError]);
+    clearLoginError();
+    clearRegisterError();
+  }, [isSignup, clearLoginError, clearRegisterError]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -54,19 +70,43 @@ const AuthPage: React.FC = () => {
     
     try {
       if (isSignup) {
+        // Validate required fields
+        if (!formData.username.trim()) {
+          throw new Error('Username is required');
+        }
+        
         // Validate passwords match
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Passwords do not match');
         }
         
-        await signup({
+        if (!formData.agreeToTerms) {
+          throw new Error('You must agree to the terms and conditions');
+        }
+        
+        const result = await register({
           email: formData.email,
           password: formData.password,
-          fullName: formData.fullName,
-          agreeToTerms: formData.agreeToTerms,
+          confirmPassword: formData.confirmPassword,
+          username: formData.username,
+          bio: formData.bio || undefined,
         });
+
+        // Check if email verification is needed
+        if (result.needsVerification) {
+          router.push('/auth/verify-email');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
-        await login(formData.email, formData.password);
+        const result = await login(formData.email, formData.password);
+        
+        // Check if email verification is needed
+        if (result.needsVerification) {
+          router.push('/auth/verify-email');
+        } else {
+          router.push('/dashboard');
+        }
       }
     } catch (error) {
       console.error('Auth error:', error);
@@ -79,10 +119,12 @@ const AuthPage: React.FC = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      fullName: '',
+      username: '',
+      bio: '',
       agreeToTerms: false,
     });
-    clearError();
+    clearLoginError();
+    clearRegisterError();
   };
 
   return (
@@ -159,22 +201,42 @@ const AuthPage: React.FC = () => {
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Full Name (Signup only) */}
+              {/* Username (Signup only) */}
               {isSignup && (
                 <div className="space-y-2">
                   <label className="text-white text-sm font-medium">
-                    Full Name
+                    Username
                   </label>
                   <div className="relative">
                     <User size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      name="fullName"
-                      value={formData.fullName}
+                      name="username"
+                      value={formData.username}
                       onChange={handleInputChange}
-                      placeholder="Enter your full name"
+                      placeholder="Enter your username"
                       className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
                       required={isSignup}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Bio (Signup only) */}
+              {isSignup && (
+                <div className="space-y-2">
+                  <label className="text-white text-sm font-medium">
+                    Bio (Optional)
+                  </label>
+                  <div className="relative">
+                    <User size={20} className="absolute left-3 top-4 text-gray-400" />
+                    <textarea
+                      name="bio"
+                      value={formData.bio}
+                      onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                      placeholder="Tell us a bit about yourself"
+                      rows={3}
+                      className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
                     />
                   </div>
                 </div>
