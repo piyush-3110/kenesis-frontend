@@ -4,6 +4,7 @@ import "./globals.css";
 import { Inter, Poppins } from 'next/font/google';
 import ConditionalLayout from "@/components/ConditionalLayout";
 import NextTopLoader from 'nextjs-toploader';
+import { AuthInitializer } from "@/components/auth/AuthInitializer";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -50,9 +51,11 @@ export default function RootLayout({
           speed={200}
           shadow="0 0 10px #0680FF,0 0 5px #0680FF"
         />
-        <ConditionalLayout>
-          {children}
-        </ConditionalLayout>
+        <AuthInitializer>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
+        </AuthInitializer>
       </body>
     </html>
   );
