@@ -1,19 +1,35 @@
 /**
- * API Utility for Kenesis Platform
- * Handles all API calls with proper security and error handling
- * Follows integration.md guidelines for security and abstraction
+ * API Layer for Kenesis Platform
+ * Handles all authentication and API calls with proper security and error handling
+ * Follows integration.md guidelines for clean, secure integration
  */
 
-// Types for API responses
+// Environment configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://kenesis-backend.onrender.com';
+
+console.log('API Base URL configured:', API_BASE_URL);
+
+/**
+ * API Types
+ */
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
-  error?: string;
   errors?: Array<{
     field: string;
     message: string;
   }>;
+  retryAfter?: number;
+}
+
+export interface ApiUser {
+  _id: string;
+  username: string;
+  email: string;
+  bio?: string;
+  emailVerified: boolean;
+  createdAt: string;
 }
 
 export interface AuthTokens {
@@ -21,19 +37,28 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-export interface ApiUser {
-  id: string;
-  email: string;
-  username: string;
-  bio?: string;
-  role: 'user' | 'admin';
-  emailVerified: boolean;
-  createdAt: string;
+// Login response format (different from register)
+export interface LoginResponse {
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    emailVerified: boolean;
+    bio: string;
+    role: string;
+    createdAt: string;
+  };
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+  };
 }
 
-export interface LoginResponse {
+// Register response format (existing)
+export interface AuthResponse {
   user: ApiUser;
-  tokens: AuthTokens;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface RegisterRequest {
@@ -49,18 +74,18 @@ export interface LoginRequest {
   password: string;
 }
 
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-if (!API_BASE_URL) {
-  console.error('Environment variable NEXT_PUBLIC_API_BASE_URL is not defined');
-  throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined in environment variables');
+// Refresh token response format
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
 }
 
-console.log('API Base URL:', API_BASE_URL); // Debug log
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
 
 /**
- * Token management utilities
+ * Token Management Utilities
  */
 export const TokenManager = {
   getAccessToken: (): string | null => {
@@ -85,14 +110,14 @@ export const TokenManager = {
     localStorage.removeItem('kenesis_refresh_token');
   },
 
-  isAuthenticated: (): boolean => {
-    return !!TokenManager.getAccessToken();
+  hasTokens: (): boolean => {
+    return !!(TokenManager.getAccessToken() && TokenManager.getRefreshToken());
   }
 };
 
 /**
- * Core API fetcher with security measures
- * Abstracts fetch logic as per integration guidelines
+ * Core API Client
+ * Handles fetch requests with proper error handling
  */
 class ApiClient {
   private baseURL: string;
@@ -101,195 +126,178 @@ class ApiClient {
     this.baseURL = baseURL;
   }
 
-  /**
-   * Generic API request method
-   */
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    const url = `${this.baseURL}${endpoint}`;
-    
-    console.log('Making API request to:', url); // Debug log
-    
-    // Default headers
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      ...((options.headers as Record<string, string>) || {}),
-    };
-
-    // Add authorization header if token exists
-    const accessToken = TokenManager.getAccessToken();
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    console.log('Request headers:', headers); // Debug log
-
+  private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-        // Remove credentials for wildcard CORS
-        // credentials: 'include',
-      });
-
-      console.log('Response status:', response.status); // Debug log
-      console.log('Response headers:', response.headers); // Debug log
-
-      // Handle non-JSON responses
+      // Check if response is JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('Invalid content type:', contentType); // Debug log
-        throw new Error('Invalid response format');
+        // Response is not JSON - probably HTML error page
+        const text = await response.text();
+        console.error(`Non-JSON Response [${response.status}]:`, text.substring(0, 200));
+        return {
+          success: false,
+          message: `Server error (${response.status}). Please check if the API is running correctly.`
+        };
       }
 
-      const data: ApiResponse<T> = await response.json();
-      console.log('Response data:', data); // Debug log
-
-      // Handle HTTP errors
+      const data = await response.json();
+      
       if (!response.ok) {
-        console.error('HTTP Error:', response.status, data); // Debug log
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        console.error(`API Error [${response.status}]:`, data);
+        return {
+          success: false,
+          message: data.message || 'Request failed',
+          errors: data.errors,
+          retryAfter: data.retryAfter
+        };
       }
 
-      return data;
+      console.log(`API Success [${response.status}]:`, data.message || 'Request successful');
+      return {
+        success: true,
+        message: data.message || 'Success',
+        data: data.data || data
+      };
     } catch (error) {
-      console.error('API Request failed:', error); // Debug log
-      // Network or parsing errors
-      if (error instanceof Error) {
-        throw new Error(error.message);
-      }
-      throw new Error('An unexpected error occurred');
+      console.error('API Response Parse Error:', error);
+      return {
+        success: false,
+        message: 'Failed to parse server response. Please check your network connection.'
+      };
     }
   }
 
-  /**
-   * GET request
-   */
-  async get<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'GET',
-      ...options,
-    });
-  }
+  async post<T>(endpoint: string, payload?: any): Promise<ApiResponse<T>> {
+    try {
+      console.log(`🚀 Making POST request to: ${this.baseURL}${endpoint}`);
+      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
 
-  /**
-   * POST request
-   */
-  async post<T>(
-    endpoint: string,
-    data?: any,
-    options?: RequestInit
-  ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-  }
+      // Build headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
 
-  /**
-   * PUT request
-   */
-  async put<T>(
-    endpoint: string,
-    data?: any,
-    options?: RequestInit
-  ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-      ...options,
-    });
-  }
+      // Add Authorization header if access token is available
+      const accessToken = TokenManager.getAccessToken();
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        console.log('🔑 Added Authorization header');
+      } else {
+        console.log('🔓 No access token found, proceeding without Authorization header');
+      }
 
-  /**
-   * DELETE request
-   */
-  async delete<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'DELETE',
-      ...options,
-    });
+      console.log(`📡 Final headers:`, headers);
+      console.log(`📤 Request body:`, JSON.stringify(payload));
+
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      });
+
+      console.log(`📥 Response status: ${response.status}`);
+      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+
+      return this.handleResponse<T>(response);
+    } catch (error) {
+      console.error(`Network Error on ${endpoint}:`, error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection and try again.'
+      };
+    }
   }
 }
 
-// Create singleton API client instance
-export const apiClient = new ApiClient(API_BASE_URL);
+// Create API client instance
+const apiClient = new ApiClient(API_BASE_URL);
 
 /**
- * Authentication API methods
- * Handles all auth-related API calls with proper error handling
+ * Authentication API
+ * All auth-related API calls
  */
 export const AuthAPI = {
   /**
    * Register new user
+   * POST /api/auth/register
    */
-  register: async (userData: RegisterRequest): Promise<ApiResponse<LoginResponse>> => {
-    return apiClient.post<LoginResponse>('/api/auth/register', userData);
+  register: async (data: RegisterRequest): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<AuthResponse>('/api/auth/register', data);
   },
 
   /**
    * Login user
+   * POST /api/auth/login
    */
-  login: async (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
-    return apiClient.post<LoginResponse>('/api/auth/login', credentials);
+  login: async (data: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
+    return apiClient.post<LoginResponse>('/api/auth/login', data);
   },
 
   /**
-   * Verify email with token
+   * Logout user
+   * POST /api/auth/logout
+   * Requires Authorization header with access token
    */
-  verifyEmail: async (token: string): Promise<ApiResponse<any>> => {
+  logout: async (): Promise<ApiResponse> => {
+    return apiClient.post('/api/auth/logout', {});
+  },
+
+  /**
+   * Verify email
+   * POST /api/auth/verify-email
+   */
+  verifyEmail: async (token: string): Promise<ApiResponse> => {
     return apiClient.post('/api/auth/verify-email', { token });
   },
 
   /**
    * Resend verification email
+   * POST /api/auth/resend-verification
    */
-  resendVerification: async (email: string): Promise<ApiResponse<any>> => {
+  resendVerification: async (email: string): Promise<ApiResponse> => {
     return apiClient.post('/api/auth/resend-verification', { email });
   },
 
   /**
-   * Revoke current session
+   * Refresh tokens
+   * POST /api/auth/refresh-token
    */
-  revokeSession: async (): Promise<ApiResponse<any>> => {
-    return apiClient.post('/api/auth/revoke-session');
+  refreshToken: async (data: RefreshTokenRequest): Promise<ApiResponse<RefreshTokenResponse>> => {
+    return apiClient.post<RefreshTokenResponse>('/api/auth/refresh-token', data);
   },
 
   /**
-   * Revoke all sessions
+   * Forgot password
+   * POST /api/auth/forgot-password
    */
-  revokeAllSessions: async (): Promise<ApiResponse<any>> => {
-    return apiClient.post('/api/auth/revoke-all-sessions');
+  forgotPassword: async (email: string): Promise<ApiResponse> => {
+    return apiClient.post('/api/auth/forgot-password', { email });
   },
 
   /**
-   * Refresh access token
+   * Reset password
+   * POST /api/auth/reset-password
    */
-  refreshToken: async (): Promise<ApiResponse<AuthTokens>> => {
-    const refreshToken = TokenManager.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-    
-    return apiClient.post<AuthTokens>('/api/auth/refresh', { refreshToken });
+  resetPassword: async (token: string, newPassword: string): Promise<ApiResponse> => {
+    return apiClient.post('/api/auth/reset-password', { token, newPassword });
   },
 };
 
 /**
- * Error handler for API responses
+ * Error Formatting Utility
  */
-export const handleApiError = (error: any): string => {
-  if (error instanceof Error) {
-    return error.message;
+export const formatApiError = (response: ApiResponse): string => {
+  if (response.errors && response.errors.length > 0) {
+    return response.errors.map(err => `${err.field}: ${err.message}`).join(', ');
   }
-  
-  if (typeof error === 'string') {
-    return error;
-  }
-  
-  return 'An unexpected error occurred';
+  return response.message || 'An unexpected error occurred';
+};
+
+/**
+ * Retry After Formatter
+ */
+export const formatRetryAfter = (seconds: number): string => {
+  if (seconds < 60) return `${seconds} seconds`;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes} minute${minutes > 1 ? 's' : ''}`;
 };
