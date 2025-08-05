@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SidebarProps } from '../types';
 import { useDashboardStore } from '../store/useDashboardStore';
+import { useAuthStore, useAuthActions } from '@/store/useAuthStore';
 import { 
   DASHBOARD_MENU_ITEMS, 
   DASHBOARD_BOTTOM_ITEMS, 
@@ -27,6 +28,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onItemClick,
 }) => {
   const router = useRouter();
+  const authStore = useAuthStore();
+  const { logout } = useAuthActions();
   const {
     selectedMenuItem,
     user,
@@ -54,8 +57,24 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Handle special cases
     if (itemId === 'logout') {
       // Handle logout logic
+      handleLogout();
+      return;
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      // Disconnect wallet first
       disconnectWallet();
-      console.log('Logout clicked');
+      
+      // Call the proper logout action with toast notifications and redirects
+      await logout();
+      
+      // The logout action will handle the redirect automatically
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback redirect in case of unexpected errors
+      router.push('/');
     }
   };
 
