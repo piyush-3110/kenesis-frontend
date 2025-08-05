@@ -207,6 +207,44 @@ class ApiClient {
       };
     }
   }
+
+  async postFormData<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+    try {
+      console.log(`🚀 Making FormData POST request to: ${this.baseURL}${endpoint}`);
+
+      // Build headers (don't set Content-Type for FormData - browser will set it with boundary)
+      const headers: Record<string, string> = {};
+
+      // Add Authorization header if access token is available
+      const accessToken = TokenManager.getAccessToken();
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+        console.log('🔑 Added Authorization header');
+      } else {
+        console.log('🔓 No access token found, proceeding without Authorization header');
+      }
+
+      console.log(`📡 Final headers:`, headers);
+      console.log('📤 FormData contents:', Array.from(formData.entries()));
+
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      console.log(`📥 Response status: ${response.status}`);
+      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+
+      return this.handleResponse<T>(response);
+    } catch (error) {
+      console.error(`Network Error on ${endpoint}:`, error);
+      return {
+        success: false,
+        message: 'Network error. Please check your connection and try again.'
+      };
+    }
+  }
 }
 
 // Create API client instance
@@ -280,6 +318,48 @@ export const AuthAPI = {
    */
   resetPassword: async (token: string, newPassword: string): Promise<ApiResponse> => {
     return apiClient.post('/api/auth/reset-password', { token, newPassword });
+  },
+};
+
+/**
+ * Course Management API
+ * All course-related API calls for instructors
+ */
+export const CourseAPI = {
+  /**
+   * Create new course
+   * POST /api/courses
+   * Requires multipart/form-data and Authorization header
+   */
+  createCourse: async (courseData: FormData): Promise<ApiResponse<{ course: string }>> => {
+    return apiClient.postFormData<{ course: string }>('/api/courses', courseData);
+  },
+
+  /**
+   * Create chapter for a course
+   * POST /api/courses/{id}/chapters
+   * Requires Authorization header
+   */
+  createChapter: async (courseId: string, chapterData: { title: string; description: string }): Promise<ApiResponse<{ chapterId: string }>> => {
+    return apiClient.post<{ chapterId: string }>(`/api/courses/${courseId}/chapters`, chapterData);
+  },
+
+  /**
+   * Create module for a course
+   * POST /api/courses/{courseId}/modules
+   * Requires multipart/form-data and Authorization header
+   */
+  createModule: async (courseId: string, moduleData: FormData): Promise<ApiResponse<any>> => {
+    return apiClient.postFormData(`/api/courses/${courseId}/modules`, moduleData);
+  },
+
+  /**
+   * Submit course for admin review
+   * POST /api/courses/{id}/submit-for-review
+   * Requires Authorization header
+   */
+  submitForReview: async (courseId: string, submissionNotes?: string): Promise<ApiResponse<any>> => {
+    return apiClient.post(`/api/courses/${courseId}/submit-for-review`, { submissionNotes });
   },
 };
 
