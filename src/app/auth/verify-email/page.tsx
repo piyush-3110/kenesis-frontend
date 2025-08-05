@@ -5,8 +5,8 @@ import { Mail, ArrowLeft, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEmailVerification } from '@/hooks/useAuth';
-import { useAuthUser } from '@/store/useAuthStore';
+import { useAuthActions, useAuthUser } from '@/store/useAuthStore';
+import { useUIStore } from '@/store/useUIStore';
 
 /**
  * EmailVerificationPage Component
@@ -16,17 +16,18 @@ const EmailVerificationPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useAuthUser();
+  const { addToast } = useUIStore();
   
-  const {
-    verifyEmail,
-    resendVerification,
-    loading,
+  const { 
+    verifyEmail, 
+    resendVerification, 
+    verificationLoading,
     resendLoading,
-    error,
+    verificationError,
     canResend,
     countdown,
-    clearError
-  } = useEmailVerification();
+    clearVerificationError
+  } = useAuthActions();
 
   const [isVerified, setIsVerified] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
@@ -50,36 +51,45 @@ const EmailVerificationPage: React.FC = () => {
 
   // Auto-verify if token is present in URL
   useEffect(() => {
-    if (verificationToken && !isVerified) {
-      handleVerifyToken(verificationToken);
+    if (verificationToken && user && !user.emailVerified) {
+      handleVerifyFromToken(verificationToken);
     }
-  }, [verificationToken, isVerified]);
+  }, [verificationToken, user]);
 
-  const handleVerifyToken = async (token: string) => {
+  const handleVerifyFromToken = async (token: string) => {
     try {
+      setVerificationStatus('pending');
       await verifyEmail(token);
       setIsVerified(true);
       setVerificationStatus('success');
       
-      // Redirect to dashboard after 3 seconds
+      addToast({
+        type: 'success',
+        message: '✅ Email verified successfully! Redirecting to dashboard...'
+      });
+
       setTimeout(() => {
         router.push('/dashboard');
-      }, 3000);
+      }, 2000);
     } catch (error) {
       setVerificationStatus('error');
       console.error('Email verification failed:', error);
+      
+      if (error instanceof Error) {
+        addToast({
+          type: 'error',
+          message: error.message
+        });
+      }
     }
   };
 
   const handleResendEmail = async () => {
     if (!user?.email || !canResend) return;
     
-    try {
-      clearError();
-      await resendVerification(user.email);
-    } catch (error) {
-      console.error('Failed to resend verification email:', error);
-    }
+    // Use auth store action which handles all error scenarios and toasts
+    clearVerificationError();
+    await resendVerification(user.email);
   };
 
   if (!user) {
@@ -126,11 +136,11 @@ const EmailVerificationPage: React.FC = () => {
         </Link>
 
         <Link 
-          href="/dashboard"
-          className="flex items-center space-x-2 text-gray-400 hover:text-white transition-colors text-sm md:text-base"
+          href="/auth"
+          className="text-gray-400 hover:text-white transition-colors text-sm md:text-base flex items-center space-x-2"
         >
           <ArrowLeft size={16} />
-          <span>Back to Dashboard</span>
+          <span>Back to Auth</span>
         </Link>
       </header>
 
@@ -146,151 +156,110 @@ const EmailVerificationPage: React.FC = () => {
               backdropFilter: 'blur(20px)',
             }}
           >
-            {verificationStatus === 'success' ? (
-              /* Success State */
-              <div className="text-center">
-                <div className="flex justify-center mb-6">
-                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center">
-                    <CheckCircle size={32} className="text-green-400" />
+            <div className="text-center">
+              {/* Status Icon */}
+              <div className="mb-6">
+                {verificationStatus === 'success' ? (
+                  <div className="w-16 h-16 mx-auto bg-green-500/20 rounded-full flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-green-400" />
                   </div>
-                </div>
-
-                <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
-                  Email Verified!
-                </h1>
-                <p className="text-gray-400 text-sm md:text-base mb-6">
-                  Your email has been successfully verified. You'll be redirected to your dashboard shortly.
-                </p>
-
-                <div className="w-full py-3 px-4 bg-green-500/20 border border-green-500/30 text-green-400 font-medium rounded-xl text-center">
-                  Redirecting to dashboard...
-                </div>
-              </div>
-            ) : verificationStatus === 'error' ? (
-              /* Error State */
-              <div className="text-center">
-                <div className="flex justify-center mb-6">
-                  <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center">
-                    <Mail size={32} className="text-red-400" />
+                ) : verificationStatus === 'error' ? (
+                  <div className="w-16 h-16 mx-auto bg-red-500/20 rounded-full flex items-center justify-center">
+                    <Mail className="w-8 h-8 text-red-400" />
                   </div>
-                </div>
-
-                <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
-                  Verification Failed
-                </h1>
-                <p className="text-gray-400 text-sm md:text-base mb-6">
-                  The verification link is invalid or has expired. Please request a new verification email.
-                </p>
-
-                {error && (
-                  <div className="text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6">
-                    {error}
+                ) : (
+                  <div className="w-16 h-16 mx-auto bg-blue-500/20 rounded-full flex items-center justify-center">
+                    {verificationLoading ? (
+                      <div className="w-8 h-8 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin" />
+                    ) : (
+                      <Mail className="w-8 h-8 text-blue-400" />
+                    )}
                   </div>
                 )}
-
-                <button
-                  onClick={handleResendEmail}
-                  disabled={resendLoading || !canResend}
-                  className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
-                >
-                  {resendLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <RefreshCw size={18} />
-                      <span>Send New Verification Email</span>
-                    </>
-                  )}
-                </button>
               </div>
-            ) : (
-              /* Pending Verification State */
-              <div className="text-center">
-                <div className="flex justify-center mb-6">
-                  <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center">
-                    <Mail size={32} className="text-blue-400" />
-                  </div>
-                </div>
 
-                <h1 className="text-white text-2xl md:text-3xl font-bold mb-2">
-                  Verify Your Email
-                </h1>
-                <p className="text-gray-400 text-sm md:text-base mb-2">
-                  We've sent a verification email to:
-                </p>
-                <p className="text-white font-medium text-sm md:text-base mb-6">
-                  {user.email}
-                </p>
-                
-                <p className="text-gray-400 text-xs md:text-sm mb-8">
-                  Please check your inbox and click the verification link to activate your account.
-                  Don't forget to check your spam folder!
-                </p>
+              {/* Title and Description */}
+              <h1 className="text-white text-2xl md:text-3xl font-bold mb-4">
+                {verificationStatus === 'success' ? 'Email Verified!' : 
+                 verificationStatus === 'error' ? 'Verification Failed' :
+                 'Check Your Email'}
+              </h1>
 
-                {/* Error Message */}
-                {error && (
-                  <div className="text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-6">
-                    {error}
-                  </div>
-                )}
+              <p className="text-gray-400 text-sm md:text-base mb-8">
+                {verificationStatus === 'success' ? 
+                  'Your email has been successfully verified. You\'ll be redirected to your dashboard shortly.' :
+                  verificationStatus === 'error' ?
+                  'There was an issue verifying your email. Please try again or request a new verification email.' :
+                  `We've sent a verification link to ${user.email}. Click the link in the email to verify your account.`
+                }
+              </p>
 
-                {/* Resend Button */}
+              {/* Action Buttons */}
+              {verificationStatus === 'pending' && (
                 <div className="space-y-4">
                   <button
                     onClick={handleResendEmail}
-                    disabled={resendLoading || !canResend}
+                    disabled={!canResend || resendLoading}
                     className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
                   >
                     {resendLoading ? (
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : canResend ? (
-                      <>
-                        <RefreshCw size={18} />
-                        <span>Resend Verification Email</span>
-                      </>
                     ) : (
                       <>
-                        <Clock size={18} />
-                        <span>Resend in {countdown}s</span>
+                        <RefreshCw size={18} />
+                        <span>
+                          {canResend ? 'Resend Email' : `Resend in ${countdown}s`}
+                        </span>
                       </>
                     )}
                   </button>
 
-                  {loading && (
-                    <div className="text-blue-400 text-sm text-center">
-                      Verifying your email...
+                  {/* Error Message */}
+                  {verificationError && (
+                    <div className="text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                      {verificationError}
                     </div>
                   )}
                 </div>
+              )}
+
+              {verificationStatus === 'error' && (
+                <div className="space-y-4">
+                  <button
+                    onClick={handleResendEmail}
+                    disabled={!canResend || resendLoading}
+                    className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
+                  >
+                    {resendLoading ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <RefreshCw size={18} />
+                        <span>Send New Email</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {/* Additional Actions */}
+              <div className="mt-8 pt-6 border-t border-gray-700/50">
+                <div className="flex items-center justify-center space-x-4 text-sm">
+                  <Link 
+                    href="/auth"
+                    className="text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    Back to Login
+                  </Link>
+                  <span className="text-gray-600">•</span>
+                  <Link 
+                    href="/"
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    Home
+                  </Link>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Help Text */}
-          {verificationStatus === 'pending' && (
-            <div className="mt-8 text-center">
-              <p className="text-gray-400 text-sm">
-                Having trouble? Check your spam folder or{' '}
-                <Link href="/support" className="text-blue-400 hover:text-blue-300 transition-colors">
-                  contact support
-                </Link>
-              </p>
-            </div>
-          )}
-
-          {/* Web3 Features */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div className="text-gray-400 text-xs">
-              <div className="text-blue-400 font-semibold mb-1">Secure</div>
-              <div>Email verification protects your account</div>
-            </div>
-            <div className="text-gray-400 text-xs">
-              <div className="text-blue-400 font-semibold mb-1">Verified</div>
-              <div>Blockchain-verified certificates await</div>
-            </div>
-            <div className="text-gray-400 text-xs">
-              <div className="text-blue-400 font-semibold mb-1">Ready</div>
-              <div>Join the Web3 learning revolution</div>
             </div>
           </div>
         </div>
