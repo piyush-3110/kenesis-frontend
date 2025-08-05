@@ -1,16 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // API rewrites for development proxy (following integration.md guidelines)
-  async rewrites() {
-    return [
-      {
-        source: '/api/proxy/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/:path*`,
-      },
-    ];
-  },
-
   // Security headers
   async headers() {
     return [
@@ -32,17 +22,6 @@ const nextConfig: NextConfig = {
         ],
       },
     ];
-  },
-
-  // Image optimization for backend assets
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'kenesis-backend.onrender.com',
-        pathname: '/**',
-      },
-    ],
   },
 };
 
