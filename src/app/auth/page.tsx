@@ -5,7 +5,8 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Wallet } from 'lucide-react'
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuthActions, useIsAuthenticated } from '@/store/useAuthStore';
+import { useAuthActions, useIsAuthenticated, useAuthUser } from '@/store/useAuthStore';
+import { useUIStore } from '@/store/useUIStore';
 
 /**
  * AuthPage Component
@@ -15,20 +16,29 @@ import { useAuthActions, useIsAuthenticated } from '@/store/useAuthStore';
 const AuthPage: React.FC = () => {
   const router = useRouter();
   const isAuthenticated = useIsAuthenticated();
-  const {
-    login,
-    register,
-    loginLoading,
+  const user = useAuthUser();
+  const { addToast } = useUIStore();
+  
+  const { 
+    register, 
+    login, 
+    forgotPassword,
     registerLoading,
-    loginError,
+    loginLoading,
+    forgotPasswordLoading,
     registerError,
-    clearLoginError,
+    loginError,
+    forgotPasswordError,
     clearRegisterError,
+    clearLoginError,
+    clearForgotPasswordError
   } = useAuthActions();
   
   const [isSignup, setIsSignup] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
 
   // Form state
   const [formData, setFormData] = useState({
@@ -40,22 +50,21 @@ const AuthPage: React.FC = () => {
     agreeToTerms: false,
   });
 
-  // Get current loading and error states
-  const loading = isSignup ? registerLoading : loginLoading;
-  const error = isSignup ? registerError : loginError;
+  // Get current loading and error states are now from the destructured variables
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated and verified
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.emailVerified) {
       router.push('/dashboard');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, user, router]);
 
   // Clear errors when component mounts or auth mode changes
   useEffect(() => {
-    clearLoginError();
     clearRegisterError();
-  }, [isSignup, clearLoginError, clearRegisterError]);
+    clearLoginError();
+    clearForgotPasswordError();
+  }, [isSignup, clearRegisterError, clearLoginError, clearForgotPasswordError]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -65,25 +74,53 @@ const AuthPage: React.FC = () => {
     }));
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!forgotPasswordEmail.trim()) {
+      addToast({
+        type: 'error',
+        message: 'Please enter your email address'
+      });
+      return;
+    }
+    
+    await forgotPassword(forgotPasswordEmail);
+    setShowForgotPassword(false);
+    setForgotPasswordEmail('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       if (isSignup) {
-        // Validate required fields
+        // Frontend validation
         if (!formData.username.trim()) {
-          throw new Error('Username is required');
+          addToast({
+            type: 'error',
+            message: 'Username is required'
+          });
+          return;
         }
         
-        // Validate passwords match
         if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
+          addToast({
+            type: 'error',
+            message: 'Passwords do not match'
+          });
+          return;
         }
         
         if (!formData.agreeToTerms) {
-          throw new Error('You must agree to the terms and conditions');
+          addToast({
+            type: 'error',
+            message: 'You must agree to the terms and conditions'
+          });
+          return;
         }
         
+        // Call register API
         const result = await register({
           email: formData.email,
           password: formData.password,
@@ -92,24 +129,100 @@ const AuthPage: React.FC = () => {
           bio: formData.bio || undefined,
         });
 
-        // Check if email verification is needed
-        if (result.needsVerification) {
-          router.push('/auth/verify-email');
+        // Handle registration response according to task requirements
+        if (result.user.emailVerified) {
+          // User is verified - tokens are stored
+          addToast({
+            type: 'success',
+            message: '✅ Account created! Redirecting to your dashboard...'
+          });
+          setTimeout(() => router.push('/dashboard'), 1500);
         } else {
-          router.push('/dashboard');
+          // User is not verified - tokens are NOT stored
+          addToast({
+            type: 'warning',
+            message: '⚠️ Please verify your email before accessing the dashboard.'
+          });
+          setTimeout(() => router.push('/auth/verify-email'), 1500);
         }
-      } else {
-        const result = await login(formData.email, formData.password);
         
-        // Check if email verification is needed
-        if (result.needsVerification) {
-          router.push('/auth/verify-email');
+      } else {
+        // Login flow according to task requirements
+        const result = await login({
+          email: formData.email,
+          password: formData.password
+        });
+        
+        // Handle login response according to task specifications
+        if (result.user.emailVerified) {
+          // Store tokens and redirect to dashboard
+          addToast({
+            type: 'success',
+            message: 'Login successful! Redirecting to dashboard...'
+          });
+          setTimeout(() => router.push('/dashboard'), 1500);
         } else {
-          router.push('/dashboard');
+          // Don't store tokens, show warning
+          addToast({
+            type: 'warning',
+            message: 'Please verify your email before accessing the dashboard.'
+          });
+          setTimeout(() => router.push('/auth/verify-email'), 1500);
         }
       }
     } catch (error) {
       console.error('Auth error:', error);
+      
+      if (error instanceof Error) {
+        // Handle specific error scenarios according to task requirements
+        const errorMessage = error.message;
+        
+        // Check for validation errors (400) - applies to both login and register
+        if (errorMessage.includes('email:') || errorMessage.includes('password:') || errorMessage.includes('username:')) {
+          // Multiple validation errors - show each one
+          const errors = errorMessage.split(', ');
+          errors.forEach(err => {
+            addToast({
+              type: 'error',
+              message: err
+            });
+          });
+        }
+        // Check for unauthorized/invalid credentials (401) - login specific
+        else if (errorMessage.includes('Invalid email or password') || errorMessage.includes('Invalid credentials')) {
+          addToast({
+            type: 'error',
+            message: 'Invalid email or password'
+          });
+        }
+        // Check for conflict error (409) - register specific
+        else if (errorMessage.includes('already exists')) {
+          addToast({
+            type: 'error',
+            message: errorMessage
+          });
+        }
+        // Check for rate limit error (429) - both login and register
+        else if (errorMessage.includes('Too many requests')) {
+          addToast({
+            type: 'error',
+            message: errorMessage
+          });
+        }
+        // Network or other errors - fallback
+        else {
+          addToast({
+            type: 'error',
+            message: errorMessage
+          });
+        }
+      } else {
+        // Fallback for unexpected errors
+        addToast({
+          type: 'error',
+          message: 'Something went wrong. Please try again later.'
+        });
+      }
     }
   };
 
@@ -123,8 +236,8 @@ const AuthPage: React.FC = () => {
       bio: '',
       agreeToTerms: false,
     });
-    clearLoginError();
     clearRegisterError();
+    clearLoginError();
   };
 
   return (
@@ -285,6 +398,19 @@ const AuthPage: React.FC = () => {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                
+                {/* Forgot Password Link (Login only) */}
+                {!isSignup && (
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Confirm Password (Signup only) */}
@@ -342,10 +468,10 @@ const AuthPage: React.FC = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading || (isSignup && !formData.agreeToTerms)}
+                disabled={(isSignup ? registerLoading : loginLoading) || (isSignup && !formData.agreeToTerms)}
                 className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:cursor-not-allowed"
               >
-                {loading ? (
+                {(isSignup ? registerLoading : loginLoading) ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
@@ -356,9 +482,9 @@ const AuthPage: React.FC = () => {
               </button>
 
               {/* Error Message */}
-              {error && (
+              {(isSignup ? registerError : loginError) && (
                 <div className="text-red-400 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                  {error}
+                  {isSignup ? registerError : loginError}
                 </div>
               )}
 
@@ -423,6 +549,64 @@ const AuthPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-md border border-gray-700">
+            <h3 className="text-xl font-semibold text-white mb-4">Reset Password</h3>
+            <p className="text-gray-400 text-sm mb-6">
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-white text-sm font-medium">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    value={forgotPasswordEmail}
+                    onChange={(e) => setForgotPasswordEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-900/50 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setForgotPasswordEmail('');
+                  }}
+                  className="flex-1 py-3 px-4 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={forgotPasswordLoading}
+                  className="flex-1 py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {forgotPasswordLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    'Send Reset Link'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
