@@ -4,7 +4,9 @@ import "./globals.css";
 import { Inter, Poppins } from 'next/font/google';
 import ConditionalLayout from "@/components/ConditionalLayout";
 import NextTopLoader from 'nextjs-toploader';
+import ToastContainer from "@/components/ui/ToastContainer";
 import { AuthInitializer } from "@/components/auth/AuthInitializer";
+import { RouteGuard } from "@/components/auth/RouteGuard";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -52,10 +54,13 @@ export default function RootLayout({
           shadow="0 0 10px #0680FF,0 0 5px #0680FF"
         />
         <AuthInitializer>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          <RouteGuard>
+            <ConditionalLayout>
+              {children}
+            </ConditionalLayout>
+          </RouteGuard>
         </AuthInitializer>
+        <ToastContainer />
       </body>
     </html>
   );
