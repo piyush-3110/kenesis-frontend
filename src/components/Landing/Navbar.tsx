@@ -1,14 +1,80 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Wallet } from 'lucide-react'; // You can replace with another icon library
+import { useEffect, useState, useRef } from 'react';
+import { Wallet, LogOut, User, ChevronDown, ShoppingBag, LayoutDashboard } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import clsx from 'clsx';
+import { useAuthActions, useIsAuthenticated, useAuthUser } from '@/store/useAuthStore';
+import { useRouter } from 'next/navigation';
+import { useUIStore } from '@/store/useUIStore';
 
 const Navbar: React.FC = () => {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  
+  const isAuthenticated = useIsAuthenticated();
+  const user = useAuthUser();
+  const { logout } = useAuthActions();
+  const { addToast } = useUIStore();
+
+  /**
+   * Handle dashboard navigation with email verification check
+   * Following task requirements: redirect to verify-email if not verified
+   */
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (!isAuthenticated || !user) {
+      addToast({
+        type: 'error',
+        message: 'Please log in to access the dashboard'
+      });
+      router.push('/auth');
+      return;
+    }
+
+    if (!user.emailVerified) {
+      addToast({
+        type: 'warning',
+        message: 'Please verify your email before accessing the dashboard'
+      });
+      router.push('/auth/verify-email');
+      return;
+    }
+
+    router.push('/dashboard');
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setIsDropdownOpen(false);
+      
+      // Call logout - it will handle toasts and redirects
+      await logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Handle show/hide on scroll
   useEffect(() => {
@@ -47,28 +113,175 @@ const Navbar: React.FC = () => {
         {/* Left side: Logo */}
         <Link href="/" className="flex items-center space-x-2">
           <Image
-            src="/images/landing/logo.png" // Add your logo to /public/logo.svg
+            src="/images/landing/logo.png"
             alt="Kenesis Logo"
             width={100}
             height={120}
             priority
             className='h-6 w-24 md:h-8 md:w-36'
           />
-          {/* <span className="text-white font-serif font-semibold px-2 text-xl montserrat-custom">Kenesis</span> */}
         </Link>
 
-        {/* Right side: Login button */}
-        <Link
-          href="/auth"
-          className="flex items-center space-x-2 text-white font-medium text-sm md:text-lg px-6 py-3 rounded-full transition hover:opacity-90"
-          style={{
-            background:
-              'linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)',
-          }}
-        >
-          <Wallet size={20} />
-          <span>Login</span>
-        </Link>
+        {/* Center/Right: Navigation Links + Authentication */}
+        <div className="flex items-center space-x-8">
+          {/* Navigation Links - positioned left of login */}
+          <div className="hidden md:flex items-center space-x-8">
+            {/* Marketplace - accessible to everyone */}
+            <Link
+              href="/marketplace"
+              className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
+            >
+              <ShoppingBag size={20} className="text-blue-400 group-hover:text-blue-300 transition-colors" />
+              <span className="font-medium text-xl">Marketplace</span>
+            </Link>
+
+            {/* Dashboard - only for authenticated users */}
+            {isAuthenticated && user && (
+              <button
+                onClick={handleDashboardClick}
+                className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
+              >
+                <LayoutDashboard size={20} className="text-purple-400 group-hover:text-purple-300 transition-colors" />
+                <span className="font-medium text-xl">Dashboard</span>
+              </button>
+            )}
+          </div>
+
+          {/* Authentication Section */}
+          {/* Mobile marketplace button for non-authenticated users */}
+          {!isAuthenticated && (
+            <div className="md:hidden">
+              <Link
+                href="/marketplace"
+                className="flex items-center justify-center w-12 h-12 text-gray-300 hover:text-white hover:bg-blue-500/20 rounded-full transition-all duration-300 border border-blue-400/20 hover:border-blue-400/40"
+              >
+                <ShoppingBag size={22} />
+              </Link>
+            </div>
+          )}
+
+          {isAuthenticated && user ? (
+            // Authenticated user profile dropdown with enhanced styling
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center space-x-2 md:space-x-3 text-white font-medium text-sm md:text-lg px-4 md:px-6 py-2 md:py-3 rounded-full transition-all duration-300 hover:scale-105"
+                style={{
+                  background: 'linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)',
+                  boxShadow: '0 4px 20px rgba(70, 72, 255, 0.3)',
+                }}
+              >
+                {/* Avatar with enhanced styling */}
+                <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base shadow-lg">
+                  {user.username?.charAt(0).toUpperCase()}
+                </div>
+                
+                {/* Username - enhanced responsive text */}
+                <span className="hidden sm:inline max-w-28 md:max-w-36 truncate font-semibold">
+                  {user.username}
+                </span>
+                
+                {/* Dropdown arrow with enhanced styling */}
+                <ChevronDown 
+                  size={16}
+                  className={clsx(
+                    'transition-all duration-300 md:w-5 md:h-5',
+                    isDropdownOpen && 'rotate-180 text-blue-200'
+                  )}
+                />
+              </button>
+
+              {/* Enhanced Dropdown Menu */}
+              {isDropdownOpen && (
+                <div className="absolute right-0 mt-3 w-64 md:w-72 bg-gradient-to-b from-[#0F0B24] to-[#1A1235] border border-blue-400/30 rounded-2xl shadow-2xl z-50 backdrop-blur-sm">
+                  <div className="py-3">
+                    {/* User Info Section with enhanced styling */}
+                    <div className="px-5 py-4 border-b border-gray-700/40">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                          {user.username?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-semibold text-base md:text-lg truncate">
+                            {user.username}
+                          </p>
+                          <p className="text-gray-400 text-sm md:text-base truncate">
+                            {user.email}
+                          </p>
+                          {!user.emailVerified && (
+                            <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                              Email Not Verified
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Mobile Navigation Links with enhanced styling */}
+                    <div className="md:hidden border-b border-gray-700/40 py-1">
+                      <Link
+                        href="/marketplace"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-blue-500/20 transition-all duration-300 group"
+                      >
+                        <ShoppingBag size={20} className="text-blue-400 group-hover:text-blue-300 transition-colors" />
+                        <span className="font-medium text-lg">Marketplace</span>
+                      </Link>
+                      
+                      <button
+                        onClick={(e) => {
+                          setIsDropdownOpen(false);
+                          handleDashboardClick(e);
+                        }}
+                        className="w-full flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-purple-500/20 transition-all duration-300 group"
+                      >
+                        <LayoutDashboard size={20} className="text-purple-400 group-hover:text-purple-300 transition-colors" />
+                        <span className="font-medium text-lg">Dashboard</span>
+                      </button>
+                    </div>
+                    
+                    {/* Profile Option with enhanced styling */}
+                    <div className="py-1">
+                      <Link
+                        href="/dashboard/profile"
+                        onClick={() => setIsDropdownOpen(false)}
+                        className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
+                      >
+                        <User size={20} className="text-green-400 group-hover:text-green-300 transition-colors" />
+                        <span className="font-medium text-lg">Profile</span>
+                      </Link>
+                      
+                      {/* Logout Option with enhanced styling */}
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="w-full flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-red-300 hover:bg-red-500/20 transition-all duration-300 disabled:opacity-50 group"
+                      >
+                        <LogOut size={20} className="text-red-400 group-hover:text-red-300 transition-colors" />
+                        <span className="font-medium text-lg">
+                          {isLoggingOut ? 'Logging out...' : 'Logout'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            // Enhanced Login button for non-authenticated users
+            <Link
+              href="/auth"
+              className="flex items-center space-x-2 text-white font-semibold text-sm md:text-lg px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              style={{
+                background: 'linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)',
+                boxShadow: '0 4px 20px rgba(70, 72, 255, 0.4)',
+              }}
+            >
+              <Wallet size={20} />
+              <span>Login</span>
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );
