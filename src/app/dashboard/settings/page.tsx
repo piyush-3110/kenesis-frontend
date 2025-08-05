@@ -7,6 +7,7 @@ import { useSettingsStore } from './store/useSettingsStore';
 import ProfileDetailsCard from './components/ProfileDetailsCard';
 import NotificationSettingsCard from './components/NotificationSettingsCard';
 import SocialLinksCard from './components/SocialLinksCard';
+import SecuritySettingsCard from './components/SecuritySettingsCard';
 import SaveActions from './components/SaveActions';
 
 /**
@@ -124,6 +125,10 @@ const SettingsPage: React.FC = () => {
 
             {/* Right Column - Settings & Actions */}
             <div className="xl:col-span-4 space-y-8 lg:space-y-10">
+              <section>
+                <SecuritySettingsCard />
+              </section>
+
               <section>
                 <NotificationSettingsCard />
               </section>
