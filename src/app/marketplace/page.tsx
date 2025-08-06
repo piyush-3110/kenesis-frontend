@@ -52,7 +52,7 @@ const MarketplacePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A071A]">
+    <div className="min-h-screen bg-[#0A071A] mt-8">
       <Navbar />
 
       {/* Mobile Filter Button */}
