@@ -5,9 +5,11 @@
  */
 
 // Environment configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://kenesis-backend.onrender.com';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://kenesis-backend.onrender.com";
 
-console.log('API Base URL configured:', API_BASE_URL);
+console.log("API Base URL configured:", API_BASE_URL);
 
 /**
  * API Types
@@ -84,35 +86,109 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
+// Wallet authentication types
+export interface WalletNonceRequest {
+  walletAddress: string;
+}
+
+export interface WalletNonceResponse {
+  nonce: string;
+  message: string;
+  expiresAt: string;
+}
+
+export interface WalletRegisterRequest {
+  walletAddress: string;
+  signature: string;
+  message: string;
+  nonce: string;
+  bio?: string;
+  chainId?: number;
+}
+
+export interface WalletLoginRequest {
+  walletAddress: string;
+  signature: string;
+  message: string;
+  nonce: string;
+}
+
+export interface WalletLinkRequest {
+  walletAddress: string;
+  signature: string;
+  message: string;
+  nonce: string;
+  chainId?: number;
+}
+
+export interface WalletUser {
+  _id: string;
+  walletAddress: string;
+  bio?: string;
+  walletMetadata: {
+    chainId: number;
+    verified: boolean;
+    verifiedAt: string;
+    lastSyncAt: string;
+  };
+  createdAt: string;
+}
+
+export interface WalletAuthResponse {
+  user: WalletUser;
+  tokens: {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+  };
+}
+
+export interface WalletLinkResponse {
+  user: {
+    _id: string;
+    username?: string;
+    email?: string;
+    walletAddress: string;
+    emailVerified?: boolean;
+    walletMetadata: {
+      chainId: number;
+      verified: boolean;
+      verifiedAt: string;
+      lastSyncAt: string;
+    };
+  };
+  message: string;
+}
+
 /**
  * Token Management Utilities
  */
 export const TokenManager = {
   getAccessToken: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('kenesis_access_token');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("kenesis_access_token");
   },
 
   getRefreshToken: (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('kenesis_refresh_token');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("kenesis_refresh_token");
   },
 
   setTokens: (tokens: AuthTokens): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem('kenesis_access_token', tokens.accessToken);
-    localStorage.setItem('kenesis_refresh_token', tokens.refreshToken);
+    if (typeof window === "undefined") return;
+    localStorage.setItem("kenesis_access_token", tokens.accessToken);
+    localStorage.setItem("kenesis_refresh_token", tokens.refreshToken);
   },
 
   clearTokens: (): void => {
-    if (typeof window === 'undefined') return;
-    localStorage.removeItem('kenesis_access_token');
-    localStorage.removeItem('kenesis_refresh_token');
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("kenesis_access_token");
+    localStorage.removeItem("kenesis_refresh_token");
   },
 
   hasTokens: (): boolean => {
     return !!(TokenManager.getAccessToken() && TokenManager.getRefreshToken());
-  }
+  },
 };
 
 /**
@@ -129,40 +205,47 @@ class ApiClient {
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
     try {
       // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
         // Response is not JSON - probably HTML error page
         const text = await response.text();
-        console.error(`Non-JSON Response [${response.status}]:`, text.substring(0, 200));
+        console.error(
+          `Non-JSON Response [${response.status}]:`,
+          text.substring(0, 200)
+        );
         return {
           success: false,
-          message: `Server error (${response.status}). Please check if the API is running correctly.`
+          message: `Server error (${response.status}). Please check if the API is running correctly.`,
         };
       }
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         console.error(`API Error [${response.status}]:`, data);
         return {
           success: false,
-          message: data.message || 'Request failed',
+          message: data.message || "Request failed",
           errors: data.errors,
-          retryAfter: data.retryAfter
+          retryAfter: data.retryAfter,
         };
       }
 
-      console.log(`API Success [${response.status}]:`, data.message || 'Request successful');
+      console.log(
+        `API Success [${response.status}]:`,
+        data.message || "Request successful"
+      );
       return {
         success: true,
-        message: data.message || 'Success',
-        data: data.data || data
+        message: data.message || "Success",
+        data: data.data || data,
       };
     } catch (error) {
-      console.error('API Response Parse Error:', error);
+      console.error("API Response Parse Error:", error);
       return {
         success: false,
-        message: 'Failed to parse server response. Please check your network connection.'
+        message:
+          "Failed to parse server response. Please check your network connection.",
       };
     }
   }
@@ -170,47 +253,57 @@ class ApiClient {
   async post<T>(endpoint: string, payload?: any): Promise<ApiResponse<T>> {
     try {
       console.log(`🚀 Making POST request to: ${this.baseURL}${endpoint}`);
-      console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+      console.log("📦 Payload:", JSON.stringify(payload, null, 2));
 
       // Build headers
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       };
 
       // Add Authorization header if access token is available
       const accessToken = TokenManager.getAccessToken();
       if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-        console.log('🔑 Added Authorization header');
+        headers["Authorization"] = `Bearer ${accessToken}`;
+        console.log("🔑 Added Authorization header");
       } else {
-        console.log('🔓 No access token found, proceeding without Authorization header');
+        console.log(
+          "🔓 No access token found, proceeding without Authorization header"
+        );
       }
 
       console.log(`📡 Final headers:`, headers);
       console.log(`📤 Request body:`, JSON.stringify(payload));
 
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers,
         body: JSON.stringify(payload),
       });
 
       console.log(`📥 Response status: ${response.status}`);
-      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log(
+        "📋 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       return this.handleResponse<T>(response);
     } catch (error) {
       console.error(`Network Error on ${endpoint}:`, error);
       return {
         success: false,
-        message: 'Network error. Please check your connection and try again.'
+        message: "Network error. Please check your connection and try again.",
       };
     }
   }
 
-  async postFormData<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+  async postFormData<T>(
+    endpoint: string,
+    formData: FormData
+  ): Promise<ApiResponse<T>> {
     try {
-      console.log(`🚀 Making FormData POST request to: ${this.baseURL}${endpoint}`);
+      console.log(
+        `🚀 Making FormData POST request to: ${this.baseURL}${endpoint}`
+      );
 
       // Build headers (don't set Content-Type for FormData - browser will set it with boundary)
       const headers: Record<string, string> = {};
@@ -218,30 +311,35 @@ class ApiClient {
       // Add Authorization header if access token is available
       const accessToken = TokenManager.getAccessToken();
       if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-        console.log('🔑 Added Authorization header');
+        headers["Authorization"] = `Bearer ${accessToken}`;
+        console.log("🔑 Added Authorization header");
       } else {
-        console.log('🔓 No access token found, proceeding without Authorization header');
+        console.log(
+          "🔓 No access token found, proceeding without Authorization header"
+        );
       }
 
       console.log(`📡 Final headers:`, headers);
-      console.log('📤 FormData contents:', Array.from(formData.entries()));
+      console.log("📤 FormData contents:", Array.from(formData.entries()));
 
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'POST',
+        method: "POST",
         headers,
         body: formData,
       });
 
       console.log(`📥 Response status: ${response.status}`);
-      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+      console.log(
+        "📋 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       return this.handleResponse<T>(response);
     } catch (error) {
       console.error(`Network Error on ${endpoint}:`, error);
       return {
         success: false,
-        message: 'Network error. Please check your connection and try again.'
+        message: "Network error. Please check your connection and try again.",
       };
     }
   }
@@ -259,8 +357,10 @@ export const AuthAPI = {
    * Register new user
    * POST /api/auth/register
    */
-  register: async (data: RegisterRequest): Promise<ApiResponse<AuthResponse>> => {
-    return apiClient.post<AuthResponse>('/api/auth/register', data);
+  register: async (
+    data: RegisterRequest
+  ): Promise<ApiResponse<AuthResponse>> => {
+    return apiClient.post<AuthResponse>("/api/auth/register", data);
   },
 
   /**
@@ -268,7 +368,7 @@ export const AuthAPI = {
    * POST /api/auth/login
    */
   login: async (data: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
-    return apiClient.post<LoginResponse>('/api/auth/login', data);
+    return apiClient.post<LoginResponse>("/api/auth/login", data);
   },
 
   /**
@@ -277,7 +377,7 @@ export const AuthAPI = {
    * Requires Authorization header with access token
    */
   logout: async (): Promise<ApiResponse> => {
-    return apiClient.post('/api/auth/logout', {});
+    return apiClient.post("/api/auth/logout", {});
   },
 
   /**
@@ -285,7 +385,7 @@ export const AuthAPI = {
    * POST /api/auth/verify-email
    */
   verifyEmail: async (token: string): Promise<ApiResponse> => {
-    return apiClient.post('/api/auth/verify-email', { token });
+    return apiClient.post("/api/auth/verify-email", { token });
   },
 
   /**
@@ -293,15 +393,20 @@ export const AuthAPI = {
    * POST /api/auth/resend-verification
    */
   resendVerification: async (email: string): Promise<ApiResponse> => {
-    return apiClient.post('/api/auth/resend-verification', { email });
+    return apiClient.post("/api/auth/resend-verification", { email });
   },
 
   /**
    * Refresh tokens
    * POST /api/auth/refresh-token
    */
-  refreshToken: async (data: RefreshTokenRequest): Promise<ApiResponse<RefreshTokenResponse>> => {
-    return apiClient.post<RefreshTokenResponse>('/api/auth/refresh-token', data);
+  refreshToken: async (
+    data: RefreshTokenRequest
+  ): Promise<ApiResponse<RefreshTokenResponse>> => {
+    return apiClient.post<RefreshTokenResponse>(
+      "/api/auth/refresh-token",
+      data
+    );
   },
 
   /**
@@ -309,15 +414,67 @@ export const AuthAPI = {
    * POST /api/auth/forgot-password
    */
   forgotPassword: async (email: string): Promise<ApiResponse> => {
-    return apiClient.post('/api/auth/forgot-password', { email });
+    return apiClient.post("/api/auth/forgot-password", { email });
   },
 
   /**
    * Reset password
    * POST /api/auth/reset-password
    */
-  resetPassword: async (token: string, newPassword: string): Promise<ApiResponse> => {
-    return apiClient.post('/api/auth/reset-password', { token, newPassword });
+  resetPassword: async (
+    token: string,
+    newPassword: string
+  ): Promise<ApiResponse> => {
+    return apiClient.post("/api/auth/reset-password", { token, newPassword });
+  },
+
+  // Wallet Authentication Endpoints
+
+  /**
+   * Request wallet nonce for signing
+   * POST /api/auth/wallet/request-nonce
+   */
+  requestWalletNonce: async (
+    data: WalletNonceRequest
+  ): Promise<ApiResponse<WalletNonceResponse>> => {
+    return apiClient.post<WalletNonceResponse>(
+      "/api/auth/wallet/request-nonce",
+      data
+    );
+  },
+
+  /**
+   * Register new user with wallet
+   * POST /api/auth/wallet/register
+   */
+  walletRegister: async (
+    data: WalletRegisterRequest
+  ): Promise<ApiResponse<WalletAuthResponse>> => {
+    return apiClient.post<WalletAuthResponse>(
+      "/api/auth/wallet/register",
+      data
+    );
+  },
+
+  /**
+   * Login existing user with wallet
+   * POST /api/auth/wallet/login
+   */
+  walletLogin: async (
+    data: WalletLoginRequest
+  ): Promise<ApiResponse<WalletAuthResponse>> => {
+    return apiClient.post<WalletAuthResponse>("/api/auth/wallet/login", data);
+  },
+
+  /**
+   * Link wallet to existing email account
+   * POST /api/auth/wallet/link
+   * Requires Authorization header with access token
+   */
+  linkWallet: async (
+    data: WalletLinkRequest
+  ): Promise<ApiResponse<WalletLinkResponse>> => {
+    return apiClient.post<WalletLinkResponse>("/api/auth/wallet/link", data);
   },
 };
 
@@ -331,8 +488,13 @@ export const CourseAPI = {
    * POST /api/courses
    * Requires multipart/form-data and Authorization header
    */
-  createCourse: async (courseData: FormData): Promise<ApiResponse<{ course: string }>> => {
-    return apiClient.postFormData<{ course: string }>('/api/courses', courseData);
+  createCourse: async (
+    courseData: FormData
+  ): Promise<ApiResponse<{ course: string }>> => {
+    return apiClient.postFormData<{ course: string }>(
+      "/api/courses",
+      courseData
+    );
   },
 
   /**
@@ -340,8 +502,14 @@ export const CourseAPI = {
    * POST /api/courses/{id}/chapters
    * Requires Authorization header
    */
-  createChapter: async (courseId: string, chapterData: { title: string; description: string }): Promise<ApiResponse<{ chapterId: string }>> => {
-    return apiClient.post<{ chapterId: string }>(`/api/courses/${courseId}/chapters`, chapterData);
+  createChapter: async (
+    courseId: string,
+    chapterData: { title: string; description: string }
+  ): Promise<ApiResponse<{ chapterId: string }>> => {
+    return apiClient.post<{ chapterId: string }>(
+      `/api/courses/${courseId}/chapters`,
+      chapterData
+    );
   },
 
   /**
@@ -349,8 +517,14 @@ export const CourseAPI = {
    * POST /api/courses/{courseId}/modules
    * Requires multipart/form-data and Authorization header
    */
-  createModule: async (courseId: string, moduleData: FormData): Promise<ApiResponse<any>> => {
-    return apiClient.postFormData(`/api/courses/${courseId}/modules`, moduleData);
+  createModule: async (
+    courseId: string,
+    moduleData: FormData
+  ): Promise<ApiResponse<any>> => {
+    return apiClient.postFormData(
+      `/api/courses/${courseId}/modules`,
+      moduleData
+    );
   },
 
   /**
@@ -358,8 +532,13 @@ export const CourseAPI = {
    * POST /api/courses/{id}/submit-for-review
    * Requires Authorization header
    */
-  submitForReview: async (courseId: string, submissionNotes?: string): Promise<ApiResponse<any>> => {
-    return apiClient.post(`/api/courses/${courseId}/submit-for-review`, { submissionNotes });
+  submitForReview: async (
+    courseId: string,
+    submissionNotes?: string
+  ): Promise<ApiResponse<any>> => {
+    return apiClient.post(`/api/courses/${courseId}/submit-for-review`, {
+      submissionNotes,
+    });
   },
 };
 
@@ -368,9 +547,11 @@ export const CourseAPI = {
  */
 export const formatApiError = (response: ApiResponse): string => {
   if (response.errors && response.errors.length > 0) {
-    return response.errors.map(err => `${err.field}: ${err.message}`).join(', ');
+    return response.errors
+      .map((err) => `${err.field}: ${err.message}`)
+      .join(", ");
   }
-  return response.message || 'An unexpected error occurred';
+  return response.message || "An unexpected error occurred";
 };
 
 /**
@@ -379,5 +560,5 @@ export const formatApiError = (response: ApiResponse): string => {
 export const formatRetryAfter = (seconds: number): string => {
   if (seconds < 60) return `${seconds} seconds`;
   const minutes = Math.floor(seconds / 60);
-  return `${minutes} minute${minutes > 1 ? 's' : ''}`;
+  return `${minutes} minute${minutes > 1 ? "s" : ""}`;
 };

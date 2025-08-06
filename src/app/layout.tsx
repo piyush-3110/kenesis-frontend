@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Inter, Poppins } from 'next/font/google';
+import { Inter, Poppins } from "next/font/google";
 import ConditionalLayout from "@/components/ConditionalLayout";
-import NextTopLoader from 'nextjs-toploader';
+import NextTopLoader from "nextjs-toploader";
 import ToastContainer from "@/components/ui/ToastContainer";
 import { AuthInitializer } from "@/components/auth/AuthInitializer";
 import { RouteGuard } from "@/components/auth/RouteGuard";
+import { WalletProvider } from "@/components/wallet/WalletProvider";
 
 const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
+  subsets: ["latin"],
+  variable: "--font-inter",
 });
 const poppins = Poppins({
-  subsets: ['latin'],
-  variable: '--font-poppins',
-  weight: ['400', '600'],
+  subsets: ["latin"],
+  variable: "--font-poppins",
+  weight: ["400", "600"],
 });
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,13 +54,13 @@ export default function RootLayout({
           speed={200}
           shadow="0 0 10px #0680FF,0 0 5px #0680FF"
         />
-        <AuthInitializer>
-          <RouteGuard>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </RouteGuard>
-        </AuthInitializer>
+        <WalletProvider>
+          <AuthInitializer>
+            <RouteGuard>
+              <ConditionalLayout>{children}</ConditionalLayout>
+            </RouteGuard>
+          </AuthInitializer>
+        </WalletProvider>
         <ToastContainer />
       </body>
     </html>
