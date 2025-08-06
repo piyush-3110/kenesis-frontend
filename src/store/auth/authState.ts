@@ -5,8 +5,8 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { TokenManager } from '@/lib/tokenManager';
-import type { User, AuthState, AuthTokens } from '@/types/auth';
+import { TokenManager } from "@/lib/tokenManager";
+import type { AuthState } from "@/types/auth";
 
 /**
  * Auth Store Implementation using Zustand
