@@ -72,7 +72,7 @@ const Hero: React.FC = () => {
         </p>
 
         {/* Connect Wallet Button */}
-        <div className="mb-12">
+        <div className="mb-12 flex justify-center items-center">
           <WalletConnectButton variant="default" />
         </div>
 
