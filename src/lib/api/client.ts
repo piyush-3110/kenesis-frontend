@@ -6,8 +6,8 @@
 import { TokenManager } from "../tokenManager";
 import type {
   ApiResponse,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
+  // RefreshTokenRequest,
+  // RefreshTokenResponse,
 } from "./types";
 
 // Environment configuration
