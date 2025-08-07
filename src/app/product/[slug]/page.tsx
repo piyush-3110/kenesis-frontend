@@ -15,7 +15,6 @@ import {
   ProductPageError,
   CourseChapters,
   CourseDetails,
-  usePurchaseFlow,
   useProductActions,
 } from "../components";
 
@@ -34,7 +33,6 @@ const ProductDetailPage: React.FC = () => {
   );
 
   // Custom hooks for business logic
-  const purchaseFlow = usePurchaseFlow(refetch);
   const productActions = useProductActions(refetch);
 
   // Loading state - show loading if either course or access is loading
@@ -96,9 +94,13 @@ const ProductDetailPage: React.FC = () => {
             price={product.price}
             description={product.description}
             courseAccess={courseAccess}
-            productId={product.id}
-            purchaseFlow={purchaseFlow}
+            course={product}
             accessLoading={accessLoading}
+            tokenToPayWith={product.tokenToPayWith}
+            onSuccess={() => {
+              // Refetch course access when purchase is successful
+              refetch();
+            }}
           />
         </div>
 

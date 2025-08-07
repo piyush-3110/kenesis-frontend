@@ -1,8 +1,8 @@
 import React from "react";
 import ProductHeader from "./ProductHeader";
-import PurchaseSection from "./PurchaseSection";
+import BlockchainPurchaseSection from "./BlockchainPurchaseSection";
 import ProductDescription from "./ProductDescription";
-import { UsePurchaseFlowReturn } from "../hooks/usePurchaseFlow";
+import type { CourseResponse } from "@/lib/api/courseApi";
 
 interface CourseAccess {
   hasAccess: boolean;
@@ -17,10 +17,11 @@ interface ProductInfoProps {
   price: number;
   description: string;
   courseAccess: CourseAccess;
-  productId: string;
-  purchaseFlow: UsePurchaseFlowReturn;
+  course: CourseResponse; // Full course data for NFT creation
   accessLoading?: boolean; // Loading state for course access check
+  tokenToPayWith?: string[]; // Available payment tokens
   className?: string;
+  onSuccess?: () => void; // Success callback for purchase
 }
 
 const ProductInfo: React.FC<ProductInfoProps> = ({
@@ -31,10 +32,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   price,
   description,
   courseAccess,
-  productId,
-  purchaseFlow,
+  course,
   accessLoading = false,
+  tokenToPayWith = [],
   className = "",
+  onSuccess,
 }) => {
   return (
     <div className={`space-y-6 ${className}`}>
@@ -45,12 +47,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         totalRatings={totalRatings}
       />
 
-      <PurchaseSection
+      <BlockchainPurchaseSection
         price={price}
         courseAccess={courseAccess}
-        productId={productId}
-        purchaseFlow={purchaseFlow}
+        course={course}
         accessLoading={accessLoading}
+        tokenToPayWith={tokenToPayWith}
+        onSuccess={onSuccess}
       />
 
       <ProductDescription description={description} />
