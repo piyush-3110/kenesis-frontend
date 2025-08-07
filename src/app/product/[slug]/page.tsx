@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useCourse } from "@/hooks/useCourseQuery";
 import Navbar from "@/components/Landing/Navbar";
 import ReviewsRatings from "@/components/product/ReviewsRatings";
-import CourseContentViewer from "@/components/product/CourseContentViewer";
+// import CourseContentViewer from "@/components/product/CourseContentViewer";
 import {
   ProductImage,
   ProductInfo,
@@ -60,23 +60,23 @@ const ProductDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Product Image */}
           <ProductImage
-            image={product.image}
+            image={product.thumbnail}
             title={product.title}
             type={product.type}
-            rating={product.rating}
-            totalRatings={product.totalRatings}
-            studentsCount={product.purchasedBy.length}
+            rating={product.stats.rating}
+            totalRatings={product.stats.reviewCount}
+            studentsCount={product.soldCount}
           />
 
           {/* Product Info */}
           <ProductInfo
             title={product.title}
-            author={product.author}
-            rating={product.rating}
-            totalRatings={product.totalRatings}
+            author={product.instructor.username}
+            rating={product.stats.rating}
+            totalRatings={product.stats.reviewCount}
             price={product.price}
             description={product.description}
-            courseAccess={product.courseAccess}
+            courseAccess={{ hasAccess: false }}
             productId={product.id}
             purchaseFlow={purchaseFlow}
           />
@@ -86,7 +86,7 @@ const ProductDetailPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Course Chapters */}
           <div className="lg:col-span-2">
-            <CourseChapters chapters={product.chapters} />
+            <CourseChapters chapters={product.chapters} courseId={product.id} />
           </div>
 
           {/* Course Details */}
@@ -100,7 +100,7 @@ const ProductDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Course Content (if user has access) */}
+        {/* Course Content (if user has access)
         {product.courseAccess.hasAccess && product.content && (
           <div className="mb-12">
             <CourseContentViewer
@@ -114,14 +114,24 @@ const ProductDetailPage: React.FC = () => {
               }
             />
           </div>
-        )}
+        )} */}
 
         {/* Reviews and Ratings */}
         <ReviewsRatings
           productId={product.id}
-          reviews={product.reviews}
-          reviewSummary={product.reviewSummary}
-          userCanReview={product.courseAccess.hasAccess}
+          reviews={[]}
+          reviewSummary={{
+            averageRating: product.stats.rating,
+            totalReviews: product.stats.reviewCount,
+            ratingDistribution: {
+              "1": 0,
+              "2": 0,
+              "3": 0,
+              "4": 0,
+              "5": 0,
+            },
+          }}
+          userCanReview={false}
           onSubmitReview={(rating, comment) =>
             productActions.handleSubmitReview(product.id, rating, comment)
           }
