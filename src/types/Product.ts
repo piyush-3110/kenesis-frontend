@@ -43,6 +43,11 @@ export interface Course {
   };
   createdAt: string; // ISO date string
   updatedAt?: string; // ISO date string, optional for products that are not updated
+  // Course access information (fetched separately)
+  courseAccess?: {
+    hasAccess: boolean;
+    progress?: number; // 0-100 percentage
+  };
 }
 
 export interface Category {
@@ -92,6 +97,27 @@ export interface MarketplaceResponse {
     | "metadata"
     | "affiliatePercentage"
   >;
+}
+
+export interface CourseForMarketplacePage {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  instructor: {
+    id: string;
+    username: string;
+  };
+  price: number;
+  stats: {
+    rating: number;
+    reviewCount: number;
+    duration: number;
+  };
+  thumbnail: string;
+  category: string;
+  type: "video" | "document";
+  createdAt: string;
 }
 
 export interface PaginatedResponse<T> {
