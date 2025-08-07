@@ -3,9 +3,10 @@
  * Re-exports all API modules for convenient importing
  */
 
-export * from './types';
-export * from './client';
-export * from './emailAuth';
-export * from './walletAuth';
-export * from './tokens';
-export { TokenManager } from '../tokenManager';
+export * from "./types";
+export * from "./client";
+export * from "./emailAuth";
+export * from "./walletAuth";
+export * from "./tokens";
+export * from "./courseApi";
+export { TokenManager } from "../tokenManager";
