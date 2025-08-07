@@ -4,11 +4,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  getCourse,
-  transformCourseToExtendedProduct,
-} from "@/lib/api/courseApi";
-import { ExtendedProduct } from "@/types/Review";
+import { CourseResponse, getCourse } from "@/lib/api/courseApi";
 
 /**
  * Query keys for course-related queries
@@ -26,7 +22,7 @@ export const courseKeys = {
 export function useCourse(idOrSlug: string | undefined) {
   return useQuery({
     queryKey: courseKeys.detail(idOrSlug || ""),
-    queryFn: async (): Promise<ExtendedProduct> => {
+    queryFn: async (): Promise<CourseResponse> => {
       if (!idOrSlug) {
         throw new Error("Course ID or slug is required");
       }
@@ -46,7 +42,7 @@ export function useCourse(idOrSlug: string | undefined) {
       }
 
       // Transform backend data to frontend format
-      return transformCourseToExtendedProduct(response.data.course);
+      return response.data.course as CourseResponse;
     },
     enabled: !!idOrSlug,
     staleTime: 5 * 60 * 1000, // 5 minutes
