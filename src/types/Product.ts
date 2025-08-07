@@ -9,11 +9,12 @@ export interface Product {
   totalRatings: number;
   image: string;
   category: string;
-  type: 'video' | 'document';
+  type: "video" | "document";
   createdAt: string;
+  slug?: string; // URL-friendly identifier for the product
   isPurchased?: boolean; // New field to track purchase status
   purchaseDate?: string; // When the user purchased this product
-  accessLevel?: 'full' | 'preview' | 'none'; // Access level for the user
+  accessLevel?: "full" | "preview" | "none"; // Access level for the user
   topics?: string[]; // Course curriculum/topics preview for unpurchased courses
 }
 
@@ -39,10 +40,17 @@ export interface MarketplaceFilters {
   priceRange?: PriceRange;
   searchQuery?: string;
   sortBy?: string;
-  type?: 'video' | 'document'; // Optional type filter
+  type?: "video" | "document"; // Optional type filter
 }
 
-export type SortOption = 'a-z' | 'z-a' | 'price-low-high' | 'price-high-low' | 'most-relevant' | 'rating-high-low' | 'newest';
+export type SortOption =
+  | "a-z"
+  | "z-a"
+  | "price-low-high"
+  | "price-high-low"
+  | "most-relevant"
+  | "rating-high-low"
+  | "newest";
 
 export interface MarketplaceResponse {
   products: Product[];
