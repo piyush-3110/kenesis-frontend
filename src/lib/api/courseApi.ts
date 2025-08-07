@@ -16,6 +16,7 @@ export interface CourseStats {
 export interface CourseInstructor {
   id: string;
   username: string;
+  walletAddress?: string; // Instructor's wallet address for receiving payments
 }
 
 export interface CourseChapter {
