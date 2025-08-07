@@ -19,6 +19,7 @@ interface ProductInfoProps {
   courseAccess: CourseAccess;
   productId: string;
   purchaseFlow: UsePurchaseFlowReturn;
+  accessLoading?: boolean; // Loading state for course access check
   className?: string;
 }
 
@@ -32,6 +33,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   courseAccess,
   productId,
   purchaseFlow,
+  accessLoading = false,
   className = "",
 }) => {
   return (
@@ -48,6 +50,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         courseAccess={courseAccess}
         productId={productId}
         purchaseFlow={purchaseFlow}
+        accessLoading={accessLoading}
       />
 
       <ProductDescription description={description} />
