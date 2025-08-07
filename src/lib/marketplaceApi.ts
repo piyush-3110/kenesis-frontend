@@ -1,9 +1,9 @@
 import {
-  Product,
   Category,
   MarketplaceFilters,
   SortOptionItem,
   PriceRange,
+  CourseForMarketplacePage,
 } from "@/types/Product";
 import { TokenManager } from "./tokenManager";
 
@@ -88,7 +88,9 @@ const getHeaders = (includeAuth: boolean = false): HeadersInit => {
 };
 
 // Helper function to map backend course to frontend Product
-const mapCourseToProduct = (course: BackendCourse): Product => {
+const mapCourseToProduct = (
+  course: BackendCourse
+): CourseForMarketplacePage => {
   // Map course level to a category for now - you may want to implement proper categories later
   const levelToCategory = {
     beginner: "Beginner Courses",
@@ -101,19 +103,20 @@ const mapCourseToProduct = (course: BackendCourse): Product => {
     title: course.title,
     slug: course.slug, // Add slug from backend
     description: course.shortDescription,
-    author: course.instructor.username,
+    instructor: {
+      id: course.instructor.id,
+      username: course.instructor.username,
+    },
     price: course.price,
-    currency: "USD",
-    rating: course.stats.rating,
-    totalRatings: course.stats.reviewCount,
-    image: course.thumbnail || "/images/landing/product.png", // Fallback to default image
+    stats: {
+      rating: course.stats.rating,
+      reviewCount: course.stats.reviewCount,
+      duration: course.stats.duration, // Duration in seconds
+    },
+    thumbnail: course.thumbnail || "/images/landing/product.png", // Fallback to default image
     category: levelToCategory[course.level] || "General",
     type: course.type,
     createdAt: course.createdAt.split("T")[0], // Convert to YYYY-MM-DD format
-    // These fields would need to come from user-specific data
-    isPurchased: false, // TODO: Implement user purchase checking
-    accessLevel: "preview" as const, // TODO: Implement access level logic
-    topics: [], // TODO: Fetch course curriculum from course details endpoint
   };
 };
 
@@ -153,7 +156,7 @@ export async function fetchProducts(
   filters: MarketplaceFilters = {},
   page: number = 1,
   limit: number = 20
-): Promise<PaginatedResponse<Product>> {
+): Promise<PaginatedResponse<CourseForMarketplacePage>> {
   try {
     // Build query parameters
     const params = new URLSearchParams();
@@ -222,6 +225,8 @@ export async function fetchProducts(
 
     // Map backend courses to frontend products
     const products = apiResponse.data.courses.map(mapCourseToProduct);
+
+    console.log("Fetched Products:", products);
 
     // Apply client-side price filtering if needed (backend doesn't support price filtering yet)
     let filteredProducts = products;
@@ -448,7 +453,9 @@ export async function fetchSearchSuggestions(
  * Search products (for autocomplete/suggestions)
  * Uses the courses API to search for products
  */
-export async function searchProducts(query: string): Promise<Product[]> {
+export async function searchProducts(
+  query: string
+): Promise<CourseForMarketplacePage[]> {
   if (!query.trim()) return [];
 
   try {
@@ -471,25 +478,6 @@ export async function searchProducts(query: string): Promise<Product[]> {
   } catch (error) {
     console.error("Error searching products:", error);
     return [];
-  }
-}
-
-/**
- * Get a single product by ID
- * This would typically use a dedicated course details endpoint
- * For now, we'll return null to avoid expensive API calls
- */
-export async function fetchProduct(id: string): Promise<Product | null> {
-  try {
-    // TODO: Implement dedicated endpoint GET /api/courses/:id
-    // For now, return null to avoid fetching all courses
-    console.warn(
-      `fetchProduct(${id}): Using dedicated course endpoint not implemented yet`
-    );
-    return null;
-  } catch (error) {
-    console.error("Error fetching product:", error);
-    return null;
   }
 }
 
