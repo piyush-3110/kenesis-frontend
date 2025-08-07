@@ -160,7 +160,7 @@ const CourseDetails: React.FC<CourseDetailsProps> = ({
         <div className="bg-gray-900/50 rounded-lg p-6 border border-gray-800">
           <h3 className="text-white text-lg font-semibold mb-4 flex items-center gap-2">
             <Target size={20} className="text-green-400" />
-            What You'll Learn
+            What You&apos;ll Learn
           </h3>
           <div className="space-y-3">
             {metadata.learningOutcomes.map((outcome, index) => (
