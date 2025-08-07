@@ -12,6 +12,14 @@ import {
 } from "lucide-react";
 import { useChapterModules } from "@/hooks/useChapterQuery";
 
+/**
+ * CourseChapters Component
+ *
+ * Displays course chapters with dynamic module loading.
+ * When a user clicks on a chapter, it fetches the modules from the backend
+ * and handles loading, error, and success states. Modules are cached using TanStack Query.
+ */
+
 interface Module {
   id: string;
   title: string;
@@ -99,7 +107,7 @@ const CourseChapters: React.FC<CourseChaptersProps> = ({
       data: chapterData,
       isLoading: modulesLoading,
       error: modulesError,
-    } = useChapterModules(courseId, chapter.id, isExpanded);
+    } = useChapterModules(courseId || "", isExpanded ? chapter.id : null);
 
     const modulesToDisplay =
       chapterData?.chapter.modules || chapter.modules || [];
