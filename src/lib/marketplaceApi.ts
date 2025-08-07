@@ -99,6 +99,7 @@ const mapCourseToProduct = (course: BackendCourse): Product => {
   return {
     id: course.id,
     title: course.title,
+    slug: course.slug, // Add slug from backend
     description: course.shortDescription,
     author: course.instructor.username,
     price: course.price,
