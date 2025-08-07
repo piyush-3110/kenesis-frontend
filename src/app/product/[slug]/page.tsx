@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useCourse } from "@/hooks/useCourseQuery";
+import { useCourseAccess } from "@/hooks/useCourseAccess";
 import Navbar from "@/components/Landing/Navbar";
 import ReviewsRatings from "@/components/product/ReviewsRatings";
 // import CourseContentViewer from "@/components/product/CourseContentViewer";
@@ -25,12 +26,19 @@ const ProductDetailPage: React.FC = () => {
   // Use React Query to fetch course data
   const { data: product, isLoading: loading, error, refetch } = useCourse(slug);
 
+  // Check if user has access to the course (only after course data is loaded)
+  // This determines whether to show purchase button or "You own this course" message
+  const { data: accessData, isLoading: accessLoading } = useCourseAccess(
+    product?.id || null,
+    !!product?.id
+  );
+
   // Custom hooks for business logic
   const purchaseFlow = usePurchaseFlow(refetch);
   const productActions = useProductActions(refetch);
 
-  // Loading state
-  if (loading) {
+  // Loading state - show loading if either course or access is loading
+  if (loading || (product?.id && accessLoading)) {
     return <ProductPageLoading />;
   }
 
@@ -38,6 +46,16 @@ const ProductDetailPage: React.FC = () => {
   if (error || !product) {
     return <ProductPageError error={error} onRetry={() => refetch()} />;
   }
+
+  // Determine course access - default to false if access check failed or is still loading
+  const courseAccess = {
+    hasAccess: accessData?.hasAccess || false,
+    // You can add progress here if available from another API
+    // progress: userProgress?.progress
+  };
+
+  // User can review if they have access to the course
+  const userCanReview = courseAccess.hasAccess;
 
   return (
     <div className="min-h-screen bg-[#0A071A] mt-8">
@@ -66,6 +84,7 @@ const ProductDetailPage: React.FC = () => {
             rating={product.stats.rating}
             totalRatings={product.stats.reviewCount}
             studentsCount={product.soldCount}
+            previewVideo={product.previewVideo}
           />
 
           {/* Product Info */}
@@ -76,9 +95,10 @@ const ProductDetailPage: React.FC = () => {
             totalRatings={product.stats.reviewCount}
             price={product.price}
             description={product.description}
-            courseAccess={{ hasAccess: false }}
+            courseAccess={courseAccess}
             productId={product.id}
             purchaseFlow={purchaseFlow}
+            accessLoading={accessLoading}
           />
         </div>
 
@@ -131,7 +151,7 @@ const ProductDetailPage: React.FC = () => {
               "5": 0,
             },
           }}
-          userCanReview={false}
+          userCanReview={userCanReview}
           onSubmitReview={(rating, comment) =>
             productActions.handleSubmitReview(product.id, rating, comment)
           }
