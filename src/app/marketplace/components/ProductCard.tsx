@@ -1,13 +1,13 @@
 "use client";
 
-import { Product } from "@/types/Product";
+import { Course } from "@/types/Product";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, PlayCircle, FileText } from "lucide-react";
 import { forwardRef } from "react";
 
 interface ProductCardProps {
-  product: Product;
+  product: Course;
 }
 
 const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
@@ -37,7 +37,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               {/* Product Image */}
               <div className="relative w-full sm:w-24 md:w-32 h-40 sm:h-24 md:h-32 flex-shrink-0">
                 <Image
-                  src={product.image}
+                  src={product.thumbnail}
                   alt={product.title}
                   fill
                   className="object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
@@ -73,7 +73,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
 
                   {/* Author */}
                   <p className="text-gray-400 text-sm mb-2 sm:mb-3">
-                    {product.author}
+                    {product.instructor.username}
                   </p>
 
                   {/* Rating */}
@@ -84,11 +84,11 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                         className="text-yellow-400 fill-current"
                       />
                       <span className="text-white text-sm font-medium">
-                        {product.rating}
+                        {product.stats.rating}
                       </span>
                     </div>
                     <span className="text-gray-400 text-sm">
-                      ({product.totalRatings})
+                      ({product.stats.reviewCount})
                     </span>
                   </div>
 
