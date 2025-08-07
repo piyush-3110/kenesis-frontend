@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/navigation";
-import { Award, CheckCircle, ShoppingCart, LogIn } from "lucide-react";
+import { Award, CheckCircle, ShoppingCart, LogIn, Loader2 } from "lucide-react";
 import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
 import { UsePurchaseFlowReturn } from "../hooks/usePurchaseFlow";
 
@@ -14,6 +14,7 @@ interface PurchaseSectionProps {
   courseAccess: CourseAccess;
   productId: string;
   purchaseFlow: UsePurchaseFlowReturn;
+  accessLoading?: boolean; // Loading state for course access check
   className?: string;
 }
 
@@ -22,6 +23,7 @@ const PurchaseSection: React.FC<PurchaseSectionProps> = ({
   courseAccess,
   productId,
   purchaseFlow,
+  accessLoading = false,
   className = "",
 }) => {
   const router = useRouter();
@@ -34,6 +36,16 @@ const PurchaseSection: React.FC<PurchaseSectionProps> = ({
   } = purchaseFlow;
 
   const renderPurchaseButton = () => {
+    // Show loading state while checking course access
+    if (accessLoading) {
+      return (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gray-600/20 text-gray-400 border border-gray-600/30">
+          <Loader2 size={20} className="animate-spin" />
+          <span className="font-medium">Checking access...</span>
+        </div>
+      );
+    }
+
     if (courseAccess.hasAccess) {
       return (
         <div className="space-y-3">
