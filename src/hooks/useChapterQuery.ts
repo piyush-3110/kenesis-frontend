@@ -1,6 +1,9 @@
 /**
  * Course Chapter Hooks
  * Custom hooks for fetching chapter-related data
+ *
+ * Uses TanStack Query for caching and provides loading/error states.
+ * Query is only enabled when chapterId is provided.
  */
 
 import { useQuery } from "@tanstack/react-query";
@@ -60,19 +63,18 @@ export const chapterKeys = {
 /**
  * Hook to fetch chapter modules when chapter is expanded
  */
-export function useChapterModules(
-  courseId: string | undefined,
-  chapterId: string | undefined,
-  enabled: boolean = true
-) {
+export const useChapterModules = (
+  courseId: string,
+  chapterId: string | null
+) => {
   return useQuery({
-    queryKey: chapterKeys.modules(courseId || "", chapterId || ""),
-    queryFn: () => fetchChapterModules(courseId!, chapterId!),
-    enabled: enabled && !!courseId && !!chapterId,
+    queryKey: chapterKeys.modules(courseId, chapterId || ""),
+    queryFn: () => fetchChapterModules(courseId, chapterId!),
+    enabled: !!courseId && !!chapterId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 2,
     refetchOnWindowFocus: false,
   });
-}
+};
 
 export type { ChapterWithModulesResponse };
