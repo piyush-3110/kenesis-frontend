@@ -26,6 +26,7 @@ import {
   isSupportedChain,
 } from "./chainConfig";
 import type { CourseResponse } from "@/lib/api/courseApi";
+import { completePurchaseFlow, type PurchaseRecord, type CourseAccess } from "@/lib/api/purchaseApi";
 
 export interface ContractPurchaseParams {
   course: CourseResponse;
@@ -51,6 +52,13 @@ export interface PurchaseResult {
   transactionHash?: string;
   nftTokenId?: bigint;
   error?: string;
+  // Backend confirmation results
+  backendConfirmation?: {
+    success: boolean;
+    purchase?: PurchaseRecord;
+    courseAccess?: CourseAccess;
+    error?: string;
+  };
 }
 
 /**
@@ -427,6 +435,35 @@ export const usePurchaseCourse = () => {
     }
   };
 
+  // Effect to handle backend confirmation after successful transaction
+  const handleBackendConfirmation = async (
+    params: ContractPurchaseParams,
+    transactionHash: string,
+    nftTokenId?: bigint
+  ) => {
+    try {
+      console.log("🔄 Starting backend purchase confirmation...");
+      
+      const backendResult = await completePurchaseFlow({
+        courseId: params.course.id,
+        tokenString: params.tokenString,
+        purchasePrice: params.course.price,
+        transactionHash,
+        nftTokenId,
+        affiliateAddress: params.affiliateAddress,
+      });
+
+      console.log("✅ Backend confirmation result:", backendResult);
+      return backendResult;
+    } catch (error) {
+      console.error("❌ Backend confirmation failed:", error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Backend confirmation failed",
+      };
+    }
+  };
+
   // Extract NFT token ID from transaction receipt
   const nftTokenId = receipt?.logs?.find((log) => {
     // Look for CoursePurchased event
@@ -440,6 +477,7 @@ export const usePurchaseCourse = () => {
 
   return {
     purchaseCourse,
+    handleBackendConfirmation,
     isLoading: isPending || isWaitingReceipt,
     isSuccess,
     transactionHash,

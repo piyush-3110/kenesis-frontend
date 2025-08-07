@@ -3,7 +3,7 @@
  * Integrates smart contract functionality with the existing purchase flow
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import {
   AlertTriangle,
@@ -26,6 +26,7 @@ import {
 } from "@/lib/contracts/marketplaceService";
 import { getTokenConfig, getChainConfig } from "@/lib/contracts/chainConfig";
 import type { CourseResponse } from "@/lib/api/courseApi";
+import type { PurchaseRecord, CourseAccess } from "@/lib/api/purchaseApi";
 
 interface SmartContractPurchaseProps {
   course: CourseResponse;
@@ -36,6 +37,12 @@ interface SmartContractPurchaseProps {
   onPurchaseSuccess?: (result: {
     transactionHash: string;
     nftTokenId?: bigint;
+    backendConfirmation?: {
+      success: boolean;
+      purchase?: PurchaseRecord;
+      courseAccess?: CourseAccess;
+      error?: string;
+    };
   }) => void;
   onPurchaseError?: (error: string) => void;
   className?: string;
@@ -46,6 +53,7 @@ type PurchaseStep =
   | "switch-chain"
   | "approve"
   | "purchase"
+  | "confirming-backend"
   | "complete";
 
 export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
@@ -61,15 +69,30 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
   useAccount();
   const [currentStep, setCurrentStep] = useState<PurchaseStep>("validate");
   const [error, setError] = useState<string | null>(null);
+  const [backendConfirmationResult, setBackendConfirmationResult] = useState<{
+    success: boolean;
+    purchase?: PurchaseRecord;
+    courseAccess?: CourseAccess;
+    error?: string;
+  } | null>(null);
 
   // Contract hooks
-  const purchaseParams: ContractPurchaseParams = {
-    course,
-    tokenString: selectedToken,
-    nftMetadataUri,
-    affiliateAddress,
-    affiliatePercentage,
-  };
+  const purchaseParams: ContractPurchaseParams = useMemo(
+    () => ({
+      course,
+      tokenString: selectedToken,
+      nftMetadataUri,
+      affiliateAddress,
+      affiliatePercentage,
+    }),
+    [
+      course,
+      selectedToken,
+      nftMetadataUri,
+      affiliateAddress,
+      affiliatePercentage,
+    ]
+  );
 
   const validation = usePurchaseValidation(purchaseParams);
   const chainSwitch = useChainSwitchRequired(selectedToken);
@@ -102,21 +125,77 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
     approval.isApproved,
   ]);
 
-  // Handle purchase success
+  // Handle blockchain transaction success and trigger backend confirmation
   useEffect(() => {
-    if (purchase.isSuccess && purchase.transactionHash) {
-      setCurrentStep("complete");
-      onPurchaseSuccess?.({
-        transactionHash: purchase.transactionHash,
-        nftTokenId: purchase.nftTokenId,
-      });
+    const handleBackendConfirmation = async () => {
+      if (!purchase.transactionHash) return;
+
+      try {
+        console.log("🔄 Starting backend confirmation...");
+        const backendResult = await purchase.handleBackendConfirmation(
+          purchaseParams,
+          purchase.transactionHash,
+          purchase.nftTokenId
+        );
+
+        setBackendConfirmationResult(backendResult);
+
+        if (backendResult.success) {
+          console.log("✅ Backend confirmation successful");
+          setCurrentStep("complete");
+          onPurchaseSuccess?.({
+            transactionHash: purchase.transactionHash,
+            nftTokenId: purchase.nftTokenId,
+            backendConfirmation: backendResult,
+          });
+        } else {
+          console.warn("⚠️ Backend confirmation failed:", backendResult.error);
+          // Still mark as complete since blockchain transaction succeeded
+          // But show a warning about backend
+          setCurrentStep("complete");
+          onPurchaseSuccess?.({
+            transactionHash: purchase.transactionHash,
+            nftTokenId: purchase.nftTokenId,
+            backendConfirmation: backendResult,
+          });
+        }
+      } catch (error) {
+        console.error("❌ Backend confirmation error:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Backend confirmation failed";
+
+        setBackendConfirmationResult({
+          success: false,
+          error: errorMessage,
+        });
+
+        // Still mark as complete since blockchain transaction succeeded
+        setCurrentStep("complete");
+        onPurchaseSuccess?.({
+          transactionHash: purchase.transactionHash,
+          nftTokenId: purchase.nftTokenId,
+          backendConfirmation: {
+            success: false,
+            error: errorMessage,
+          },
+        });
+      }
+    };
+
+    if (
+      purchase.isSuccess &&
+      purchase.transactionHash &&
+      currentStep !== "confirming-backend" &&
+      currentStep !== "complete"
+    ) {
+      setCurrentStep("confirming-backend");
+      handleBackendConfirmation();
     }
-  }, [
-    purchase.isSuccess,
-    purchase.transactionHash,
-    purchase.nftTokenId,
-    onPurchaseSuccess,
-  ]);
+  }, [purchase, currentStep, purchaseParams, onPurchaseSuccess]);
+
+  // Backend confirmation handler (removed since it's now inline)
 
   // Handle errors from both transaction write and receipt
   useEffect(() => {
@@ -320,33 +399,99 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
           </div>
         );
 
-      case "complete":
+      case "confirming-backend":
         return (
-          <div className="p-4 rounded-lg bg-green-600/20 border border-green-600/30">
-            <div className="flex items-start gap-3">
-              <CheckCircle size={20} className="text-green-400 mt-0.5" />
-              <div className="flex-1">
-                <h4 className="text-green-400 font-medium mb-2">
-                  Purchase Successful!
-                </h4>
-                <p className="text-green-300 text-sm mb-3">
-                  Your course purchase has been completed and your NFT has been
-                  minted.
-                </p>
+          <div className="space-y-4">
+            <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-600/30">
+              <div className="flex items-start gap-3">
+                <Loader2
+                  size={20}
+                  className="text-blue-400 mt-0.5 animate-spin"
+                />
+                <div className="flex-1">
+                  <h4 className="text-blue-400 font-medium mb-2">
+                    Confirming Purchase
+                  </h4>
+                  <p className="text-blue-300 text-sm mb-3">
+                    Your blockchain transaction was successful! We&apos;re now
+                    confirming your purchase with our backend to activate your
+                    course access.
+                  </p>
 
-                {purchase.transactionHash && chainConfig && (
-                  <a
-                    href={`${chainConfig.blockExplorer}/tx/${purchase.transactionHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm text-green-400 hover:text-green-300"
-                  >
-                    <ExternalLink size={14} />
-                    View on {chainConfig.name} Explorer
-                  </a>
-                )}
+                  {purchase.transactionHash && chainConfig && (
+                    <a
+                      href={`${chainConfig.blockExplorer}/tx/${purchase.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300"
+                    >
+                      <ExternalLink size={14} />
+                      View transaction on {chainConfig.name} Explorer
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
+          </div>
+        );
+
+      case "complete":
+        const hasBackendError =
+          backendConfirmationResult && !backendConfirmationResult.success;
+
+        return (
+          <div className="space-y-4">
+            {/* Main success message */}
+            <div className="p-4 rounded-lg bg-green-600/20 border border-green-600/30">
+              <div className="flex items-start gap-3">
+                <CheckCircle size={20} className="text-green-400 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="text-green-400 font-medium mb-2">
+                    Purchase Successful!
+                  </h4>
+                  <p className="text-green-300 text-sm mb-3">
+                    Your blockchain transaction has been completed successfully
+                    {hasBackendError
+                      ? "."
+                      : " and your course access has been activated!"}
+                  </p>
+
+                  {purchase.transactionHash && chainConfig && (
+                    <a
+                      href={`${chainConfig.blockExplorer}/tx/${purchase.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-green-400 hover:text-green-300"
+                    >
+                      <ExternalLink size={14} />
+                      View on {chainConfig.name} Explorer
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Backend confirmation warning if it failed */}
+            {hasBackendError && (
+              <div className="p-4 rounded-lg bg-yellow-600/20 border border-yellow-600/30">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle size={20} className="text-yellow-400 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-yellow-400 font-medium mb-2">
+                      Course Access Pending
+                    </h4>
+                    <p className="text-yellow-300 text-sm mb-2">
+                      Your payment was successful, but we couldn&apos;t automatically
+                      activate your course access. Our team will manually verify
+                      your purchase and activate access shortly.
+                    </p>
+                    <p className="text-yellow-300 text-xs">
+                      Error: {backendConfirmationResult?.error}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         );
 
