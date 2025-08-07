@@ -52,7 +52,7 @@ export interface CourseResponse {
   description: string;
   shortDescription: string;
   thumbnail: string;
-  videoPreview: string;
+  previewVideo: string; // URL to the course preview video
   isPublished: boolean;
   instructor: CourseInstructor;
   price: number;
@@ -76,10 +76,46 @@ export interface CourseApiResponse {
 }
 
 /**
+ * Course access check response
+ */
+export interface CourseAccessResponse {
+  success: boolean;
+  hasAccess: boolean;
+}
+
+export interface CourseAccessApiResponse {
+  success: boolean;
+  message: string;
+  data: CourseAccessResponse;
+}
+
+/**
  * Fetch a single course by ID or slug
  */
 export const getCourse = async (
   idOrSlug: string
 ): Promise<ApiResponse<CourseApiResponse>> => {
   return apiClient.get<CourseApiResponse>(`/api/courses/${idOrSlug}`);
+};
+
+/**
+ * Check if user has access to a course
+ */
+export const checkCourseAccess = async (
+  courseId: string
+): Promise<ApiResponse<CourseAccessResponse>> => {
+  const response = await apiClient.get<CourseAccessApiResponse>(
+    `/api/courses/purchases/access/${courseId}`
+  );
+
+  if (!response.success) {
+    throw new Error(response.message || "Failed to check course access");
+  }
+
+  // Return the nested data structure to match the expected format
+  return {
+    success: response.success,
+    message: response.message,
+    data: response.data!.data,
+  };
 };
