@@ -1,5 +1,3 @@
-import { Product } from "./Product";
-
 export interface Review {
   id: string;
   userId: string;
@@ -50,21 +48,6 @@ export interface CourseContent {
   attachments?: DocumentAttachment[]; // Documents attached to the content
 }
 
-export interface ExtendedProduct extends Product {
-  reviews: Review[];
-  reviewSummary: ReviewSummary;
-  courseAccess: CourseAccess;
-  content?: CourseContent[];
-  purchasedBy: string[]; // Array of user IDs who purchased this course
-
-  // Course-specific fields
-  chapters?: CourseChapter[];
-  availableQuantity?: number;
-  accessDuration?: number;
-  metadata?: CourseMetadata;
-  soldCount?: number;
-}
-
 export interface CourseChapter {
   id: string;
   title: string;
@@ -81,7 +64,6 @@ export interface CourseModule {
   duration: number; // in seconds (backend format)
   order: number;
   isPreview: boolean;
-  isCompleted?: boolean; // This would come from user progress, not backend module data
 }
 
 export interface CourseMetadata {
