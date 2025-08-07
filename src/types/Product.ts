@@ -1,21 +1,48 @@
-export interface Product {
+export interface Course {
   id: string;
   title: string;
-  description: string;
-  author: string;
-  price: number;
-  currency: string; // Always "USD"
-  rating: number;
-  totalRatings: number;
-  image: string;
-  category: string;
   type: "video" | "document";
-  createdAt: string;
+  description: string;
+  shortDescription: string;
+  thumbnail: string;
+  previewVideo: string;
+  isPublished: boolean;
+  instructor: {
+    id: string;
+    username: string;
+  };
+  price: number;
   slug?: string; // URL-friendly identifier for the product
-  isPurchased?: boolean; // New field to track purchase status
-  purchaseDate?: string; // When the user purchased this product
-  accessLevel?: "full" | "preview" | "none"; // Access level for the user
-  topics?: string[]; // Course curriculum/topics preview for unpurchased courses
+  level: "beginner" | "intermediate" | "advanced";
+  affiliatePercentage: number;
+  tokenToPayWith: string[]; // ["USDT-1", [USDC-1]], Basically ["TOKEN_SYMBOL-CHAIN_ID"]
+  accessDuration: number; // in seconds, -1 if infinite access
+  availableQuantity: number; // total number of times that the course can be sold -1 for unlimited
+  soldCount: number; // Total number of products sold
+  stats: {
+    rating: number; // Average rating
+    reviewCount: number; // Total number of reviews
+    duration: number; // Total duration in seconds (for video courses)
+  };
+  language: string; // en, es, fr, etc.
+  chapters: [
+    {
+      id: string;
+      title: string;
+      description?: string;
+      order: number;
+      moduleCount: number;
+    }
+  ];
+  metadata: {
+    requirements: string[];
+    learningOutcomes: string[];
+    targetAudience: string[];
+    level: string; // beginner, intermediate, advanced
+    tags: string[]; // e.g., ["web development", "javascript"]
+  };
+  createdAt: string; // ISO date string
+  updatedAt?: string; // ISO date string, optional for products that are not updated
 }
 
 export interface Category {
@@ -53,20 +80,28 @@ export type SortOption =
   | "newest";
 
 export interface MarketplaceResponse {
-  products: Product[];
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
+  products: Omit<
+    Course[],
+    | "chapters"
+    | "description"
+    | "previewVideo"
+    | "tokenToPayWith"
+    | "accessDuration"
+    | "availableQuantity"
+    | "soldCount"
+    | "metadata"
+    | "affiliatePercentage"
+  >;
 }
 
 export interface PaginatedResponse<T> {
   data: T[];
   pagination: {
-    page: number;
-    limit: number;
-    total: number;
+    currentPage: number;
     totalPages: number;
+    totalCourses: number;
     hasNextPage: boolean;
     hasPrevPage: boolean;
+    limit: number;
   };
 }
