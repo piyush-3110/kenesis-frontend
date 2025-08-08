@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Mail, ArrowLeft, CheckCircle, Clock, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { Mail, ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -29,7 +29,6 @@ const EmailVerificationPage: React.FC = () => {
     clearVerificationError
   } = useAuthActions();
 
-  const [isVerified, setIsVerified] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
 
   // Get token from URL params for direct verification links
@@ -54,13 +53,13 @@ const EmailVerificationPage: React.FC = () => {
     if (verificationToken && user && !user.emailVerified) {
       handleVerifyFromToken(verificationToken);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verificationToken, user]);
 
   const handleVerifyFromToken = async (token: string) => {
     try {
       setVerificationStatus('pending');
       await verifyEmail(token);
-      setIsVerified(true);
       setVerificationStatus('success');
       
       addToast({
@@ -268,4 +267,17 @@ const EmailVerificationPage: React.FC = () => {
   );
 };
 
-export default EmailVerificationPage;
+export default function Page() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#0A071A]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <EmailVerificationPage />
+    </Suspense>
+  );
+}
