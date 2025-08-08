@@ -1,16 +1,45 @@
 'use client';
 
-import { useState } from 'react';
-import { ExtendedProduct } from '@/types/Review';
-import Navbar from '@/components/Landing/Navbar';
+import React, { useState } from 'react';
+// Using product shape inferred from usage; ExtendedProduct type not exported here
+// Navbar is provided globally via EnhancedConditionalLayout in the app layout
 import ReviewsRatings from '@/components/product/ReviewsRatings';
+import type { ReviewSummary, CourseContent } from '@/types/Review';
 import CourseContentViewer from '@/components/product/CourseContentViewer';
-import { ArrowLeft, Star, Award, Play, FileText, ShoppingCart, CheckCircle, Users, ChevronDown, ChevronUp, Link2 } from 'lucide-react';
+import { ArrowLeft, Star, Award, Play, FileText, CheckCircle, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+type MinimalProduct = {
+  id: string;
+  title: string;
+  author: string;
+  description: string;
+  price: number;
+  image: string;
+  type: "video" | "document";
+  rating: number;
+  totalRatings: number;
+  purchasedBy: string[];
+  topics?: string[];
+  content?: CourseContent[];
+  courseAccess: { hasAccess: boolean; progress?: number };
+  reviews: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    rating: number;
+    comment: string;
+    createdAt: string;
+    likes: number;
+    likedByCurrentUser: boolean;
+  }>;
+  reviewSummary: ReviewSummary;
+};
+
 interface ProductDetailViewProps {
-  product: ExtendedProduct;
+  // Minimal product shape required for this component
+  product: MinimalProduct;
   loading: boolean;
   isAffiliate?: boolean;
   backLink: string;
@@ -20,7 +49,7 @@ interface ProductDetailViewProps {
     onClick: () => void;
     loading?: boolean;
     disabled?: boolean;
-    icon?: React.ReactNode;
+  icon?: React.ReactNode;
     variant?: 'purchase' | 'affiliate';
   };
   onSubmitReview?: (rating: number, comment: string) => Promise<void>;
@@ -66,7 +95,6 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0A071A]">
-        <Navbar />
         <div className="pt-24 md:pt-28 p-4 sm:p-8 max-w-7xl mx-auto">
           <div className="animate-pulse space-y-6">
             <div className="h-8 bg-gray-700 rounded w-1/3 mb-6"></div>
@@ -88,7 +116,6 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   if (!product) {
     return (
       <div className="min-h-screen bg-[#0A071A]">
-        <Navbar />
         <div className="pt-24 md:pt-28 p-4 sm:p-8 max-w-7xl mx-auto">
           <div className="text-center text-white">
             <h1 className="text-2xl font-bold mb-4">Product not found</h1>
@@ -102,8 +129,7 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#0A071A]">
-      <Navbar />
+  <div className="min-h-screen bg-[#0A071A]">
       <div className="pt-24 md:pt-28 p-4 sm:p-8 max-w-7xl mx-auto">
         {/* Back Button */}
         <Link 
@@ -246,10 +272,10 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
           <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12 bg-gradient-to-br from-gray-900/80 to-gray-800/60 border-y border-gray-700/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
               <h2 className="text-white text-2xl lg:text-3xl font-bold mb-8 text-center">
-                What you'll learn
+                What you&apos;ll learn
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-6xl mx-auto">
-                {product.topics.map((topic, index) => {
+                {product.topics.map((topic: string, index: number) => {
                   const isExpanded = expandedTopics.has(index);
                   return (
                     <div key={index} className="border border-gray-700/50 rounded-lg overflow-hidden bg-gray-900/40 hover:bg-gray-800/50 transition-colors">
