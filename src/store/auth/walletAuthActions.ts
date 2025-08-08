@@ -113,6 +113,11 @@ export const useWalletAuthActions = () => {
         if (currentUser) {
           const updatedUser: User = {
             ...currentUser,
+            // Persist identity fields if backend provided them
+            username: result.data.user.username ?? currentUser.username,
+            email: result.data.user.email ?? currentUser.email,
+            emailVerified:
+              result.data.user.emailVerified ?? currentUser.emailVerified,
             walletAddress: result.data.user.walletAddress,
             isWalletConnected: true,
             authMethod: "hybrid",

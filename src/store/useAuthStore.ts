@@ -116,9 +116,19 @@ const mapLoginUserToUser = (loginUser: LoginResponse["user"]): User => ({
 /**
  * Convert wallet user to store user format
  */
+type WalletUserMaybeProfile = WalletUser & {
+  username?: string;
+  email?: string;
+  emailVerified?: boolean;
+};
+
 const mapWalletUserToUser = (walletUser: WalletUser): User => ({
   id: walletUser._id,
   walletAddress: walletUser.walletAddress,
+  // If backend includes these on wallet user, surface them; otherwise undefined
+  username: (walletUser as WalletUserMaybeProfile).username ?? undefined,
+  email: (walletUser as WalletUserMaybeProfile).email ?? undefined,
+  emailVerified: (walletUser as WalletUserMaybeProfile).emailVerified ?? undefined,
   bio: walletUser.bio,
   createdAt: walletUser.createdAt,
   authMethod: "wallet",
