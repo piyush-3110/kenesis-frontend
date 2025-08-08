@@ -26,7 +26,11 @@ import {
   isSupportedChain,
 } from "./chainConfig";
 import type { CourseResponse } from "@/lib/api/courseApi";
-import { completePurchaseFlow, type PurchaseRecord, type CourseAccess } from "@/lib/api/purchaseApi";
+import {
+  completePurchaseFlow,
+  type PurchaseRecord,
+  type CourseAccess,
+} from "@/lib/api/purchaseApi";
 
 export interface ContractPurchaseParams {
   course: CourseResponse;
@@ -443,7 +447,7 @@ export const usePurchaseCourse = () => {
   ) => {
     try {
       console.log("🔄 Starting backend purchase confirmation...");
-      
+
       const backendResult = await completePurchaseFlow({
         courseId: params.course.id,
         tokenString: params.tokenString,
@@ -459,7 +463,10 @@ export const usePurchaseCourse = () => {
       console.error("❌ Backend confirmation failed:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Backend confirmation failed",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Backend confirmation failed",
       };
     }
   };
