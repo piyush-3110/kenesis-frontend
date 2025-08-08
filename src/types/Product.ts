@@ -118,7 +118,13 @@ export interface CourseForMarketplacePage {
   category: string;
   type: "video" | "document";
   createdAt: string;
+  // Optional access flags that may be provided by API when user is authenticated
+  isPurchased?: boolean;
+  purchaseDate?: string;
 }
+
+// New canonical name for marketplace listing items
+export type MarketplaceProduct = CourseForMarketplacePage;
 
 export interface PaginatedResponse<T> {
   data: T[];
