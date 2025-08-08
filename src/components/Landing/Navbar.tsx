@@ -194,12 +194,20 @@ const Navbar: React.FC = () => {
               >
                 {/* Avatar with enhanced styling */}
                 <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base shadow-lg">
-                  {user.username?.charAt(0).toUpperCase()}
+                  {(user.username || user.walletAddress || "W")
+                    .charAt(0)
+                    .toUpperCase()}
                 </div>
 
-                {/* Username - enhanced responsive text */}
+                {/* Display Name (username or shortened wallet) */}
                 <span className="hidden sm:inline max-w-28 md:max-w-36 truncate font-semibold">
-                  {user.username}
+                  {user.username ||
+                    (user.walletAddress
+                      ? `${user.walletAddress.slice(
+                          0,
+                          6
+                        )}...${user.walletAddress.slice(-4)}`
+                      : "Wallet User")}
                 </span>
 
                 {/* Dropdown arrow with enhanced styling */}
@@ -224,10 +232,16 @@ const Navbar: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-white font-semibold text-base md:text-lg truncate">
-                            {user.username || "Wallet User"}
+                            {user.username ||
+                              (user.walletAddress
+                                ? `${user.walletAddress.slice(
+                                    0,
+                                    6
+                                  )}...${user.walletAddress.slice(-4)}`
+                                : "Wallet User")}
                           </p>
                           <p className="text-gray-400 text-sm md:text-base truncate">
-                            {user.email || user.walletAddress}
+                            {user.email || user.walletAddress || ""}
                           </p>
                           {user.email && !user.emailVerified && (
                             <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
