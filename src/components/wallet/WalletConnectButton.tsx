@@ -3,11 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Wallet, AlertCircle } from "lucide-react";
-import {
-  useAuthActions,
-  useIsAuthenticated,
-  useAuthUser,
-} from "@/store/useAuthStore";
+import { useAuthActions, useIsAuthenticated, useAuthUser } from "@/store/auth";
 import { useAccount, useDisconnect } from "wagmi";
 
 interface WalletConnectButtonProps {
