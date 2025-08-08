@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Product, Category, MarketplaceFilters, PaginatedResponse, SortOptionItem, PriceRange } from '@/types/Product';
-import { fetchProducts, fetchCategories, fetchSortOptions, fetchPriceRange } from '@/lib/marketplaceApi';
+import { fetchProducts, fetchCategories, fetchSortOptions, fetchPriceRange } from '@/lib/marketplaceApiReal';
 import { useDebounce } from '@/hooks/useDebounce';
 
 export function useMarketplace() {
