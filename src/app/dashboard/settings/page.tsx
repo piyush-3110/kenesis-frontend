@@ -9,6 +9,7 @@ import NotificationSettingsCard from './components/NotificationSettingsCard';
 import SocialLinksCard from './components/SocialLinksCard';
 import SecuritySettingsCard from './components/SecuritySettingsCard';
 import SaveActions from './components/SaveActions';
+import { useUserProfile } from '@/store/useAuthStore';
 
 /**
  * SettingsPage Component
@@ -32,6 +33,12 @@ const SettingsPage: React.FC = () => {
   useEffect(() => {
     return () => clearError();
   }, [clearError]);
+
+  // Fetch user profile on settings page mount
+  const { fetchUserProfile } = useUserProfile();
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   if (isLoading) {
     return (
