@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Navbar from "@/components/Landing/Navbar";
+import EnhancedNavbar from "@/components/Landing/EnhancedNavbar";
 import Footer from "@/components/Landing/Footer";
 
 /**
@@ -19,7 +19,7 @@ const ConditionalLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
   return (
     <>
-      {!shouldHide && <Navbar />}
+  {!shouldHide && <EnhancedNavbar />}
       {children}
       {!shouldHide && <Footer />}
     </>

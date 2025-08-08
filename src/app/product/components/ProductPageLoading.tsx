@@ -1,10 +1,8 @@
 import React from "react";
-import Navbar from "@/components/Landing/Navbar";
 
 const ProductPageLoading: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0A071A]">
-      <Navbar />
       <div className="pt-24 md:pt-28 p-4 sm:p-8 max-w-7xl mx-auto">
         <div className="animate-pulse space-y-6">
           <div className="h-8 bg-gray-700 rounded w-1/3 mb-6"></div>

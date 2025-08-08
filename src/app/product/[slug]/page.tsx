@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useCourse } from "@/hooks/useCourseQuery";
 import { useCourseAccess } from "@/hooks/useCourseAccess";
-import Navbar from "@/components/Landing/Navbar";
 import ReviewsRatings from "@/components/product/ReviewsRatings";
 import { CourseAccessBanner } from "../components/CourseAccessStatus";
 // import CourseContentViewer from "@/components/product/CourseContentViewer";
@@ -60,7 +59,6 @@ const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A071A] mt-8">
-      <Navbar />
 
       <div className="pt-24 md:pt-28 p-4 sm:p-8 max-w-7xl mx-auto">
         {/* Back Button */}
