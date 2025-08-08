@@ -34,7 +34,7 @@ const MyAffiliationProductDetailPage: React.FC = () => {
               price: affiliatedProd.price,
               currency: 'USD',
               rating: affiliatedProd.rating,
-              totalRatings: affiliatedProd.reviewCount,
+              reviewCount: affiliatedProd.reviewCount,
               image: affiliatedProd.thumbnail,
               category: affiliatedProd.category,
               type: affiliatedProd.type,
@@ -112,28 +112,7 @@ const MyAffiliationProductDetailPage: React.FC = () => {
     };
   };
 
-  const getSecondaryActions = () => {
-    if (!affiliatedProduct) return [];
-
-    return [
-      {
-        label: copying ? 'Copying...' : 'Copy Affiliate Link',
-        onClick: handleCopyLink,
-        loading: copying,
-        disabled: copying,
-        icon: <Copy size={16} />,
-        variant: 'secondary' as const
-      },
-      {
-        label: 'Open Affiliate Link',
-        onClick: handleOpenLink,
-        loading: false,
-        disabled: false,
-        icon: <ExternalLink size={16} />,
-        variant: 'secondary' as const
-      }
-    ];
-  };
+  // Secondary actions are rendered below directly; helper removed to avoid unused-variable error
 
   if (!product && !loading) {
     return null; // Let ProductDetailView handle the not found state

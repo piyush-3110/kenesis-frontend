@@ -30,7 +30,7 @@ const AffiliateProductDetailPage: React.FC = () => {
               currency: 'USD',
               createdAt: new Date().toISOString(),
               description: foundProduct.description || `Learn ${foundProduct.title} with ${foundProduct.author}`,
-              totalRatings: foundProduct.reviewCount,
+              // reviewCount is already on the base product; no separate totalRatings in ExtendedProduct
               purchasedBy: [], // Not relevant for affiliate view
               reviews: [],
               reviewSummary: {
