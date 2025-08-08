@@ -128,7 +128,8 @@ const mapWalletUserToUser = (walletUser: WalletUser): User => ({
   // If backend includes these on wallet user, surface them; otherwise undefined
   username: (walletUser as WalletUserMaybeProfile).username ?? undefined,
   email: (walletUser as WalletUserMaybeProfile).email ?? undefined,
-  emailVerified: (walletUser as WalletUserMaybeProfile).emailVerified ?? undefined,
+  emailVerified:
+    (walletUser as WalletUserMaybeProfile).emailVerified ?? undefined,
   bio: walletUser.bio,
   createdAt: walletUser.createdAt,
   authMethod: "wallet",

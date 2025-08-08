@@ -3,13 +3,13 @@
  * Handles wallet-based auth operations with the store
  */
 
-import { useUIStore } from '@/store/useUIStore';
-import { useAuthStore } from './authState';
-import { useWalletAuth } from '@/hooks/useWalletAuth';
-import { tokenRefreshManager } from '@/lib/tokenRefresh';
-import { useTokenRefresh } from '@/hooks/auth/useTokenRefresh';
-import type { User, AuthIntent } from '@/types/auth';
-import type { WalletAuthResponse, WalletUser } from '@/lib/api/types';
+import { useUIStore } from "@/store/useUIStore";
+import { useAuthStore } from "./authState";
+import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { tokenRefreshManager } from "@/lib/tokenRefresh";
+import { useTokenRefresh } from "@/hooks/auth/useTokenRefresh";
+import type { User, AuthIntent } from "@/types/auth";
+import type { WalletAuthResponse, WalletUser } from "@/lib/api/types";
 
 /**
  * Convert wallet user to store user format
@@ -35,7 +35,13 @@ const mapWalletAuthToUser = (authResponse: WalletAuthResponse): User => {
  * Wallet authentication actions hook
  */
 export const useWalletAuthActions = () => {
-  const { setUser, setTokens, clearAuth, setWalletAddress, setWalletConnected } = useAuthStore();
+  const {
+    setUser,
+    setTokens,
+    clearAuth,
+    setWalletAddress,
+    setWalletConnected,
+  } = useAuthStore();
   const { addToast } = useUIStore();
   const walletAuthHook = useWalletAuth();
   const refreshTokenHook = useTokenRefresh();
@@ -46,10 +52,7 @@ export const useWalletAuthActions = () => {
    * @param bio - Optional bio for registration
    * @param intent - Whether to prioritize 'signup', 'signin', or 'auto'
    */
-  const walletAuth = async (
-    bio?: string,
-    intent: AuthIntent = "auto"
-  ) => {
+  const walletAuth = async (bio?: string, intent: AuthIntent = "auto") => {
     try {
       const result = await walletAuthHook.authenticateWallet(bio, intent);
 
@@ -65,10 +68,13 @@ export const useWalletAuthActions = () => {
 
         // Start automatic token refresh
         tokenRefreshManager.startAutoRefresh(async () => {
-          const currentRefreshToken = useAuthStore.getState().tokens?.refreshToken;
+          const currentRefreshToken =
+            useAuthStore.getState().tokens?.refreshToken;
           if (!currentRefreshToken) return false;
 
-          const refreshResult = await refreshTokenHook.refreshToken(currentRefreshToken);
+          const refreshResult = await refreshTokenHook.refreshToken(
+            currentRefreshToken
+          );
           if (refreshResult) {
             setTokens({
               accessToken: refreshResult.accessToken,
