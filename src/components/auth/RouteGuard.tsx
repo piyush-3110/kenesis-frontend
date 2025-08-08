@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuthUser, useIsAuthenticated } from "@/store/useAuthStore";
+import { useAuthUser, useIsAuthenticated } from "@/store/auth";
 import { useUIStore } from "@/store/useUIStore";
 
 /**

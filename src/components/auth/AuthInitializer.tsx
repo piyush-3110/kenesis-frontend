@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { tokenRefreshManager } from '@/lib/tokenRefresh';
-import { useAuthStore, useAuthActions } from '@/store/useAuthStore';
+import { useAuthStore, useAuthActions } from '@/store/auth';
 import { TokenManager } from '@/lib/api';
 
 /**
@@ -32,7 +32,7 @@ export const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       tokenRefreshManager.stopAutoRefresh();
     };
-  }, []); // Run once on mount
+  }, [tokens, user?.emailVerified, refreshTokens]); // Run on auth state changes
 
   return <>{children}</>;
 };

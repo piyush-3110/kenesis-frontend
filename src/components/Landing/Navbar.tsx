@@ -16,7 +16,7 @@ import {
   useAuthActions,
   useIsAuthenticated,
   useAuthUser,
-} from "@/store/useAuthStore";
+} from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { useUIStore } from "@/store/useUIStore";
 

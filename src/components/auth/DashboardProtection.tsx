@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthUser, useIsAuthenticated } from "@/store/useAuthStore";
+import { useAuthUser, useIsAuthenticated } from "@/store/auth";
 
 /**
  * DashboardProtection Component
