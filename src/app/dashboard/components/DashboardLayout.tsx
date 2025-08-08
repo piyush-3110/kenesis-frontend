@@ -7,6 +7,7 @@ import { DASHBOARD_COLORS } from '../constants';
 import { cn } from '@/lib/utils';
 import { Menu } from 'lucide-react';
 import { useDashboardStore } from '../store/useDashboardStore';
+import { useUserProfile } from '@/store/useAuthStore';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -29,6 +30,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
   const { user, connectWallet, disconnectWallet } = useDashboardStore();
+
+  // Fetch user profile on dashboard layout mount
+  const { fetchUserProfile } = useUserProfile();
+  React.useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   const handleMobileSidebarToggle = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
