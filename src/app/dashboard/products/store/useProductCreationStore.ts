@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ProductCreationState, Course, Chapter, Module, CreateCourseStep } from '../types';
+import { ProductCreationState, Course, Chapter, Module, CreateCourseStep, CourseType, CourseLevel } from '../types';
 
 /**
  * Product Creation Store
@@ -52,7 +52,10 @@ export const useProductCreationStore = create<ProductCreationStore>((set, get) =
 
   // Basic setters
   setCurrentStep: (step) => set({ currentStep: step }),
-  setCurrentCourse: (course) => set({ currentCourse: course }),
+  setCurrentCourse: (course) => {
+    console.log('🏪 Store - Setting current course:', course);
+    set({ currentCourse: course });
+  },
   setSelectedChapterId: (chapterId) => set({ selectedChapterId: chapterId }),
   setLoading: (loading) => set({ isLoading: loading }),
   setError: (error) => set({ error }),
@@ -62,13 +65,16 @@ export const useProductCreationStore = create<ProductCreationStore>((set, get) =
     const newCourse: Course = {
       id: generateId(),
       title: '',
-      type: '',
+      type: 'free' as CourseType,
       shortDescription: '',
       description: '',
-      level: 'Beginner',
-      language: 'English',
-      price: '',
-      tokensToPayWith: [],
+      level: 'beginner' as CourseLevel,
+      language: 'en',
+      price: 0,
+      tokenToPayWith: [],
+      accessDuration: -1,
+      affiliatePercentage: 1000,
+      availableQuantity: -1,
       chapters: [],
       status: 'draft',
       createdAt: new Date().toISOString(),
@@ -97,9 +103,10 @@ export const useProductCreationStore = create<ProductCreationStore>((set, get) =
 
     const newChapter: Chapter = {
       ...chapterData,
-      id: generateId(),
+      id: generateId(), // Local ID for UI state
       order: currentCourse.chapters.length + 1,
-      modules: [],
+      modules: chapterData.modules || [],
+      backendId: chapterData.backendId, // Preserve backend ID if provided
     };
 
     set({
@@ -164,8 +171,9 @@ export const useProductCreationStore = create<ProductCreationStore>((set, get) =
 
     const newModule: Module = {
       ...moduleData,
-      id: generateId(),
-      attachments: [],
+      id: generateId(), // Local ID for UI state
+      attachments: moduleData.attachments || [], // Preserve attachments
+      backendId: moduleData.backendId, // Preserve backend ID if provided
     };
 
     const updatedChapters = currentCourse.chapters.map((ch) =>
