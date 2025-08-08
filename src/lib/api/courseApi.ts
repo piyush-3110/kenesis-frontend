@@ -105,7 +105,7 @@ export const getCourse = async (
 export const checkCourseAccess = async (
   courseId: string
 ): Promise<ApiResponse<CourseAccessResponse>> => {
-  const response = await apiClient.get<CourseAccessApiResponse>(
+  const response = await apiClient.get<CourseAccessResponse>(
     `/api/courses/purchases/access/${courseId}`
   );
 
@@ -113,10 +113,12 @@ export const checkCourseAccess = async (
     throw new Error(response.message || "Failed to check course access");
   }
 
-  // Return the nested data structure to match the expected format
+  console.log("Course access response:", response);
+
+  // Return the response data directly since the API client already unwraps it
   return {
     success: response.success,
     message: response.message,
-    data: response.data!.data,
+    data: response.data!, // response.data is already CourseAccessResponse
   };
 };
