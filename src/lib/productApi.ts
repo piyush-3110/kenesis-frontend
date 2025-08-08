@@ -1,5 +1,5 @@
 import { ExtendedProduct, Review, ReviewSummary, CourseAccess, CourseContent } from '@/types/Review';
-import { Product } from '@/types/Product';
+import type { CourseForMarketplacePage as Product } from '@/types/Product';
 
 // Mock user ID for demonstration
 const CURRENT_USER_ID = 'user-123';
@@ -350,20 +350,20 @@ export async function fetchExtendedProduct(productId: string): Promise<ExtendedP
     const response = await fetch(`/api/products/${productId}`);
     if (!response.ok) {
       // Fallback to mock data for demo
-      const mockProducts = await import('@/lib/marketplaceApi').then(m => m.fetchProducts());
-      const product = mockProducts.data.find(p => p.id === productId);
+  const mockProducts = await import('@/lib/marketplaceApi').then(m => m.fetchProducts(undefined, 1, 50));
+  const product = mockProducts.data.find((p: Product) => p.id === productId);
       if (!product) return null;
       
       return createExtendedProduct(product);
     }
 
-    const product: Product = await response.json();
+  const product: Product = await response.json();
     return createExtendedProduct(product);
   } catch (error) {
     console.error('Error fetching extended product:', error);
     // Fallback to mock data
-    const mockProducts = await import('@/lib/marketplaceApi').then(m => m.fetchProducts());
-    const product = mockProducts.data.find(p => p.id === productId);
+  const mockProducts = await import('@/lib/marketplaceApi').then(m => m.fetchProducts(undefined, 1, 50));
+  const product = mockProducts.data.find((p: Product) => p.id === productId);
     if (!product) return null;
     
     return createExtendedProduct(product);
@@ -373,10 +373,9 @@ export async function fetchExtendedProduct(productId: string): Promise<ExtendedP
 function createExtendedProduct(product: Product): ExtendedProduct {
   const reviews = generateMockReviews(product.id);
   const reviewSummary = generateReviewSummary(reviews);
-  
-  // Use the actual product purchase data instead of hardcoded values
+
   const hasAccess = product.isPurchased || false;
-  
+
   const courseAccess: CourseAccess = {
     hasAccess,
     purchaseDate: hasAccess && product.purchaseDate ? product.purchaseDate : undefined,
@@ -385,18 +384,33 @@ function createExtendedProduct(product: Product): ExtendedProduct {
   };
 
   const content = hasAccess ? generateMockCourseContent(product.type) : undefined;
-
-  // Generate a mock list of purchasers for UI display
   const purchasedBy = hasAccess ? [CURRENT_USER_ID] : [];
 
-  return {
-    ...product,
+  const extended: ExtendedProduct = {
+    id: product.id,
+    title: product.title,
+    author: product.instructor.username,
+    price: product.price,
+    currency: 'USD',
+    rating: product.stats.rating,
+    reviewCount: product.stats.reviewCount,
+    image: product.thumbnail,
+    thumbnail: product.thumbnail,
+    description: product.description,
+    createdAt: product.createdAt,
+    category: product.category,
+    type: product.type,
+    isPurchased: product.isPurchased,
+    purchaseDate: product.purchaseDate,
     reviews,
     reviewSummary,
+    purchasedBy,
     courseAccess,
     content,
-    purchasedBy,
+    topics: undefined,
   };
+
+  return extended;
 }
 
 /**
