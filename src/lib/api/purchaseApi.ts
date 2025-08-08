@@ -18,7 +18,7 @@ import { TokenManager } from "../tokenManager";
  */
 const refreshAccessToken = async (): Promise<boolean> => {
   try {
-  const refreshToken = TokenManager.getRefreshToken();
+    const refreshToken = TokenManager.getRefreshToken();
     if (!refreshToken) {
       console.warn("No refresh token available");
       return false;
@@ -45,10 +45,16 @@ const refreshAccessToken = async (): Promise<boolean> => {
 
     const data = await response.json();
 
-    if (data.success && (data.data || (data.accessToken && data.refreshToken))) {
+    if (
+      data.success &&
+      (data.data || (data.accessToken && data.refreshToken))
+    ) {
       const newAccess = data.data?.accessToken ?? data.accessToken;
       const newRefresh = data.data?.refreshToken ?? data.refreshToken;
-      TokenManager.setTokens({ accessToken: newAccess, refreshToken: newRefresh });
+      TokenManager.setTokens({
+        accessToken: newAccess,
+        refreshToken: newRefresh,
+      });
       console.log("✅ Access token refreshed successfully");
       return true;
     } else {
@@ -110,7 +116,9 @@ const makeApiRequest = async <T>(
         msg.toLowerCase().includes(p)
       )
     ) {
-      console.log("🔄 Detected auth error in response body, attempting refresh...");
+      console.log(
+        "🔄 Detected auth error in response body, attempting refresh..."
+      );
       const refreshSuccess = await refreshAccessToken();
       if (refreshSuccess) {
         return makeApiRequest<T>(endpoint, payload, false);
