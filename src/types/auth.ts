@@ -3,7 +3,7 @@
  * All auth-related interfaces and types
  */
 
-import type { WalletAuthResponse, WalletLinkResponse } from '@/lib/api/types';
+import type { WalletAuthResponse } from '@/lib/api/types';
 
 /**
  * User interface for authentication store
@@ -109,7 +109,7 @@ export interface WalletAuthResult {
  */
 export interface WalletLinkResult {
   success: boolean;
-  data?: WalletLinkResponse;
+  data?: WalletAuthResponse;
   error?: WalletAuthError;
 }
 
