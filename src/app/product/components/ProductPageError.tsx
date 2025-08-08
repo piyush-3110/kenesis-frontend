@@ -14,7 +14,7 @@ const ProductPageError: React.FC<ProductPageErrorProps> = ({
   const isAuthError = error?.message === "AUTHENTICATION_REQUIRED";
 
   return (
-  <div className="min-h-screen bg-[#0A071A]">
+    <div className="min-h-screen bg-[#0A071A]">
       <div className="pt-24 md:pt-28 p-4 sm:p-8 max-w-7xl mx-auto">
         <div className="text-center">
           <div className="flex items-center justify-center mb-4">

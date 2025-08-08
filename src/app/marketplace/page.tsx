@@ -51,7 +51,6 @@ const MarketplacePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A071A] mt-8">
-
       {/* Mobile Filter Button */}
       <div className="lg:hidden fixed bottom-6 right-6 z-30">
         <button
@@ -64,7 +63,7 @@ const MarketplacePage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-  <div className="pt-16 lg:pt-20">
+      <div className="pt-16 lg:pt-20">
         {" "}
         {/* Account for fixed navbar */}
         {/* Search and Filter Bar */}
