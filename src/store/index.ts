@@ -18,7 +18,7 @@ export interface StoreState {
 export const resetAllStores = () => {
   // Import stores dynamically to avoid circular dependencies
   import('./useAuthStore').then(({ useAuthStore }) => {
-    useAuthStore.getState().logout();
+  useAuthStore.getState().clearAuth();
   });
   
   import('./useUIStore').then(({ useUIStore }) => {
