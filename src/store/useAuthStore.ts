@@ -545,3 +545,47 @@ export const useAuthActions = () => {
 export const useAuthUser = () => useAuthStore((state) => state.user);
 export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
 export const useAuthTokens = () => useAuthStore((state) => state.tokens);
+
+/**
+ * Fetch and update user profile from backend
+ * Handles all error scenarios and updates global state
+ */
+export const useUserProfile = () => {
+  const { setUser, clearAuth } = useAuthStore();
+  const { addToast } = useUIStore();
+
+  const fetchUserProfile = async () => {
+    const result = await (await import('@/lib/api')).UserAPI.getProfile();
+    if (result.success && result.data?.user) {
+      setUser({
+        id: result.data.user._id,
+        email: result.data.user.email,
+        username: result.data.user.username,
+        bio: result.data.user.bio,
+        emailVerified: result.data.user.emailVerified,
+        createdAt: result.data.user.createdAt,
+      });
+      return result.data.user;
+    } else {
+      // Error handling per integration.md
+      if (result.message?.includes('Access token required') || result.message?.includes('Invalid or expired token')) {
+        clearAuth();
+        addToast({ type: 'error', message: 'Session expired. Please log in again.' });
+        if (typeof window !== 'undefined') window.location.href = '/login';
+      } else if (result.message?.includes('deactivated')) {
+        addToast({ type: 'error', message: 'Your account has been deactivated.' });
+        // Optionally redirect to support/help page
+      } else if (result.message?.includes('not found')) {
+        addToast({ type: 'error', message: 'User not found. Please contact support.' });
+        if (typeof window !== 'undefined') window.location.href = '/login';
+      } else if (result.message?.includes('Too many requests')) {
+        addToast({ type: 'error', message: `Too many requests. Try again in ${result.retryAfter || 60} seconds.` });
+      } else {
+        addToast({ type: 'error', message: 'Something went wrong while fetching your profile.' });
+      }
+      return null;
+    }
+  };
+
+  return { fetchUserProfile };
+};
