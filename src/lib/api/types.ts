@@ -78,44 +78,31 @@ export interface RefreshTokenResponse {
   refreshToken: string;
 }
 
-// Wallet authentication
-export interface WalletNonceRequest {
-  walletAddress: string;
+// Wallet authentication (SIWE) - New flow
+export interface WalletPrepareRequest {
+  // Optional but recommended; 0x-prefixed, 40 hex chars
+  walletAddress?: string;
 }
 
-export interface WalletNonceResponse {
-  nonce: string;
-  message: string;
-  expiresAt: string;
+export interface WalletPrepareResponse {
+  challengeId: string;
+  message: string; // SIWE message to sign as-is
+  expiresAt: string; // ISO-8601
 }
 
-export interface WalletRegisterRequest {
-  walletAddress: string;
-  signature: string;
-  message: string;
-  nonce: string;
-  bio?: string;
-  chainId: number;
-}
-
-export interface WalletLoginRequest {
-  walletAddress: string;
-  signature: string;
-  message: string;
-  nonce: string;
-}
-
-export interface WalletLinkRequest {
-  walletAddress: string;
-  signature: string;
-  message: string;
-  nonce: string;
-  chainId: number;
+export interface WalletVerifyRequest {
+  challengeId: string;
+  signature: string; // 0x + 130 hex chars
+  message: string; // exact SIWE message that was signed
 }
 
 export interface WalletUser {
   _id: string;
   walletAddress: string;
+  // When linking, backend may include public profile fields
+  username?: string;
+  email?: string;
+  emailVerified?: boolean;
   bio?: string;
   walletMetadata: {
     chainId: number;
@@ -135,19 +122,3 @@ export interface WalletAuthResponse {
   };
 }
 
-export interface WalletLinkResponse {
-  user: {
-    _id: string;
-    username?: string;
-    email?: string;
-    walletAddress: string;
-    emailVerified?: boolean;
-    walletMetadata: {
-      chainId: number;
-      verified: boolean;
-      verifiedAt: string;
-      lastSyncAt: string;
-    };
-  };
-  message: string;
-}

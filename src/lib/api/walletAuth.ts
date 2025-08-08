@@ -1,65 +1,37 @@
 /**
- * Wallet Authentication API
- * Handles all wallet-based authentication endpoints
+ * Wallet Authentication API (SIWE)
+ * New simplified flow: prepare -> verify
  */
 
 import { apiClient } from './client';
 import type {
   ApiResponse,
-  WalletNonceRequest,
-  WalletNonceResponse,
-  WalletRegisterRequest,
-  WalletLoginRequest,
-  WalletLinkRequest,
+  WalletPrepareRequest,
+  WalletPrepareResponse,
+  WalletVerifyRequest,
   WalletAuthResponse,
-  WalletLinkResponse,
 } from './types';
 
 export const walletAuthAPI = {
   /**
-   * Request wallet nonce for signing
-   * POST /api/auth/wallet/request-nonce
+   * Prepare a SIWE challenge
+   * POST /api/auth/wallet/prepare
+   * - If Authorization header is present, backend treats this as link mode
    */
-  requestWalletNonce: async (
-    data: WalletNonceRequest
-  ): Promise<ApiResponse<WalletNonceResponse>> => {
-    return apiClient.post<WalletNonceResponse>(
-      '/api/auth/wallet/request-nonce',
-      data
-    );
+  prepare: async (
+    data: WalletPrepareRequest
+  ): Promise<ApiResponse<WalletPrepareResponse>> => {
+    return apiClient.post<WalletPrepareResponse>('/api/auth/wallet/prepare', data);
   },
 
   /**
-   * Register new user with wallet
-   * POST /api/auth/wallet/register
+   * Verify signed SIWE message
+   * POST /api/auth/wallet/verify
+   * - Works for both login/register and link flows
    */
-  walletRegister: async (
-    data: WalletRegisterRequest
+  verify: async (
+    data: WalletVerifyRequest
   ): Promise<ApiResponse<WalletAuthResponse>> => {
-    return apiClient.post<WalletAuthResponse>(
-      '/api/auth/wallet/register',
-      data
-    );
-  },
-
-  /**
-   * Login existing user with wallet
-   * POST /api/auth/wallet/login
-   */
-  walletLogin: async (
-    data: WalletLoginRequest
-  ): Promise<ApiResponse<WalletAuthResponse>> => {
-    return apiClient.post<WalletAuthResponse>('/api/auth/wallet/login', data);
-  },
-
-  /**
-   * Link wallet to existing email account
-   * POST /api/auth/wallet/link
-   * Requires Authorization header with access token
-   */
-  linkWallet: async (
-    data: WalletLinkRequest
-  ): Promise<ApiResponse<WalletLinkResponse>> => {
-    return apiClient.post<WalletLinkResponse>('/api/auth/wallet/link', data);
+    return apiClient.post<WalletAuthResponse>('/api/auth/wallet/verify', data);
   },
 };
