@@ -9,12 +9,10 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
   "https://kenesis-backend.onrender.com";
 
-console.log("API Base URL configured:", API_BASE_URL);
-
 /**
  * API Types
  */
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   message: string;
   data?: T;
@@ -161,35 +159,11 @@ export interface WalletLinkResponse {
 }
 
 /**
- * Token Management Utilities
+ * Token Management Utilities (Consolidated)
+ * Use the centralized TokenManager implementation from lib/tokenManager
  */
-export const TokenManager = {
-  getAccessToken: (): string | null => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("kenesis_access_token");
-  },
-
-  getRefreshToken: (): string | null => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("kenesis_refresh_token");
-  },
-
-  setTokens: (tokens: AuthTokens): void => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("kenesis_access_token", tokens.accessToken);
-    localStorage.setItem("kenesis_refresh_token", tokens.refreshToken);
-  },
-
-  clearTokens: (): void => {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("kenesis_access_token");
-    localStorage.removeItem("kenesis_refresh_token");
-  },
-
-  hasTokens: (): boolean => {
-    return !!(TokenManager.getAccessToken() && TokenManager.getRefreshToken());
-  },
-};
+import { TokenManager } from "./tokenManager";
+export { TokenManager } from "./tokenManager";
 
 /**
  * Core API Client
@@ -250,7 +224,7 @@ class ApiClient {
     }
   }
 
-  async post<T>(endpoint: string, payload?: any): Promise<ApiResponse<T>> {
+  async post<T>(endpoint: string, payload?: unknown): Promise<ApiResponse<T>> {
     try {
       console.log(`🚀 Making POST request to: ${this.baseURL}${endpoint}`);
       console.log("📦 Payload:", JSON.stringify(payload, null, 2));
@@ -520,7 +494,7 @@ export const CourseAPI = {
   createModule: async (
     courseId: string,
     moduleData: FormData
-  ): Promise<ApiResponse<any>> => {
+  ): Promise<ApiResponse<unknown>> => {
     return apiClient.postFormData(
       `/api/courses/${courseId}/modules`,
       moduleData
@@ -535,7 +509,7 @@ export const CourseAPI = {
   submitForReview: async (
     courseId: string,
     submissionNotes?: string
-  ): Promise<ApiResponse<any>> => {
+  ): Promise<ApiResponse<unknown>> => {
     return apiClient.post(`/api/courses/${courseId}/submit-for-review`, {
       submissionNotes,
     });

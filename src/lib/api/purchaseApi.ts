@@ -11,28 +11,14 @@ const API_BASE_URL =
 /**
  * Token Management for API requests
  */
-const getAccessToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("kenesis_access_token");
-};
-
-const getRefreshToken = (): string | null => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("kenesis_refresh_token");
-};
-
-const setTokens = (accessToken: string, refreshToken: string): void => {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("kenesis_access_token", accessToken);
-  localStorage.setItem("kenesis_refresh_token", refreshToken);
-};
+import { TokenManager } from "../tokenManager";
 
 /**
  * Refresh access token using refresh token
  */
 const refreshAccessToken = async (): Promise<boolean> => {
   try {
-    const refreshToken = getRefreshToken();
+  const refreshToken = TokenManager.getRefreshToken();
     if (!refreshToken) {
       console.warn("No refresh token available");
       return false;
@@ -59,8 +45,10 @@ const refreshAccessToken = async (): Promise<boolean> => {
 
     const data = await response.json();
 
-    if (data.success && data.data) {
-      setTokens(data.data.accessToken, data.data.refreshToken);
+    if (data.success && (data.data || (data.accessToken && data.refreshToken))) {
+      const newAccess = data.data?.accessToken ?? data.accessToken;
+      const newRefresh = data.data?.refreshToken ?? data.refreshToken;
+      TokenManager.setTokens({ accessToken: newAccess, refreshToken: newRefresh });
       console.log("✅ Access token refreshed successfully");
       return true;
     } else {
@@ -86,7 +74,7 @@ const makeApiRequest = async <T>(
   };
 
   // Add Authorization header if access token is available
-  const accessToken = getAccessToken();
+  const accessToken = TokenManager.getAccessToken();
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
   }
@@ -97,8 +85,8 @@ const makeApiRequest = async <T>(
     body: JSON.stringify(payload),
   });
 
-  // Handle 401 Unauthorized - try token refresh
-  if (response.status === 401 && retryOnAuth) {
+  // Handle auth errors - try token refresh
+  if (retryOnAuth && (response.status === 401 || response.status === 403)) {
     console.log("🔄 Access token expired, attempting refresh...");
 
     const refreshSuccess = await refreshAccessToken();
@@ -107,6 +95,28 @@ const makeApiRequest = async <T>(
       return makeApiRequest<T>(endpoint, payload, false); // Don't retry again
     } else {
       throw new Error("Authentication failed. Please log in again.");
+    }
+  }
+
+  // Also handle body-level forbidden errors
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const msg: string = errorData?.message ?? response.statusText;
+    if (
+      retryOnAuth &&
+      TokenManager.getRefreshToken() &&
+      typeof msg === "string" &&
+      ["forbidden", "unauthorized", "jwt expired", "token expired"].some((p) =>
+        msg.toLowerCase().includes(p)
+      )
+    ) {
+      console.log("🔄 Detected auth error in response body, attempting refresh...");
+      const refreshSuccess = await refreshAccessToken();
+      if (refreshSuccess) {
+        return makeApiRequest<T>(endpoint, payload, false);
+      } else {
+        throw new Error("Session expired. Please log in again.");
+      }
     }
   }
 

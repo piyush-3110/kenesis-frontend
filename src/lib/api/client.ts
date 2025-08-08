@@ -87,7 +87,8 @@ class ApiClient {
       "token is expired",
       "expired token",
       "unauthorized",
-      "invalid token",
+  "invalid token",
+  "forbidden",
     ];
 
     return expiredPatterns.some((pattern) =>
@@ -134,14 +135,14 @@ class ApiClient {
       const data = await response.json();
 
       // Handle API response format
-      if (!response.ok) {
+    if (!response.ok) {
         const errorMessage =
           data.message || `HTTP ${response.status}: ${response.statusText}`;
 
         // Check if this is a token expiration error and we haven't already retried
         if (
           !isRetry &&
-          (response.status === 401 || this.isTokenExpiredError(errorMessage)) &&
+      (response.status === 401 || response.status === 403 || this.isTokenExpiredError(errorMessage)) &&
           TokenManager.getRefreshToken()
         ) {
           console.log("🔄 Detected token expiration, attempting refresh...");
