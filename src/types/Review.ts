@@ -73,3 +73,31 @@ export interface CourseMetadata {
   level: string;
   tags: string[];
 }
+
+// Composite type used across product UI
+export interface ExtendedProduct {
+  id: string;
+  title: string;
+  author: string;
+  price: number;
+  currency: string;
+  rating: number;
+  // Total number of reviews; mirrors reviewSummary.totalReviews in many places
+  reviewCount: number;
+  image?: string;
+  thumbnail?: string;
+  description?: string;
+  createdAt: string;
+  // Marketplace/product fields
+  category?: string;
+  type: "video" | "document";
+  isPurchased?: boolean;
+  purchaseDate?: string;
+  // Enriched fields
+  reviews: Review[];
+  reviewSummary: ReviewSummary;
+  purchasedBy: string[];
+  courseAccess: CourseAccess;
+  content?: CourseContent[];
+  topics?: string[];
+}
