@@ -4,24 +4,23 @@ import { Product, ApiPaginatedResponse, MarketplaceFilters } from '@/app/marketp
 import { MARKETPLACE_CONFIG, SORT_OPTIONS } from '@/app/marketplace/constants';
 import { useDebounce } from '@/hooks/useDebounce';
 
-// Mock API service - in production this would be a real API
+// Real API service - connects to Kenesis backend
 const marketplaceApi = {
   async getProducts(filters: MarketplaceFilters, page: number, limit: number = MARKETPLACE_CONFIG.PRODUCTS_PER_PAGE): Promise<ApiPaginatedResponse<Product>> {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
+    console.log('🛒 Marketplace Hook: Fetching products from real backend API');
     
-    // Import existing marketplace API for now
-    const { fetchProducts } = await import('@/lib/marketplaceApi');
+    // Use real API that connects to backend
+    const { fetchProducts } = await import('@/lib/marketplaceApiReal');
     const result = await fetchProducts(filters, page, limit);
     
     return result;
   },
 
   async getCategories() {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    console.log('🏷️ Marketplace Hook: Fetching categories from real backend API');
     
-    const { fetchCategories } = await import('@/lib/marketplaceApi');
+    // Use real API that connects to backend
+    const { fetchCategories } = await import('@/lib/marketplaceApiReal');
     return fetchCategories();
   },
 };
