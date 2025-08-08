@@ -1,11 +1,11 @@
 'use client';
 
-import { Product } from '@/types/Product';
+import type { MarketplaceProduct } from '@/types/Product';
 import ProductCard from './ProductCard';
 import { Loader2 } from 'lucide-react';
 
 interface ProductGridProps {
-  products: Product[];
+  products: MarketplaceProduct[];
   loading: boolean;
   loadingMore: boolean;
   hasNextPage: boolean;

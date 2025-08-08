@@ -1,11 +1,11 @@
 // Re-export existing types for consistency
 export type { 
-  Product, 
   Category, 
   PriceRange, 
   SortOptionItem,
   MarketplaceFilters,
-  PaginatedResponse
+  PaginatedResponse,
+  CourseForMarketplacePage as Product
 } from '@/types/Product';
 
 // Use the existing PaginatedResponse from lib/marketplaceApi

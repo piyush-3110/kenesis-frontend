@@ -1,13 +1,13 @@
 "use client";
 
-import { Course } from "@/types/Product";
+import type { MarketplaceProduct } from "@/types/Product";
 import Image from "next/image";
 import Link from "next/link";
 import { Star, PlayCircle, FileText } from "lucide-react";
 import { forwardRef } from "react";
 
 interface ProductCardProps {
-  product: Course;
+  product: MarketplaceProduct;
 }
 
 const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
