@@ -24,12 +24,12 @@ type MinimalProduct = {
   id: string;
   title: string;
   author: string;
-  description: string;
+  description?: string;
   price: number;
-  image: string;
+  image?: string;
   type: "video" | "document";
   rating: number;
-  totalRatings: number;
+  totalRatings?: number;
   purchasedBy: string[];
   topics?: string[];
   content?: CourseContent[];
@@ -163,7 +163,7 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
           <div className="space-y-4">
             <div className="aspect-video rounded-xl overflow-hidden border border-gray-800 hover:border-gray-700 transition-colors">
               <Image
-                src={product.image}
+                src={product.image ?? "/images/landing/product.png"}
                 alt={product.title}
                 width={600}
                 height={400}
@@ -190,11 +190,9 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
 
               <div className="bg-gray-900/50 rounded-lg p-4 text-center border border-gray-800">
                 <Star size={24} className="text-yellow-400 mx-auto mb-2" />
-                <div className="text-white font-semibold">
-                  {product.rating}/5
-                </div>
+                <div className="text-white font-semibold">{product.rating}/5</div>
                 <div className="text-gray-400 text-sm">
-                  {product.totalRatings} reviews
+                  {(product.totalRatings ?? product.reviewSummary.totalReviews)} reviews
                 </div>
               </div>
 
@@ -224,7 +222,7 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                 </div>
                 <span className="text-white font-medium">{product.rating}</span>
                 <span className="text-gray-400">
-                  ({product.totalRatings} reviews)
+                  ({product.totalRatings ?? product.reviewSummary.totalReviews} reviews)
                 </span>
               </div>
             </div>
@@ -295,14 +293,16 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
             </div>
 
             {/* Description */}
-            <div>
+            {product.description && (
+              <div>
               <h3 className="text-white text-xl font-semibold mb-3">
                 About this course
               </h3>
               <p className="text-gray-300 leading-relaxed">
                 {product.description}
               </p>
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
