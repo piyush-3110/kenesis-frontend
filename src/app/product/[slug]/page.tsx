@@ -7,6 +7,7 @@ import { useCourse } from "@/hooks/useCourseQuery";
 import { useCourseAccess } from "@/hooks/useCourseAccess";
 import Navbar from "@/components/Landing/Navbar";
 import ReviewsRatings from "@/components/product/ReviewsRatings";
+import { CourseAccessBanner } from "../components/CourseAccessStatus";
 // import CourseContentViewer from "@/components/product/CourseContentViewer";
 import {
   ProductImage,
@@ -27,10 +28,12 @@ const ProductDetailPage: React.FC = () => {
 
   // Check if user has access to the course (only after course data is loaded)
   // This determines whether to show purchase button or "You own this course" message
-  const { data: accessData, isLoading: accessLoading } = useCourseAccess(
-    product?.id || null,
-    !!product?.id
-  );
+  const {
+    data: accessData,
+    isLoading: accessLoading,
+    error: accessError,
+    refetchAccess,
+  } = useCourseAccess(product?.id || null, !!product?.id);
 
   // Custom hooks for business logic
   const productActions = useProductActions(refetch);
@@ -72,6 +75,15 @@ const ProductDetailPage: React.FC = () => {
           <span>Back to Marketplace</span>
         </Link>
 
+        {/* Course Access Status Banner */}
+        <CourseAccessBanner
+          hasAccess={courseAccess.hasAccess}
+          isLoading={accessLoading}
+          error={accessError}
+          courseTitle={product.title}
+          className="mb-8"
+        />
+
         {/* Product Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Product Image */}
@@ -98,8 +110,12 @@ const ProductDetailPage: React.FC = () => {
             accessLoading={accessLoading}
             tokenToPayWith={product.tokenToPayWith}
             onSuccess={() => {
-              // Refetch course access when purchase is successful
-              refetch();
+              // Refetch both course data and access status when purchase is successful
+              console.log(
+                "🎉 Purchase successful, refetching course access..."
+              );
+              refetch(); // Refetch course data
+              refetchAccess(); // Refetch access status
             }}
           />
         </div>
