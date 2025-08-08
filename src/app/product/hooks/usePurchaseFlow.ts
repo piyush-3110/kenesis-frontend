@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
-import { useIsAuthenticated, useAuthUser } from "@/store/useAuthStore";
+import { useIsAuthenticated, useAuthUser } from "@/store/auth";
 import { purchaseCourse } from "@/lib/productApi";
 import { purchaseCourseWithNFT } from "@/lib/nft/purchaseFlow";
 import type { CourseResponse } from "@/lib/api/courseApi";
