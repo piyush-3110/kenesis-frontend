@@ -5,13 +5,9 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  useAuthActions,
-  useIsAuthenticated,
-  useAuthUser,
-} from "@/store/useAuthStore";
+import { useAuthActions, useIsAuthenticated, useAuthUser } from "@/store/auth";
 import { useUIStore } from "@/store/useUIStore";
-import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
+import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
 
 /**
  * AuthPage Component
@@ -33,7 +29,7 @@ const AuthPage: React.FC = () => {
     forgotPasswordLoading,
     registerError,
     loginError,
-    forgotPasswordError,
+  // forgotPasswordError,
     clearRegisterError,
     clearLoginError,
     clearForgotPasswordError,
@@ -564,8 +560,8 @@ const AuthPage: React.FC = () => {
               <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
             </div>
 
-            {/* Web3 Connect Button */}
-            <WalletConnectButton
+            {/* Web3 Connect Button (enhanced) */}
+            <EnhancedWalletConnectButton
               variant="auth-page"
               authIntent={isSignup ? "signup" : "signin"}
               onConnected={() => {

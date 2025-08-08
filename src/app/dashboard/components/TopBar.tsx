@@ -4,7 +4,7 @@ import React from "react";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 // import { DASHBOARD_COLORS } from '../constants';
-import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
+import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
 
 interface TopBarProps {
   title: string;
@@ -71,8 +71,8 @@ const TopBar: React.FC<TopBarProps> = ({
             </div>
           </button>
 
-          {/* Wallet Connect Button */}
-          <WalletConnectButton variant="dashboard" showWalletInfo={true} />
+          {/* Wallet Connect Button (enhanced) */}
+          <EnhancedWalletConnectButton variant="dashboard" showWalletInfo={true} />
         </div>
       </div>
 

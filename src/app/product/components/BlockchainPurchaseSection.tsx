@@ -14,8 +14,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useAccount } from "wagmi";
-import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
-import { useIsAuthenticated } from "@/store/useAuthStore";
+import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
+import { useIsAuthenticated } from "@/store/auth";
 import TokenSelector from "@/components/product/TokenSelector";
 import { SmartContractPurchase } from "@/components/web3/SmartContractPurchase";
 import { validateTokensForPurchase } from "@/lib/contracts/chainConfig";
@@ -249,7 +249,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
               <p className="text-blue-400 text-sm mb-3">
                 Connect your wallet to complete the purchase
               </p>
-              <WalletConnectButton
+              <EnhancedWalletConnectButton
                 variant="default"
                 onConnected={() => {}} // No need for callback, state updates automatically
                 className="w-full"

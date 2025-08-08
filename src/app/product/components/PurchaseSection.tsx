@@ -8,7 +8,7 @@ import {
   Loader2,
   ExternalLink,
 } from "lucide-react";
-import { WalletConnectButton } from "@/components/wallet/WalletConnectButton";
+import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
 import { UsePurchaseFlowReturn } from "../hooks/usePurchaseFlow";
 import TokenSelector from "@/components/product/TokenSelector";
 import type { CourseResponse } from "@/lib/api/courseApi";
@@ -122,7 +122,7 @@ const PurchaseSection: React.FC<PurchaseSectionProps> = ({
               <p className="text-blue-400 text-sm mb-3">
                 Connect your wallet to complete the purchase
               </p>
-              <WalletConnectButton
+              <EnhancedWalletConnectButton
                 variant="default"
                 onConnected={handleWalletConnected}
                 className="w-full"
