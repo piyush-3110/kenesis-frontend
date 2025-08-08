@@ -10,7 +10,8 @@ import {
   Settings, 
   MessageSquare, 
   LogOut,
-  BarChart3
+  BarChart3,
+  FolderOpen
 } from 'lucide-react';
 import { DashboardMenuItem } from '../types';
 
@@ -90,6 +91,12 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     label: 'Products',
     icon: Package,
     href: '/dashboard/products',
+  },
+  {
+    id: 'my-products',
+    label: 'My Products',
+    icon: FolderOpen,
+    href: '/dashboard/my-products',
   },
   {
     id: 'affiliate-showcase',
