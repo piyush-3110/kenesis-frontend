@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { SidebarProps } from '../types';
 import { useDashboardStore } from '../store/useDashboardStore';
-import { useAuthStore, useAuthActions } from '@/store/useAuthStore';
+import { useAuthStore, useAuthActions, useUserProfile } from '@/store/useAuthStore';
 import { 
   DASHBOARD_MENU_ITEMS, 
   DASHBOARD_BOTTOM_ITEMS, 
@@ -39,6 +39,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     connectWallet,
     disconnectWallet,
   } = useDashboardStore();
+
+  // Fetch user profile on mount
+  const { fetchUserProfile } = useUserProfile();
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   // Initialize dashboard data on mount
   useEffect(() => {
