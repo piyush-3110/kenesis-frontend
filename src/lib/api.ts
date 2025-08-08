@@ -84,41 +84,6 @@ export interface RefreshTokenRequest {
   refreshToken: string;
 }
 
-// Wallet authentication types
-export interface WalletNonceRequest {
-  walletAddress: string;
-}
-
-export interface WalletNonceResponse {
-  nonce: string;
-  message: string;
-  expiresAt: string;
-}
-
-export interface WalletRegisterRequest {
-  walletAddress: string;
-  signature: string;
-  message: string;
-  nonce: string;
-  bio?: string;
-  chainId?: number;
-}
-
-export interface WalletLoginRequest {
-  walletAddress: string;
-  signature: string;
-  message: string;
-  nonce: string;
-}
-
-export interface WalletLinkRequest {
-  walletAddress: string;
-  signature: string;
-  message: string;
-  nonce: string;
-  chainId?: number;
-}
-
 export interface WalletUser {
   _id: string;
   walletAddress: string;
@@ -139,23 +104,6 @@ export interface WalletAuthResponse {
     refreshToken: string;
     expiresIn: number;
   };
-}
-
-export interface WalletLinkResponse {
-  user: {
-    _id: string;
-    username?: string;
-    email?: string;
-    walletAddress: string;
-    emailVerified?: boolean;
-    walletMetadata: {
-      chainId: number;
-      verified: boolean;
-      verifiedAt: string;
-      lastSyncAt: string;
-    };
-  };
-  message: string;
 }
 
 /**
@@ -402,54 +350,7 @@ export const AuthAPI = {
     return apiClient.post("/api/auth/reset-password", { token, newPassword });
   },
 
-  // Wallet Authentication Endpoints
-
-  /**
-   * Request wallet nonce for signing
-   * POST /api/auth/wallet/request-nonce
-   */
-  requestWalletNonce: async (
-    data: WalletNonceRequest
-  ): Promise<ApiResponse<WalletNonceResponse>> => {
-    return apiClient.post<WalletNonceResponse>(
-      "/api/auth/wallet/request-nonce",
-      data
-    );
-  },
-
-  /**
-   * Register new user with wallet
-   * POST /api/auth/wallet/register
-   */
-  walletRegister: async (
-    data: WalletRegisterRequest
-  ): Promise<ApiResponse<WalletAuthResponse>> => {
-    return apiClient.post<WalletAuthResponse>(
-      "/api/auth/wallet/register",
-      data
-    );
-  },
-
-  /**
-   * Login existing user with wallet
-   * POST /api/auth/wallet/login
-   */
-  walletLogin: async (
-    data: WalletLoginRequest
-  ): Promise<ApiResponse<WalletAuthResponse>> => {
-    return apiClient.post<WalletAuthResponse>("/api/auth/wallet/login", data);
-  },
-
-  /**
-   * Link wallet to existing email account
-   * POST /api/auth/wallet/link
-   * Requires Authorization header with access token
-   */
-  linkWallet: async (
-    data: WalletLinkRequest
-  ): Promise<ApiResponse<WalletLinkResponse>> => {
-    return apiClient.post<WalletLinkResponse>("/api/auth/wallet/link", data);
-  },
+  // Wallet Authentication Endpoints moved to modular client at src/lib/api/walletAuth.ts
 };
 
 /**
