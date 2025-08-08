@@ -5,7 +5,7 @@
 
 import { useUIStore } from "@/store/useUIStore";
 import { useAuthStore } from "./authState";
-import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useWalletAuth } from "@/hooks/auth/useWalletAuth";
 import { tokenRefreshManager } from "@/lib/tokenRefresh";
 import { useTokenRefresh } from "@/hooks/auth/useTokenRefresh";
 import type { User, AuthIntent } from "@/types/auth";

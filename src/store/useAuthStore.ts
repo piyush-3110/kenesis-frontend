@@ -17,7 +17,7 @@ import {
   useForgotPassword,
   useResetPassword,
 } from "@/hooks/useAuth";
-import { useWalletAuth } from "@/hooks/useWalletAuth";
+import { useWalletAuth } from "@/hooks/auth/useWalletAuth";
 import { tokenRefreshManager } from "@/lib/tokenRefresh";
 import { useUIStore } from "@/store/useUIStore";
 
