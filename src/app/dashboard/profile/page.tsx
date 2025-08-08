@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useProfileStore } from './store/useProfileStore';
+import { useUserProfile } from '@/store/useAuthStore';
 import GradientBox from './components/GradientBox';
 import StatCard from './components/StatCard';
 import InstructorCard from './components/InstructorCard';
@@ -36,6 +37,12 @@ const ProfilePage: React.FC = () => {
     loadCourses,
     resetError
   } = useProfileStore();
+
+  // Fetch user profile on profile page mount
+  const { fetchUserProfile } = useUserProfile();
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
 
   // Load initial data
   useEffect(() => {
