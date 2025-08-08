@@ -1,27 +1,18 @@
 "use client";
 
-import { Product } from "@/types/Product";
+import type { ExtendedProduct } from "@/types/Review";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Star,
-  PlayCircle,
-  FileText,
-  CheckCircle,
-  ShoppingCart,
-  Lock,
-  Eye,
-} from "lucide-react";
+import { Star, PlayCircle, FileText, CheckCircle, ShoppingCart, Lock } from "lucide-react";
 import { forwardRef } from "react";
 
 interface ProductCardProps {
-  product: Product;
+  product: ExtendedProduct;
 }
 
 const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
   ({ product }, ref) => {
-    const isPurchased = product.isPurchased;
-    const accessLevel = product.accessLevel || "none";
+  const isPurchased = Boolean(product.isPurchased || product.courseAccess?.hasAccess);
 
     const getAccessBadge = () => {
       if (isPurchased) {
@@ -33,14 +24,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
         );
       }
 
-      switch (accessLevel) {
-        case "preview":
-          return (
-            <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md bg-yellow-600/90 backdrop-blur-sm">
-              <Eye size={12} className="text-white" />
-              <span className="text-white text-xs font-medium">Preview</span>
-            </div>
-          );
+      switch (isPurchased ? "owned" : "none") {
         case "none":
         default:
           return (
@@ -77,16 +61,14 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
             <ShoppingCart size={16} className="text-blue-400" />
             <span className="text-blue-400 text-sm font-medium">Buy Now</span>
           </div>
-          {accessLevel === "preview" && (
-            <p className="text-yellow-400 text-xs mt-1">Preview available</p>
-          )}
+          {/* Preview state not implemented in current data model */}
         </div>
       );
     };
 
     return (
       <Link
-        href={`/product/${product.slug || product.id}`}
+        href={`/product/${product.id}`}
         className="block group"
       >
         <div
@@ -116,13 +98,11 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               {/* Product Image */}
               <div className="relative w-full sm:w-24 md:w-32 h-40 sm:h-24 md:h-32 flex-shrink-0">
                 <Image
-                  src={product.image}
+                  src={product.image || product.thumbnail || "/images/landing/product.png"}
                   alt={product.title}
                   fill
                   className={`object-cover rounded-lg transition-transform duration-300 group-hover:scale-105 ${
-                    !isPurchased && accessLevel === "none"
-                      ? "grayscale opacity-60"
-                      : ""
+                    !isPurchased ? "grayscale opacity-60" : ""
                   }`}
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 96px, 128px"
                 />
@@ -163,9 +143,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                   </h3>
 
                   {/* Author */}
-                  <p className="text-gray-400 text-sm mb-2 sm:mb-3">
-                    {product.author}
-                  </p>
+                  <p className="text-gray-400 text-sm mb-2 sm:mb-3">{product.author}</p>
 
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-2 sm:mb-3">
@@ -174,30 +152,28 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                         size={14}
                         className="text-yellow-400 fill-current"
                       />
-                      <span className="text-white text-sm font-medium">
-                        {product.rating}
-                      </span>
+                      <span className="text-white text-sm font-medium">{product.rating}</span>
                     </div>
                     <span className="text-gray-400 text-sm">
-                      ({product.totalRatings})
+                      ({product.reviewSummary?.totalReviews ?? product.reviewCount})
                     </span>
                   </div>
 
                   {/* Description - Hidden on mobile */}
-                  <p className="text-gray-300 text-sm line-clamp-2 leading-relaxed hidden sm:block">
-                    {product.description}
-                  </p>
+                  {product.description && (
+                    <p className="text-gray-300 text-sm line-clamp-2 leading-relaxed hidden sm:block">
+                      {product.description}
+                    </p>
+                  )}
 
                   {/* Course Topics Preview - Only for unpurchased courses */}
-                  {!isPurchased &&
-                    product.topics &&
-                    product.topics.length > 0 && (
+      {!isPurchased && product.topics && product.topics.length > 0 && (
                       <div className="mt-3 hidden sm:block">
                         <h4 className="text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">
                           Course Content:
                         </h4>
                         <div className="space-y-1">
-                          {product.topics.slice(0, 3).map((topic, index) => (
+                          {product.topics.slice(0, 3).map((topic: string, index: number) => (
                             <div
                               key={index}
                               className="flex items-center gap-2 text-gray-400 text-xs"
@@ -217,7 +193,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                           )}
                         </div>
                       </div>
-                    )}
+        )}
                 </div>
               </div>
 
@@ -233,9 +209,11 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                 </div>
 
                 {/* Mobile description preview */}
-                <p className="text-gray-400 text-xs line-clamp-1 sm:hidden max-w-[150px] mb-2">
-                  {product.description}
-                </p>
+                {product.description && (
+                  <p className="text-gray-400 text-xs line-clamp-1 sm:hidden max-w-[150px] mb-2">
+                    {product.description}
+                  </p>
+                )}
 
                 {/* Purchase/Access Button */}
                 <div className="w-full">{getPurchaseButton()}</div>
@@ -243,13 +221,13 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
             </div>
 
             {/* Mobile Topics Preview - Only for unpurchased courses */}
-            {!isPurchased && product.topics && product.topics.length > 0 && (
+    {!isPurchased && product.topics && product.topics.length > 0 && (
               <div className="mt-3 px-3 sm:hidden">
                 <h4 className="text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">
                   Course Content:
                 </h4>
                 <div className="space-y-1">
-                  {product.topics.slice(0, 4).map((topic, index) => (
+                  {product.topics.slice(0, 4).map((topic: string, index: number) => (
                     <div
                       key={index}
                       className="flex items-center gap-2 text-gray-400 text-xs"

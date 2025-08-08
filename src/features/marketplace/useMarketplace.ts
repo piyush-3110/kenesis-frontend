@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Product, Category, MarketplaceFilters, PaginatedResponse, SortOptionItem, PriceRange } from '@/types/Product';
+import { Category, MarketplaceFilters, SortOptionItem, PriceRange } from '@/types/Product';
+import type { CourseForMarketplacePage as Product } from '@/types/Product';
+import type { PaginatedResponse } from '@/lib/marketplaceApi';
 import { fetchProducts, fetchCategories, fetchSortOptions, fetchPriceRange } from '@/lib/marketplaceApi';
 import { useDebounce } from '@/hooks/useDebounce';
 
@@ -55,7 +57,7 @@ export function useMarketplace() {
         searchQuery: debouncedSearchQuery
       };
       
-      const response: PaginatedResponse<Product> = await fetchProducts(filtersWithSearch, page, 10);
+  const response: PaginatedResponse<Product> = await fetchProducts(filtersWithSearch, page, 10);
       
       if (isLoadMore) {
         // Append new products for infinite scroll
@@ -65,8 +67,8 @@ export function useMarketplace() {
         setProducts(response.data);
       }
       
-      setHasNextPage(response.pagination.hasNextPage);
-      setTotalCount(response.pagination.total);
+  setHasNextPage(response.pagination.hasNextPage);
+  setTotalCount(response.pagination.total);
       setCurrentPage(page);
       
     } catch (err) {

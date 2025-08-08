@@ -1,11 +1,11 @@
 "use client";
 
-import { Course } from "@/types/Product";
+import type { ExtendedProduct } from "@/types/Review";
 import ProductCard from "./ProductCard";
 import { Loader2 } from "lucide-react";
 
 interface ProductGridProps {
-  products: Course[];
+  products: ExtendedProduct[];
   loading: boolean;
   loadingMore: boolean;
   hasNextPage: boolean;
