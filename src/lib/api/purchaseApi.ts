@@ -3,8 +3,6 @@
  * Handles backend purchase confirmation after successful blockchain transactions
  */
 
-import { parseTokenString } from '@/lib/contracts/chainConfig';
-
 // Environment configuration
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
@@ -18,10 +16,71 @@ const getAccessToken = (): string | null => {
   return localStorage.getItem("kenesis_access_token");
 };
 
+const getRefreshToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("kenesis_refresh_token");
+};
+
+const setTokens = (accessToken: string, refreshToken: string): void => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem("kenesis_access_token", accessToken);
+  localStorage.setItem("kenesis_refresh_token", refreshToken);
+};
+
 /**
- * Simple API client for purchase confirmation
+ * Refresh access token using refresh token
  */
-const makeApiRequest = async <T>(endpoint: string, payload: PurchaseConfirmationRequest): Promise<T> => {
+const refreshAccessToken = async (): Promise<boolean> => {
+  try {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      console.warn("No refresh token available");
+      return false;
+    }
+
+    console.log("🔄 Refreshing access token...");
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/refresh-token`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!response.ok) {
+      console.error(
+        "Failed to refresh token:",
+        response.status,
+        response.statusText
+      );
+      return false;
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.data) {
+      setTokens(data.data.accessToken, data.data.refreshToken);
+      console.log("✅ Access token refreshed successfully");
+      return true;
+    } else {
+      console.error("Token refresh response invalid:", data);
+      return false;
+    }
+  } catch (error) {
+    console.error("Token refresh error:", error);
+    return false;
+  }
+};
+
+/**
+ * API client with automatic token refresh
+ */
+const makeApiRequest = async <T>(
+  endpoint: string,
+  payload: PurchaseConfirmationRequest,
+  retryOnAuth = true
+): Promise<T> => {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -38,38 +97,53 @@ const makeApiRequest = async <T>(endpoint: string, payload: PurchaseConfirmation
     body: JSON.stringify(payload),
   });
 
+  // Handle 401 Unauthorized - try token refresh
+  if (response.status === 401 && retryOnAuth) {
+    console.log("🔄 Access token expired, attempting refresh...");
+
+    const refreshSuccess = await refreshAccessToken();
+    if (refreshSuccess) {
+      // Retry the request with new token
+      return makeApiRequest<T>(endpoint, payload, false); // Don't retry again
+    } else {
+      throw new Error("Authentication failed. Please log in again.");
+    }
+  }
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+    throw new Error(
+      errorData.message || `HTTP ${response.status}: ${response.statusText}`
+    );
   }
 
   return response.json();
 };
 
 export interface PurchaseConfirmationRequest {
-  courseId: string;              // MongoDB ObjectId of the course
-  tokenUsed: string;             // Payment token address (e.g., "USDC", "ETH")
-  purchasePrice: number;         // Amount paid for the course
-  transactionHash?: string;      // Blockchain transaction hash
-  nftId?: string;               // NFT ID if purchase includes an NFT
-  affiliateCode?: string;        // Ethereum wallet address of affiliate
+  courseId: string; // MongoDB ObjectId of the course
+  tokenUsed: string; // Payment token in SYMBOL-CHAINID format (e.g., "USDC-1", "USDT-137")
+  purchasePrice: number; // Amount paid for the course
+  transactionHash?: string; // Blockchain transaction hash (hex only, no 0x prefix)
+  nftId?: string; // NFT ID if purchase includes an NFT
+  affiliateCode?: string; // Ethereum wallet address of affiliate
 }
 
 export interface PurchaseRecord {
-  id: string;                    // Purchase record ID
-  courseId: string;              // Course ID
-  purchasePrice: number;         // Amount paid
-  tokenUsed: string;             // Payment token used
-  purchasedAt: Date;             // Purchase timestamp
-  expiresAt?: Date;              // Access expiration (if course has time limit)
-  hasAccess: true;               // Always true for successful purchase
-  nftId?: string;                // NFT ID if applicable
+  id: string; // Purchase record ID
+  courseId: string; // Course ID
+  purchasePrice: number; // Amount paid
+  tokenUsed: string; // Payment token used
+  purchasedAt: Date; // Purchase timestamp
+  expiresAt?: Date; // Access expiration (if course has time limit)
+  hasAccess: true; // Always true for successful purchase
+  nftId?: string; // NFT ID if applicable
 }
 
 export interface CourseAccess {
-  hasAccess: true;               // Access status
-  expiresAt?: Date;              // When access expires (if applicable)
-  remainingDays: number | null;  // Days remaining or null for lifetime access
+  hasAccess: true; // Access status
+  expiresAt?: Date; // When access expires (if applicable)
+  remainingDays: number | null; // Days remaining or null for lifetime access
 }
 
 export interface PurchaseConfirmationResponse {
@@ -94,17 +168,18 @@ export const confirmPurchase = async (
   request: PurchaseConfirmationRequest
 ): Promise<PurchaseConfirmationResponse> => {
   try {
-    console.log('🔄 Confirming purchase with backend:', request);
+    console.log("🔄 Confirming purchase with backend...");
+    console.log("📋 Request payload:", JSON.stringify(request, null, 2));
 
     const response = await makeApiRequest<PurchaseConfirmationResponse>(
-      '/api/courses/purchases/confirm',
+      "/api/courses/purchases/confirm",
       request
     );
 
-    console.log('✅ Purchase confirmed successfully:', response);
+    console.log("✅ Purchase confirmed successfully:", response);
     return response;
   } catch (error: unknown) {
-    console.error('❌ Purchase confirmation failed:', error);
+    console.error("❌ Purchase confirmation failed:", error);
 
     // Handle errors properly
     if (error instanceof Error) {
@@ -112,7 +187,7 @@ export const confirmPurchase = async (
     }
 
     // Handle unexpected error types
-    throw new Error('Failed to confirm purchase with backend');
+    throw new Error("Failed to confirm purchase with backend");
   }
 };
 
@@ -121,22 +196,42 @@ export const confirmPurchase = async (
  */
 export const createPurchaseConfirmationRequest = (params: {
   courseId: string;
-  tokenString: string;           // e.g., "USDT-137"
+  tokenString: string; // e.g., "USDT-137"
   purchasePrice: number;
   transactionHash: string;
   nftTokenId?: bigint;
   affiliateAddress?: string;
 }): PurchaseConfirmationRequest => {
-  const { symbol } = parseTokenString(params.tokenString);
-  
-  return {
+  // Keep the full token string format (SYMBOL-CHAINID) as required by backend
+  const tokenUsed = params.tokenString;
+
+  // Remove "0x" prefix from transaction hash as backend expects hex-only
+  const cleanTransactionHash = params.transactionHash.startsWith("0x")
+    ? params.transactionHash.slice(2)
+    : params.transactionHash;
+
+  console.log("🔧 Creating purchase confirmation request:");
+  console.log("  - Course ID:", params.courseId);
+  console.log("  - Token String (input):", params.tokenString);
+  console.log("  - Token Used (output):", tokenUsed);
+  console.log("  - Purchase Price:", params.purchasePrice);
+  console.log("  - Transaction Hash (input):", params.transactionHash);
+  console.log("  - Transaction Hash (output):", cleanTransactionHash);
+  console.log("  - NFT Token ID:", params.nftTokenId?.toString());
+  console.log("  - Affiliate Address:", params.affiliateAddress);
+
+  const request = {
     courseId: params.courseId,
-    tokenUsed: symbol,
+    tokenUsed: tokenUsed, // Use full format: "USDT-137"
     purchasePrice: params.purchasePrice,
-    transactionHash: params.transactionHash,
+    transactionHash: cleanTransactionHash, // Remove 0x prefix
     nftId: params.nftTokenId?.toString(),
     affiliateCode: params.affiliateAddress,
   };
+
+  console.log("📦 Final request object:", JSON.stringify(request, null, 2));
+
+  return request;
 };
 
 /**
@@ -165,10 +260,11 @@ export const completePurchaseFlow = async (params: {
       courseAccess: result.data.courseAccess,
     };
   } catch (error) {
-    console.error('Complete purchase flow failed:', error);
+    console.error("Complete purchase flow failed:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Purchase completion failed',
+      error:
+        error instanceof Error ? error.message : "Purchase completion failed",
     };
   }
 };
