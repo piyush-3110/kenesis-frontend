@@ -36,7 +36,7 @@ const CourseReview: React.FC = () => {
     if (!currentCourse) return 0;
     return currentCourse.chapters.reduce((total, chapter) => {
       return total + chapter.modules.reduce((chapterTotal, module) => {
-        return chapterTotal + module.duration;
+        return chapterTotal + (module.duration || 0);
       }, 0);
     }, 0);
   };
@@ -208,9 +208,9 @@ const CourseReview: React.FC = () => {
             <div>
               <h3 className="font-semibold text-white mb-2">Payment Tokens</h3>
               <div className="flex flex-wrap gap-2">
-                {currentCourse.tokensToPayWith.map(token => (
-                  <span key={token} className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm">
-                    {token}
+                {currentCourse.tokenToPayWith.map((token: any) => (
+                  <span key={`${token.chainId}-${token.address}`} className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm">
+                    {token.symbol} ({token.chainName})
                   </span>
                 ))}
               </div>
@@ -245,7 +245,7 @@ const CourseReview: React.FC = () => {
                     {chapter.modules.length} modules
                   </div>
                   <div className="text-xs text-gray-500">
-                    {chapter.modules.reduce((total, module) => total + module.duration, 0)} min
+                    {chapter.modules.reduce((total, module) => total + (module.duration || 0), 0)} min
                   </div>
                 </div>
               </div>
