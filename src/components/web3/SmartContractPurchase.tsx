@@ -481,9 +481,9 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                       Course Access Pending
                     </h4>
                     <p className="text-yellow-300 text-sm mb-2">
-                      Your payment was successful, but we couldn&apos;t automatically
-                      activate your course access. Our team will manually verify
-                      your purchase and activate access shortly.
+                      Your payment was successful, but we couldn&apos;t
+                      automatically activate your course access. Our team will
+                      manually verify your purchase and activate access shortly.
                     </p>
                     <p className="text-yellow-300 text-xs">
                       Error: {backendConfirmationResult?.error}

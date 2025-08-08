@@ -22,6 +22,10 @@ import { validateTokensForPurchase } from "@/lib/contracts/chainConfig";
 import { purchaseCourseWithNFT } from "@/lib/nft/purchaseFlow";
 import type { CourseResponse } from "@/lib/api/courseApi";
 import type { PurchaseWithNFTResult } from "@/lib/nft/purchaseFlow";
+import type {
+  PurchaseRecord,
+  CourseAccess as ApiCourseAccess,
+} from "@/lib/api/purchaseApi";
 
 interface CourseAccess {
   hasAccess: boolean;
@@ -60,13 +64,16 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
 
   // Authentication and wallet state
   const isAuthenticated = useIsAuthenticated();
-  const { address: connectedWalletAddress, isConnected: isWalletConnected } = useAccount();
+  const { address: connectedWalletAddress, isConnected: isWalletConnected } =
+    useAccount();
 
   // For purchase, we need:
   // 1. User must be logged in (via email OR wallet - doesn't matter)
   // 2. Wallet must be connected via wagmi
   // Email is optional - if they have it fine, if not nevermind
-  const hasWalletConnected = Boolean(connectedWalletAddress && isWalletConnected);
+  const hasWalletConnected = Boolean(
+    connectedWalletAddress && isWalletConnected
+  );
 
   // Determine purchase button state
   const getPurchaseButtonState = (): "login" | "wallet" | "purchase" => {
@@ -132,10 +139,32 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   const handlePurchaseSuccess = (result: {
     transactionHash: string;
     nftTokenId?: bigint;
+    backendConfirmation?: {
+      success: boolean;
+      purchase?: PurchaseRecord;
+      courseAccess?: ApiCourseAccess;
+      error?: string;
+    };
   }) => {
     console.log("Blockchain purchase successful:", result);
+
+    // Log backend confirmation status
+    if (result.backendConfirmation) {
+      if (result.backendConfirmation.success) {
+        console.log(
+          "✅ Backend confirmation successful:",
+          result.backendConfirmation
+        );
+      } else {
+        console.warn(
+          "⚠️ Backend confirmation failed:",
+          result.backendConfirmation.error
+        );
+      }
+    }
+
     setPurchaseStep("idle"); // Reset state
-    onSuccess?.();
+    onSuccess?.(); // This will trigger course access refetch
   };
 
   const handlePurchaseError = (error: string) => {
