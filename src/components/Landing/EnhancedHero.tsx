@@ -5,8 +5,8 @@
 
 "use client";
 
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 import Image from "next/image";
-import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
 import React from "react";
 
 const EnhancedHero: React.FC = () => {
@@ -77,14 +77,7 @@ const EnhancedHero: React.FC = () => {
 
         {/* Enhanced Connect Wallet Button with auto strategy */}
         <div className="mb-12 flex justify-center items-center">
-          <EnhancedWalletConnectButton
-            variant="default"
-            authIntent="auto"
-            onConnected={() => {
-              // Optional: redirect to dashboard after successful connection
-              // window.location.href = "/dashboard";
-            }}
-          />
+          <SiweAuthButton />
         </div>
 
         {/* Girls Image */}

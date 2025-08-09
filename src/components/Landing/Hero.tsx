@@ -1,7 +1,7 @@
 "use client";
 
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 import Image from "next/image";
-import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
 import React from "react";
 
 const Hero: React.FC = () => {
@@ -73,7 +73,7 @@ const Hero: React.FC = () => {
 
         {/* Connect Wallet Button (enhanced, unified auth flow) */}
         <div className="mb-12 flex justify-center items-center">
-          <EnhancedWalletConnectButton variant="default" />
+          <SiweAuthButton />
         </div>
 
         {/* Girls Image */}
