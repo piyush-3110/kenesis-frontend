@@ -3,14 +3,14 @@
  * New simplified flow: prepare -> verify
  */
 
-import { apiClient } from './client';
+import { apiClient } from "./client";
 import type {
   ApiResponse,
   WalletPrepareRequest,
   WalletPrepareResponse,
   WalletVerifyRequest,
   WalletAuthResponse,
-} from './types';
+} from "./types";
 
 export const walletAuthAPI = {
   /**
@@ -21,7 +21,10 @@ export const walletAuthAPI = {
   prepare: async (
     data: WalletPrepareRequest
   ): Promise<ApiResponse<WalletPrepareResponse>> => {
-    return apiClient.post<WalletPrepareResponse>('/api/auth/wallet/prepare', data);
+    return apiClient.post<WalletPrepareResponse>(
+      "/api/auth/wallet/prepare",
+      data
+    );
   },
 
   /**
@@ -32,6 +35,6 @@ export const walletAuthAPI = {
   verify: async (
     data: WalletVerifyRequest
   ): Promise<ApiResponse<WalletAuthResponse>> => {
-    return apiClient.post<WalletAuthResponse>('/api/auth/wallet/verify', data);
+    return apiClient.post<WalletAuthResponse>("/api/auth/wallet/verify", data);
   },
 };

@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from "./client";
-import type { ApiResponse } from "./types";
+import type { ApiResponse } from "./apiTypes";
 
 // Course response types based on backend API
 export interface CourseStats {

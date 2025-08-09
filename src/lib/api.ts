@@ -110,8 +110,8 @@ export interface WalletAuthResponse {
  * Token Management Utilities (Consolidated)
  * Use the centralized TokenManager implementation from lib/tokenManager
  */
-import { TokenManager } from "./tokenManager";
-export { TokenManager } from "./tokenManager";
+import { TokenManager } from "@/features/auth/tokenManager";
+export { TokenManager } from "@/features/auth/tokenManager";
 
 /**
  * Core API Client

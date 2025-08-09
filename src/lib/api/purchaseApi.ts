@@ -11,7 +11,7 @@ const API_BASE_URL =
 /**
  * Token Management for API requests
  */
-import { TokenManager } from "../tokenManager";
+import { TokenManager } from "@/features/auth/tokenManager";
 
 /**
  * Refresh access token using refresh token

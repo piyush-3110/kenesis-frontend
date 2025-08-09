@@ -3,12 +3,8 @@
  * Handles HTTP requests with proper token management and automatic token refresh
  */
 
-import { TokenManager } from "../tokenManager";
-import type {
-  ApiResponse,
-  // RefreshTokenRequest,
-  // RefreshTokenResponse,
-} from "./types";
+import { TokenManager } from "@/features/auth/tokenManager";
+import type { ApiResponse } from "./apiTypes";
 
 // Environment configuration
 const API_BASE_URL =
