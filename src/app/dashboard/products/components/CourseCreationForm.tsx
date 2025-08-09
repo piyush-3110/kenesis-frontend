@@ -182,23 +182,26 @@ const CourseCreationForm: React.FC = () => {
       }
       
       // Optional metadata (as JSON string per backend spec)
-      // Filter out empty values before sending
+      // Filter out empty values more thoroughly before sending
       const cleanedMetadata = {
-        requirements: formData.metadata?.requirements?.filter(req => req.trim()) || [],
-        learningOutcomes: formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim()) || [],
-        targetAudience: formData.metadata?.targetAudience?.filter(audience => audience.trim()) || []
+        requirements: formData.metadata?.requirements?.filter(req => req.trim().length > 0) || [],
+        learningOutcomes: formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim().length > 0) || [],
+        targetAudience: formData.metadata?.targetAudience?.filter(audience => audience.trim().length > 0) || []
       };
       
       console.log('📋 Original metadata:', formData.metadata);
       console.log('📋 Cleaned metadata:', cleanedMetadata);
       
-      if (cleanedMetadata.requirements.length || 
-          cleanedMetadata.learningOutcomes.length || 
-          cleanedMetadata.targetAudience.length) {
+      // Only send metadata if there's actually content, otherwise send empty object
+      if (cleanedMetadata.requirements.length > 0 || 
+          cleanedMetadata.learningOutcomes.length > 0 || 
+          cleanedMetadata.targetAudience.length > 0) {
         courseFormData.append('metadata', JSON.stringify(cleanedMetadata));
-        console.log('✅ Metadata added to FormData:', JSON.stringify(cleanedMetadata));
+        console.log('✅ Metadata with content added to FormData:', JSON.stringify(cleanedMetadata));
       } else {
-        console.log('⚠️ No metadata to send (all fields empty)');
+        // Send an empty object if no metadata
+        courseFormData.append('metadata', JSON.stringify({}));
+        console.log('✅ Empty metadata object added to FormData');
       }
       
       console.log('📤 Submitting course creation request');
@@ -665,7 +668,7 @@ const CourseCreationForm: React.FC = () => {
             <label className="block text-white font-medium mb-3">
               What Students Will Learn *
               <span className="text-xs text-gray-400 ml-2">
-                (Minimum 3 required - {(formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim()).length || 0)}/3)
+                (Minimum 3 required - {(formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim().length > 0).length || 0)}/3)
               </span>
             </label>
             <div className="space-y-2">
@@ -730,9 +733,9 @@ const CourseCreationForm: React.FC = () => {
               >
                 <Plus className="w-4 h-4" />
                 Add Learning Outcome
-                {(formData.metadata?.learningOutcomes?.length || 0) < 3 && (
+                {((formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim().length > 0).length || 0) < 3) && (
                   <span className="text-orange-400 text-xs">
-                    ({3 - (formData.metadata?.learningOutcomes?.length || 0)} more needed)
+                    ({3 - (formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim().length > 0).length || 0)} more needed)
                   </span>
                 )}
               </button>
