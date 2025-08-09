@@ -32,13 +32,25 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { logout } = useAuthActions();
   const {
     selectedMenuItem,
-    user,
     setSelectedMenuItem,
     setSidebarCollapsed,
     initializeDashboard,
     connectWallet,
     disconnectWallet,
   } = useDashboardStore();
+
+  // Get real user data from auth store
+  const authUser = useAuthStore((state) => state.user);
+  
+  // Create dashboard user object from auth user
+  const user = authUser ? {
+    id: authUser.id,
+    name: authUser.username || authUser.email?.split('@')[0] || 'User',
+    email: authUser.email || '',
+    avatar: '', // No avatar in API yet, will be added later
+    isConnected: authUser.isWalletConnected || false,
+    walletAddress: authUser.walletAddress || undefined,
+  } : null;
 
   // Fetch user profile on mount
   const { fetchUserProfile } = useUserProfile();
