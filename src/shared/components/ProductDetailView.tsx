@@ -190,9 +190,12 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
 
               <div className="bg-gray-900/50 rounded-lg p-4 text-center border border-gray-800">
                 <Star size={24} className="text-yellow-400 mx-auto mb-2" />
-                <div className="text-white font-semibold">{product.rating}/5</div>
+                <div className="text-white font-semibold">
+                  {product.rating}/5
+                </div>
                 <div className="text-gray-400 text-sm">
-                  {(product.totalRatings ?? product.reviewSummary.totalReviews)} reviews
+                  {product.totalRatings ?? product.reviewSummary.totalReviews}{" "}
+                  reviews
                 </div>
               </div>
 
@@ -222,7 +225,8 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                 </div>
                 <span className="text-white font-medium">{product.rating}</span>
                 <span className="text-gray-400">
-                  ({product.totalRatings ?? product.reviewSummary.totalReviews} reviews)
+                  ({product.totalRatings ?? product.reviewSummary.totalReviews}{" "}
+                  reviews)
                 </span>
               </div>
             </div>
@@ -295,12 +299,12 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
             {/* Description */}
             {product.description && (
               <div>
-              <h3 className="text-white text-xl font-semibold mb-3">
-                About this course
-              </h3>
-              <p className="text-gray-300 leading-relaxed">
-                {product.description}
-              </p>
+                <h3 className="text-white text-xl font-semibold mb-3">
+                  About this course
+                </h3>
+                <p className="text-gray-300 leading-relaxed">
+                  {product.description}
+                </p>
               </div>
             )}
           </div>
