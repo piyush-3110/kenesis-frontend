@@ -3,8 +3,8 @@
 import React from "react";
 import { Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 // import { DASHBOARD_COLORS } from '../constants';
-import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
 
 interface TopBarProps {
   title: string;
@@ -72,7 +72,7 @@ const TopBar: React.FC<TopBarProps> = ({
           </button>
 
           {/* Wallet Connect Button (enhanced) */}
-          <EnhancedWalletConnectButton variant="dashboard" showWalletInfo={true} />
+          <SiweAuthButton variant="dashboard" />
         </div>
       </div>
 
