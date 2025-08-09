@@ -1,3 +1,4 @@
+import { TokenManager } from "@/features/auth/tokenManager";
 import {
   Category,
   MarketplaceFilters,
@@ -5,7 +6,6 @@ import {
   PriceRange,
   CourseForMarketplacePage,
 } from "@/types/Product";
-import { TokenManager } from "@/features/auth/tokenManager";
 
 // Cache for reducing API calls
 let categoriesCache: { data: Category[]; timestamp: number } | null = null;
@@ -92,11 +92,6 @@ const mapCourseToProduct = (
   course: BackendCourse
 ): CourseForMarketplacePage => {
   // Map course level to a category for now - you may want to implement proper categories later
-  const levelToCategory = {
-    beginner: "Beginner Courses",
-    intermediate: "Intermediate Courses",
-    advanced: "Advanced Courses",
-  };
 
   return {
     id: course.id,
@@ -114,7 +109,6 @@ const mapCourseToProduct = (
       duration: course.stats.duration, // Duration in seconds
     },
     thumbnail: course.thumbnail || "/images/landing/product.png", // Fallback to default image
-    category: levelToCategory[course.level] || "General",
     type: course.type,
     createdAt: course.createdAt.split("T")[0], // Convert to YYYY-MM-DD format
   };

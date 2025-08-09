@@ -11,7 +11,7 @@ export interface DashboardMenuItem {
   isActive?: boolean;
   badge?: {
     count: number;
-    variant?: 'primary' | 'secondary' | 'danger';
+    variant?: "primary" | "secondary" | "danger";
   };
   isSection?: boolean;
 }
@@ -22,7 +22,6 @@ export interface DashboardUser {
   email: string;
   avatar?: string;
   walletAddress?: string;
-  isConnected: boolean;
 }
 
 export interface DashboardMetric {
@@ -31,7 +30,7 @@ export interface DashboardMetric {
   value: string | number;
   change?: {
     percentage: number;
-    direction: 'up' | 'down';
+    direction: "up" | "down";
     period: string;
   };
   trend?: number[];
@@ -45,8 +44,8 @@ export interface Transaction {
   amount: number;
   currency: string;
   timestamp: Date;
-  status: 'completed' | 'pending' | 'failed';
-  type: 'deposit' | 'withdrawal' | 'transfer';
+  status: "completed" | "pending" | "failed";
+  type: "deposit" | "withdrawal" | "transfer";
   userWallet: string;
 }
 

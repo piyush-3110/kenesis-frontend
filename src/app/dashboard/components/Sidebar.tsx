@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { SidebarProps } from "../types";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { useLogout } from "@/features/auth/hooks";
+
 import {
   DASHBOARD_MENU_ITEMS,
   DASHBOARD_BOTTOM_ITEMS,
@@ -14,6 +15,7 @@ import NavigationItem from "./NavigationItem";
 import UserProfile from "./UserProfile";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
 
 /**
  * Sidebar Component
@@ -30,11 +32,24 @@ const Sidebar: React.FC<SidebarProps> = ({
   const logout = useLogout();
   const {
     selectedMenuItem,
-    user,
     setSelectedMenuItem,
     initializeDashboard,
     disconnectWallet,
   } = useDashboardStore();
+
+  // Get real user data from auth store
+  const { data: authUser } = useCurrentUser();
+
+  // Create dashboard user object from auth user
+  const user = authUser
+    ? {
+        id: authUser.id,
+        name: authUser.username || authUser.email?.split("@")[0] || "User",
+        email: authUser.email || "",
+        avatar: authUser.avatar, // No avatar in API yet, will be added later
+        walletAddress: authUser.walletAddress || undefined,
+      }
+    : null;
 
   // Initialize dashboard data on mount
   useEffect(() => {
@@ -64,7 +79,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       disconnectWallet();
 
       // Call the proper logout action with toast notifications and redirects
-      await logout.mutateAsync();
+      await logout.mutate();
 
       // The logout action will handle the redirect automatically
     } catch (error) {

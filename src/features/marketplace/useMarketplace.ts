@@ -2,24 +2,24 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
+  Course,
   Category,
   MarketplaceFilters,
+  PaginatedResponse,
   SortOptionItem,
   PriceRange,
 } from "@/types/Product";
-import type { CourseForMarketplacePage as Product } from "@/types/Product";
-import type { PaginatedResponse } from "@/lib/marketplaceApi";
 import {
   fetchProducts,
   fetchCategories,
   fetchSortOptions,
   fetchPriceRange,
-} from "@/lib/marketplaceApi";
+} from "@/lib/marketplaceApiReal";
 import { useDebounce } from "@/hooks/useDebounce";
 
 export function useMarketplace() {
   // State management
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Course[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sortOptions, setSortOptions] = useState<SortOptionItem[]>([]);
   const [priceRange, setPriceRange] = useState<PriceRange>({
@@ -72,7 +72,7 @@ export function useMarketplace() {
           searchQuery: debouncedSearchQuery,
         };
 
-        const response: PaginatedResponse<Product> = await fetchProducts(
+        const response: PaginatedResponse<Course> = await fetchProducts(
           filtersWithSearch,
           page,
           10

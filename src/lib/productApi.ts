@@ -363,37 +363,37 @@ const generateMockCourseContent = (
 export async function fetchExtendedProduct(
   productId: string
 ): Promise<ExtendedProduct | null> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  console.log("🔍 Fetching extended product from backend:", productId);
 
   try {
-    // First fetch the basic product data
-    const response = await fetch(`/api/products/${productId}`);
-    if (!response.ok) {
-      // Fallback to mock data for demo
-      const mockProducts = await import("@/lib/marketplaceApi").then((m) =>
-        m.fetchProducts(undefined, 1, 50)
+    // Use the real backend API
+    const { fetchProduct } = await import("@/lib/marketplaceApiReal");
+    const product = await fetchProduct(productId);
+
+    if (!product) {
+      console.error("❌ Product not found in backend:", productId);
+      return null;
+    }
+
+    console.log("✅ Successfully fetched product from backend:", product.title);
+    return createExtendedProduct(product);
+  } catch (error) {
+    console.error("💥 Error fetching extended product from backend:", error);
+
+    // Fallback to mock data for development
+    console.log("🔄 Falling back to mock data for product:", productId);
+    try {
+      const mockProducts = await import("@/lib/marketplaceApiReal").then((m) =>
+        m.fetchProducts()
       );
-      const product = mockProducts.data.find(
-        (p: Product) => p.id === productId
-      );
+      const product = mockProducts.data.find((p) => p.id === productId);
       if (!product) return null;
 
       return createExtendedProduct(product);
+    } catch (fallbackError) {
+      console.error("💥 Fallback also failed:", fallbackError);
+      return null;
     }
-
-    const product: Product = await response.json();
-    return createExtendedProduct(product);
-  } catch (error) {
-    console.error("Error fetching extended product:", error);
-    // Fallback to mock data
-    const mockProducts = await import("@/lib/marketplaceApi").then((m) =>
-      m.fetchProducts(undefined, 1, 50)
-    );
-    const product = mockProducts.data.find((p: Product) => p.id === productId);
-    if (!product) return null;
-
-    return createExtendedProduct(product);
   }
 }
 

@@ -4,13 +4,15 @@ import {
   Users, 
   Wallet, 
   ShoppingCart, 
+  ShoppingBag,
   TrendingUp, 
   Mail, 
   Flame, 
   Settings, 
   MessageSquare, 
   LogOut,
-  BarChart3
+  BarChart3,
+  FolderOpen
 } from 'lucide-react';
 import { DashboardMenuItem } from '../types';
 
@@ -90,6 +92,18 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     label: 'Products',
     icon: Package,
     href: '/dashboard/products',
+  },
+  {
+    id: 'my-products',
+    label: 'My Products',
+    icon: FolderOpen,
+    href: '/dashboard/my-products',
+  },
+  {
+    id: 'purchased-products',
+    label: 'Purchased Products',
+    icon: ShoppingBag,
+    href: '/dashboard/purchased-products',
   },
   {
     id: 'affiliate-showcase',

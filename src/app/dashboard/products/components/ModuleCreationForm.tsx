@@ -77,54 +77,67 @@ const ModuleCreationForm: React.FC = () => {
 
   const handleFileUpload = (file: File, isMainFile = true) => {
     const moduleType = formData.type;
-    let limits;
-
-    switch (moduleType) {
-      case "video":
-        limits = FILE_UPLOAD_LIMITS.video;
-        break;
-      case "audio":
-        limits = FILE_UPLOAD_LIMITS.audio;
-        break;
-      case "pdf":
-        limits = FILE_UPLOAD_LIMITS.document;
-        break;
-      default:
-        limits = FILE_UPLOAD_LIMITS.document;
-    }
-
-    if (file.size > limits.maxSize) {
-      setErrors((prev) => ({
-        ...prev,
-        [isMainFile ? "mainFile" : "attachments"]: `File size exceeds ${
-          limits.maxSize / (1024 * 1024)
-        }MB limit`,
-      }));
-      return;
-    }
-
-    if (!limits.allowedTypes.includes(file.type)) {
-      setErrors((prev) => ({
-        ...prev,
-        [isMainFile
-          ? "mainFile"
-          : "attachments"]: `Invalid file type. Allowed: ${limits.allowedTypes.join(
-          ", "
-        )}`,
-      }));
-      return;
-    }
-
-    // Clear any existing errors
-    setErrors((prev) => ({
-      ...prev,
-      [isMainFile ? "mainFile" : "attachments"]: "",
-    }));
 
     if (isMainFile) {
+      // Validate main file based on module type and API specs
+      const limits = FILE_UPLOAD_LIMITS.moduleMainFile[moduleType];
+
+      if (file.size > limits.maxSize) {
+        setErrors((prev) => ({
+          ...prev,
+          mainFile: `File size exceeds ${
+            limits.maxSize / (1024 * 1024)
+          }MB limit`,
+        }));
+        return;
+      }
+
+      if (!limits.allowedTypes.includes(file.type)) {
+        const typeLabel = moduleType === "video" ? "video" : "document";
+        setErrors((prev) => ({
+          ...prev,
+          mainFile: `Invalid ${typeLabel} file type. Allowed: ${limits.allowedTypes.join(
+            ", "
+          )}`,
+        }));
+        return;
+      }
+
+      setErrors((prev) => ({ ...prev, mainFile: "" }));
       setMainFile(file);
       setMainFilePreview(URL.createObjectURL(file));
     } else {
+      // Validate attachment files based on API specs
+      const attachmentLimits = FILE_UPLOAD_LIMITS.moduleAttachment;
+
+      // Check attachment count limit (max 10)
+      if (attachmentFiles.length >= attachmentLimits.maxCount) {
+        setErrors((prev) => ({
+          ...prev,
+          attachments: `Maximum ${attachmentLimits.maxCount} attachments allowed`,
+        }));
+        return;
+      }
+
+      if (file.size > attachmentLimits.maxSize) {
+        setErrors((prev) => ({
+          ...prev,
+          attachments: `Attachment file size exceeds ${
+            attachmentLimits.maxSize / (1024 * 1024)
+          }MB limit`,
+        }));
+        return;
+      }
+
+      if (!attachmentLimits.allowedTypes.includes(file.type)) {
+        setErrors((prev) => ({
+          ...prev,
+          attachments: `Invalid attachment file type. Allowed: documents and images`,
+        }));
+        return;
+      }
+
+      setErrors((prev) => ({ ...prev, attachments: "" }));
       setAttachmentFiles((prev) => [...prev, file]);
     }
   };
@@ -136,13 +149,38 @@ const ModuleCreationForm: React.FC = () => {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.title.trim()) newErrors.title = "Module title is required";
-    if (!formData.description.trim())
-      newErrors.description = "Module description is required";
-    if (formData.duration <= 0)
-      newErrors.duration = "Duration must be greater than 0";
-    if (!editingModuleId && !mainFile)
-      newErrors.mainFile = "Main file is required";
+    // Required fields validation according to API docs
+    if (!formData.title.trim()) {
+      newErrors.title = "Module title is required";
+    } else if (formData.title.trim().length < 3) {
+      newErrors.title = "Module title must be at least 3 characters";
+    }
+
+    // Type validation - must be exactly "video" or "document"
+    if (!formData.type || !["video", "document"].includes(formData.type)) {
+      newErrors.type = 'Module type must be either "video" or "document"';
+    }
+
+    // Chapter ID validation - required for API call
+    if (!selectedChapterId) {
+      newErrors.general = "Please select a chapter first";
+    }
+
+    // Main file validation - not required by API but recommended
+    if (!editingModuleId && !mainFile) {
+      newErrors.mainFile =
+        "Main file is recommended for better learning experience";
+    }
+
+    // Duration validation - optional but should be positive if provided
+    if (formData.duration && formData.duration < 0) {
+      newErrors.duration = "Duration cannot be negative";
+    }
+
+    // Attachment count validation
+    if (attachmentFiles.length > FILE_UPLOAD_LIMITS.moduleAttachment.maxCount) {
+      newErrors.attachments = `Maximum ${FILE_UPLOAD_LIMITS.moduleAttachment.maxCount} attachments allowed`;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -152,13 +190,37 @@ const ModuleCreationForm: React.FC = () => {
     e.preventDefault();
 
     if (!validateForm() || !selectedChapterId) return;
+
+    // Debug logging
+    console.log("🔍 Module creation - Current course:", currentCourse);
+    console.log("🔍 Module creation - Selected chapter ID:", selectedChapterId);
+    console.log("🔍 Module creation - Chapter data:", currentChapter);
+
     if (!currentCourse?.id) {
+      console.error("❌ No course ID found");
       addToast({
         type: "error",
         message: "No course found. Please create a course first.",
       });
       return;
     }
+
+    // Find the selected chapter and ensure it has a backend ID
+    const selectedChapter = currentCourse.chapters.find(
+      (ch) => ch.id === selectedChapterId
+    );
+    if (!selectedChapter) {
+      console.error("❌ Selected chapter not found");
+      addToast({
+        type: "error",
+        message: "Selected chapter not found. Please select a valid chapter.",
+      });
+      return;
+    }
+
+    // Use backend chapter ID if available, otherwise local ID
+    const chapterIdForAPI = selectedChapter.backendId || selectedChapter.id;
+    console.log("📍 Using chapter ID for API:", chapterIdForAPI);
 
     // Clear any existing API errors
     clearError();
@@ -170,42 +232,76 @@ const ModuleCreationForm: React.FC = () => {
       resetForm();
       addToast({ type: "success", message: "Module updated successfully!" });
     } else {
-      // API call for creating new modules
+      // API call for creating new modules following exact API specification
       try {
-        // Create FormData for the module
-        const moduleFormData = new FormData();
-        moduleFormData.append("chapterId", selectedChapterId);
-        moduleFormData.append("title", formData.title);
-        moduleFormData.append("description", formData.description);
-        moduleFormData.append("type", formData.type);
-        moduleFormData.append(
-          "order",
-          ((currentChapter?.modules.length || 0) + 1).toString()
-        );
-        moduleFormData.append("duration", formData.duration.toString());
-        moduleFormData.append("isPreview", formData.isPreview.toString());
+        console.log("📤 Creating module for course ID:", currentCourse.id);
+        console.log("📤 Module data:", formData);
+        console.log("📤 Main file:", mainFile);
+        console.log("📤 Attachments:", attachmentFiles);
 
-        // Add main file (required)
+        // Create FormData following API specification exactly
+        const moduleFormData = new FormData();
+
+        // Required fields according to API docs
+        moduleFormData.append("chapterId", chapterIdForAPI);
+        moduleFormData.append("title", formData.title.trim());
+        moduleFormData.append("type", formData.type);
+
+        // Optional fields - only append if they have values
+        if (formData.description?.trim()) {
+          moduleFormData.append("description", formData.description.trim());
+        }
+
+        if (formData.duration && formData.duration > 0) {
+          moduleFormData.append("duration", formData.duration.toString());
+        }
+
+        if (formData.isPreview !== undefined) {
+          moduleFormData.append("isPreview", formData.isPreview.toString());
+        }
+
+        // Optional order (API will auto-assign if not provided)
+        const nextOrder = (currentChapter?.modules.length || 0) + 1;
+        moduleFormData.append("order", nextOrder.toString());
+
+        // Optional main file
         if (mainFile) {
           moduleFormData.append("mainFile", mainFile);
         }
 
-        // Add attachments (optional)
+        // Optional attachments (max 10)
         attachmentFiles.forEach((file) => {
-          moduleFormData.append(`attachments`, file);
+          moduleFormData.append("attachments", file);
         });
+
+        console.log(
+          "📤 API URL will be: /api/courses/" + currentCourse.id + "/modules"
+        );
+        console.log("📦 FormData contents:");
+        for (const [key, value] of moduleFormData.entries()) {
+          console.log(`  ${key}:`, value);
+        }
 
         const result = await createModuleAPI(currentCourse.id, moduleFormData);
 
         if (result.success && result.data) {
-          // Add module to local state with the API-generated ID
-          const nextOrder = (currentChapter?.modules.length || 0) + 1;
-          addModule(selectedChapterId, {
-            ...formData,
-            order: nextOrder,
-            mainFile: mainFile!,
+          console.log("✅ Module created successfully:", result.data);
+
+          // Add module to local state with the API-generated data
+          const newModuleData = {
+            title: formData.title,
+            description: formData.description,
+            type: formData.type,
+            chapterId: selectedChapterId,
+            order: result.data.module?.order || nextOrder,
+            duration: formData.duration,
+            isPreview: formData.isPreview,
+            mainFile: mainFile || undefined,
             attachments: attachmentFiles,
-          });
+            backendId: result.data.module?.id, // Store backend ID for future API calls
+          };
+
+          addModule(selectedChapterId, newModuleData);
 
           resetForm();
           addToast({
@@ -213,6 +309,8 @@ const ModuleCreationForm: React.FC = () => {
             message: result.message || "Module created successfully!",
           });
         } else {
+          console.error("❌ Module creation failed:", result);
+
           // Handle specific error scenarios
           if (result.isUnauthorized) {
             logout.mutate();
@@ -235,7 +333,8 @@ const ModuleCreationForm: React.FC = () => {
           if (result.isNotFound) {
             addToast({
               type: "error",
-              message: "Course or chapter not found. Please try again.",
+              message:
+                "Course or chapter not found. Please ensure the chapter was saved properly.",
             });
             return;
           }
@@ -247,14 +346,6 @@ const ModuleCreationForm: React.FC = () => {
 
           if (result.isValidationError) {
             addToast({ type: "error", message: result.message });
-            return;
-          }
-
-          if (result.isServerError) {
-            addToast({
-              type: "error",
-              message: "Something went wrong. Please try again later.",
-            });
             return;
           }
 
@@ -295,10 +386,10 @@ const ModuleCreationForm: React.FC = () => {
     if (chapterModule) {
       setFormData({
         title: chapterModule.title,
-        description: chapterModule.description,
+        description: chapterModule.description || "",
         type: chapterModule.type,
         order: chapterModule.order,
-        duration: chapterModule.duration,
+        duration: chapterModule.duration || 0,
         isPreview: chapterModule.isPreview,
         mainFile: chapterModule.mainFile as File,
         attachments: chapterModule.attachments as File[],
@@ -395,7 +486,7 @@ const ModuleCreationForm: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Module Title and Type */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className="relative z-10">
                   <label className="block text-white font-medium mb-3">
                     Module Title *
                   </label>
@@ -406,8 +497,10 @@ const ModuleCreationForm: React.FC = () => {
                       onChange={(e) =>
                         handleInputChange("title", e.target.value)
                       }
-                      placeholder="Enter module title"
+                      placeholder="Enter module title (min 3 characters)"
                       className={inputClass}
+                      minLength={3}
+                      required
                     />
                   </div>
                   {errors.title && (
@@ -415,17 +508,28 @@ const ModuleCreationForm: React.FC = () => {
                   )}
                 </div>
 
-                <div>
+                <div className="relative z-10">
                   <label className="block text-white font-medium mb-3">
                     Module Type *
                   </label>
                   <div className={gradientBorderClass}>
                     <select
                       value={formData.type}
-                      onChange={(e) =>
-                        handleInputChange("type", e.target.value)
-                      }
+                      onChange={(e) => {
+                        handleInputChange("type", e.target.value);
+                        // Clear main file when type changes to ensure proper validation
+                        if (mainFile) {
+                          setMainFile(null);
+                          setMainFilePreview(null);
+                          addToast({
+                            type: "info",
+                            message:
+                              "Main file cleared due to module type change. Please upload a new file.",
+                          });
+                        }
+                      }}
                       className={inputClass}
+                      required
                     >
                       {MODULE_TYPES.map((type) => (
                         <option
@@ -438,13 +542,16 @@ const ModuleCreationForm: React.FC = () => {
                       ))}
                     </select>
                   </div>
+                  {errors.type && (
+                    <p className="text-red-400 text-sm mt-2">{errors.type}</p>
+                  )}
                 </div>
               </div>
 
               {/* Description */}
-              <div>
+              <div className="relative z-10">
                 <label className="block text-white font-medium mb-3">
-                  Description *
+                  Description
                 </label>
                 <div className={gradientBorderClass}>
                   <textarea
@@ -452,7 +559,7 @@ const ModuleCreationForm: React.FC = () => {
                     onChange={(e) =>
                       handleInputChange("description", e.target.value)
                     }
-                    placeholder="Describe what this module covers"
+                    placeholder="Describe what this module covers (optional but recommended)"
                     rows={3}
                     className={cn(inputClass, "resize-none")}
                   />
@@ -466,14 +573,15 @@ const ModuleCreationForm: React.FC = () => {
 
               {/* Duration and Preview */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
+                <div className="relative z-10">
                   <label className="block text-white font-medium mb-3">
-                    Duration (minutes) *
+                    Duration (minutes)
+                    <span className="text-xs text-gray-400 ml-2">Optional</span>
                   </label>
                   <div className={gradientBorderClass}>
                     <input
                       type="number"
-                      value={formData.duration}
+                      value={formData.duration || ""}
                       onChange={(e) =>
                         handleInputChange(
                           "duration",
@@ -481,7 +589,8 @@ const ModuleCreationForm: React.FC = () => {
                         )
                       }
                       placeholder="0"
-                      min="1"
+                      min="0"
+                      max="600"
                       className={inputClass}
                     />
                   </div>
@@ -490,22 +599,45 @@ const ModuleCreationForm: React.FC = () => {
                       {errors.duration}
                     </p>
                   )}
+                  <p className="text-xs text-gray-500 mt-1">
+                    Leave as 0 if duration is unknown
+                  </p>
                 </div>
 
-                <div className="flex items-end">
-                  <label className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={formData.isPreview}
-                      onChange={(e) =>
-                        handleInputChange("isPreview", e.target.checked)
-                      }
-                      className="w-5 h-5 text-[#0680FF] bg-[#010519] border border-gray-600 rounded focus:ring-[#0680FF] focus:ring-2"
-                    />
-                    <span className="text-white font-medium">
-                      Available as Preview
-                    </span>
-                  </label>
+                <div className="flex items-end relative z-10">
+                  <div className="w-full">
+                    <label className="block text-white font-medium mb-3">
+                      Module Access
+                    </label>
+                    <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-800/30 rounded-lg border border-gray-600 hover:border-gray-500 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={formData.isPreview}
+                        onChange={(e) => {
+                          const isChecked = e.target.checked;
+                          handleInputChange("isPreview", isChecked);
+
+                          // Notify user about preview functionality
+                          if (isChecked) {
+                            addToast({
+                              type: "info",
+                              message:
+                                "💡 Preview modules can be accessed by anyone without purchasing the course. Great for attracting students!",
+                            });
+                          }
+                        }}
+                        className="w-5 h-5 text-[#0680FF] bg-[#010519] border border-gray-600 rounded focus:ring-[#0680FF] focus:ring-2"
+                      />
+                      <div>
+                        <span className="text-white font-medium block">
+                          Available as Preview
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          Free to watch for everyone
+                        </span>
+                      </div>
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -524,60 +656,52 @@ const ModuleCreationForm: React.FC = () => {
                             className="w-full h-full object-cover"
                             controls
                           />
-                        ) : formData.type === "audio" ? (
-                          <audio
-                            src={mainFilePreview}
-                            controls
-                            className="w-full"
-                          />
                         ) : (
                           <div className="text-center">
                             <FileText className="w-12 h-12 text-[#0680FF] mx-auto mb-2" />
-                            <p className="text-white">
-                              {formData.mainFile?.name}
-                            </p>
+                            <p className="text-white">{mainFile?.name}</p>
                           </div>
                         )}
                         <button
                           type="button"
                           onClick={() => {
                             setMainFilePreview(null);
-                            setFormData((prev) => ({
-                              ...prev,
-                              mainFile: undefined,
-                            }));
+                            setMainFile(null);
                           }}
-                          className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                          className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors z-10"
                         >
                           <X className="w-4 h-4 text-white" />
                         </button>
                       </>
                     ) : (
-                      <>
+                      <label className="cursor-pointer w-full h-full flex items-center justify-center">
                         <div className="text-center">
                           <Upload className="w-8 h-8 text-gray-400 mb-2 mx-auto" />
                           <p className="text-gray-400 text-sm">
-                            Upload main file
+                            Click to upload main file
                           </p>
                           <p className="text-gray-500 text-xs mt-1">
-                            {formData.type === "video" && "Max 500MB, MP4/WEBM"}
-                            {formData.type === "audio" && "Max 50MB, MP3/WAV"}
-                            {formData.type === "pdf" && "Max 10MB, PDF/DOC"}
-                            {!["video", "audio", "pdf"].includes(
-                              formData.type
-                            ) && "Various formats supported"}
+                            {formData.type === "video" &&
+                              "Max 500MB, MP4/WEBM/OGG/AVI/MOV/WMV/QuickTime"}
+                            {formData.type === "document" &&
+                              "Max 500MB, PDF/DOC/DOCX/PPT/PPTX"}
                           </p>
                         </div>
-                      </>
+                        <input
+                          type="file"
+                          accept={
+                            formData.type === "video"
+                              ? "video/mp4,video/webm,video/ogg,video/avi,video/mov,video/wmv,video/quicktime"
+                              : "application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                          }
+                          onChange={(e) =>
+                            e.target.files?.[0] &&
+                            handleFileUpload(e.target.files[0], true)
+                          }
+                          className="hidden"
+                        />
+                      </label>
                     )}
-                    <input
-                      type="file"
-                      onChange={(e) =>
-                        e.target.files?.[0] &&
-                        handleFileUpload(e.target.files[0], true)
-                      }
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
                   </div>
                 </div>
                 {errors.mainFile && (
@@ -589,23 +713,26 @@ const ModuleCreationForm: React.FC = () => {
               <div>
                 <label className="block text-white font-medium mb-3">
                   Attachments (Optional)
+                  <span className="text-xs text-gray-400 ml-2">
+                    Max 10 files, 500MB each
+                  </span>
                 </label>
                 <div className={cn(gradientBorderClass, "min-h-[100px]")}>
                   <div className="bg-[#010519] rounded-lg p-4">
-                    {formData.attachments.length > 0 && (
+                    {attachmentFiles.length > 0 && (
                       <div className="mb-4 space-y-2">
-                        {formData.attachments.map((file, index) => (
+                        {attachmentFiles.map((file, index) => (
                           <div
                             key={index}
                             className="flex items-center justify-between bg-gray-800/50 rounded p-2"
                           >
-                            <span className="text-white text-sm">
+                            <span className="text-white text-sm truncate flex-1 mr-2">
                               {file.name}
                             </span>
                             <button
                               type="button"
                               onClick={() => removeAttachment(index)}
-                              className="text-red-400 hover:text-red-300"
+                              className="text-red-400 hover:text-red-300 flex-shrink-0"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -613,24 +740,51 @@ const ModuleCreationForm: React.FC = () => {
                         ))}
                       </div>
                     )}
-                    <div className="text-center">
-                      <Upload className="w-6 h-6 text-gray-400 mb-2 mx-auto" />
-                      <p className="text-gray-400 text-sm">
-                        Drop files here or click to upload
-                      </p>
-                      <input
-                        type="file"
-                        multiple
-                        onChange={(e) => {
-                          Array.from(e.target.files || []).forEach((file) =>
-                            handleFileUpload(file, false)
-                          );
-                        }}
-                        className="absolute inset-0 opacity-0 cursor-pointer"
-                      />
-                    </div>
+
+                    {attachmentFiles.length <
+                      FILE_UPLOAD_LIMITS.moduleAttachment.maxCount && (
+                      <label className="cursor-pointer block">
+                        <div className="text-center py-4 border-2 border-dashed border-gray-600 rounded-lg hover:border-gray-500 transition-colors">
+                          <Upload className="w-6 h-6 text-gray-400 mb-2 mx-auto" />
+                          <p className="text-gray-400 text-sm">
+                            Click to add attachment files
+                          </p>
+                          <p className="text-gray-500 text-xs mt-1">
+                            Documents and images allowed
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          multiple
+                          accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*"
+                          onChange={(e) => {
+                            Array.from(e.target.files || []).forEach((file) =>
+                              handleFileUpload(file, false)
+                            );
+                            // Clear the input so the same file can be selected again if needed
+                            e.target.value = "";
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
+
+                    {attachmentFiles.length >=
+                      FILE_UPLOAD_LIMITS.moduleAttachment.maxCount && (
+                      <div className="text-center py-4">
+                        <p className="text-yellow-400 text-sm">
+                          Maximum {FILE_UPLOAD_LIMITS.moduleAttachment.maxCount}{" "}
+                          attachments reached
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
+                {errors.attachments && (
+                  <p className="text-red-400 text-sm mt-2">
+                    {errors.attachments}
+                  </p>
+                )}
               </div>
 
               {/* Form Actions */}

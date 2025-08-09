@@ -8,7 +8,7 @@ import {
 import { MARKETPLACE_CONFIG, SORT_OPTIONS } from "@/app/marketplace/constants";
 import { useDebounce } from "@/hooks/useDebounce";
 
-// Mock API service - in production this would be a real API
+// Real API service - connects to Kenesis backend
 const marketplaceApi = {
   async getProducts(
     filters: MarketplaceFilters,

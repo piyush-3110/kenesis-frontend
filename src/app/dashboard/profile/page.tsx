@@ -1,23 +1,24 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { 
-  Users, 
-  BookOpen, 
-  DollarSign, 
-  Star, 
-  MessageCircle, 
+import React, { useEffect } from "react";
+import {
+  Users,
+  BookOpen,
+  DollarSign,
+  Star,
+  MessageCircle,
   TrendingUp,
   Plus,
   Filter,
-  Search
-} from 'lucide-react';
-import DashboardLayout from '../components/DashboardLayout';
-import { useProfileStore } from './store/useProfileStore';
-import GradientBox from './components/GradientBox';
-import StatCard from './components/StatCard';
-import InstructorCard from './components/InstructorCard';
-import CourseCard from './components/CourseCard';
+  Search,
+} from "lucide-react";
+import DashboardLayout from "../components/DashboardLayout";
+import { useProfileStore } from "./store/useProfileStore";
+import GradientBox from "./components/GradientBox";
+import StatCard from "./components/StatCard";
+import InstructorCard from "./components/InstructorCard";
+import CourseCard from "./components/CourseCard";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
 
 /**
  * ProfilePage Component
@@ -26,7 +27,6 @@ import CourseCard from './components/CourseCard';
  */
 const ProfilePage: React.FC = () => {
   const {
-    profile,
     stats,
     courses,
     loading,
@@ -34,8 +34,10 @@ const ProfilePage: React.FC = () => {
     loadProfile,
     loadStats,
     loadCourses,
-    resetError
+    resetError,
   } = useProfileStore();
+
+  const { data: profile } = useCurrentUser();
 
   // Load initial data
   useEffect(() => {
@@ -117,7 +119,7 @@ const ProfilePage: React.FC = () => {
                 Track your teaching metrics and student engagement
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <StatCard
                 title="Total Students"
@@ -125,63 +127,63 @@ const ProfilePage: React.FC = () => {
                 subtitle="Students enrolled across all courses"
                 icon={<Users size={24} />}
                 trend={{
-                  direction: 'up',
-                  value: '+12.5%'
+                  direction: "up",
+                  value: "+12.5%",
                 }}
               />
-              
+
               <StatCard
                 title="Total Courses"
                 value={stats.totalCourses}
                 subtitle="Published and draft courses"
                 icon={<BookOpen size={24} />}
                 trend={{
-                  direction: 'up',
-                  value: '+2 courses'
+                  direction: "up",
+                  value: "+2 courses",
                 }}
               />
-              
+
               <StatCard
                 title="Total Earnings"
                 value={`$${stats.totalEarnings.toLocaleString()}`}
                 subtitle="Revenue from course sales"
                 icon={<DollarSign size={24} />}
                 trend={{
-                  direction: 'up',
-                  value: '+18.2%'
+                  direction: "up",
+                  value: "+18.2%",
                 }}
               />
-              
+
               <StatCard
                 title="Average Rating"
                 value={stats.averageRating.toFixed(1)}
                 subtitle={`Based on ${stats.totalReviews.toLocaleString()} reviews`}
                 icon={<Star size={24} />}
                 trend={{
-                  direction: 'up',
-                  value: '+0.2 points'
+                  direction: "up",
+                  value: "+0.2 points",
                 }}
               />
-              
+
               <StatCard
                 title="Student Reviews"
                 value={stats.totalReviews}
                 subtitle="Total feedback received"
                 icon={<MessageCircle size={24} />}
                 trend={{
-                  direction: 'up',
-                  value: '+45 reviews'
+                  direction: "up",
+                  value: "+45 reviews",
                 }}
               />
-              
+
               <StatCard
                 title="Completion Rate"
                 value={`${stats.completionRate}%`}
                 subtitle="Students who complete courses"
                 icon={<TrendingUp size={24} />}
                 trend={{
-                  direction: 'up',
-                  value: '+3.1%'
+                  direction: "up",
+                  value: "+3.1%",
                 }}
               />
             </div>
@@ -199,25 +201,28 @@ const ProfilePage: React.FC = () => {
                 Manage your published and draft courses
               </p>
             </div>
-            
+
             {/* Course Actions */}
             <div className="flex items-center gap-3">
               {/* Search */}
               <div className="relative">
-                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Search
+                  size={16}
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                />
                 <input
                   type="text"
                   placeholder="Search courses..."
                   className="pl-10 pr-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors"
                 />
               </div>
-              
+
               {/* Filter */}
               <button className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-gray-300 hover:text-white transition-colors">
                 <Filter size={16} />
                 <span className="text-sm">Filter</span>
               </button>
-              
+
               {/* Add Course */}
               <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-sm font-medium transition-colors">
                 <Plus size={16} />
@@ -230,10 +235,7 @@ const ProfilePage: React.FC = () => {
           {courses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {courses.map((course) => (
-                <CourseCard 
-                  key={course.id} 
-                  course={course}
-                />
+                <CourseCard key={course.id} course={course} />
               ))}
             </div>
           ) : (

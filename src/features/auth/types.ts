@@ -13,8 +13,16 @@ export type User = {
   bio?: string;
   role: string;
   emailVerified: boolean;
+  socialMedia: {
+    website?: string;
+    twitter?: string;
+    linkedin?: string;
+    facebook?: string;
+    instagram?: string;
+  };
   createdAt: string;
-  walletAddress?: string | null;
+  walletAddress?: string;
+  avatar?: string;
 };
 
 export type Tokens = {

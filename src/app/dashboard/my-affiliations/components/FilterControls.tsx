@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Search, Filter, SortAsc, SortDesc } from 'lucide-react';
+import { Search, SortAsc, SortDesc } from 'lucide-react';
 import { AffiliationFilters } from '../types';
 
 interface FilterControlsProps {
@@ -39,7 +39,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         <div className="min-w-[140px]">
           <select
             value={filters.status || 'all'}
-            onChange={(e) => onFiltersChange({ status: e.target.value as any })}
+            onChange={(e) => onFiltersChange({ status: e.target.value as 'all' | 'active' | 'inactive' })}
             className="w-full px-3 py-2 bg-gray-800/50 border border-gray-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
           >
             <option value="all">All Status</option>
@@ -84,7 +84,7 @@ const FilterControls: React.FC<FilterControlsProps> = ({
         <div className="min-w-[140px]">
           <select
             value={filters.sortBy || 'created'}
-            onChange={(e) => onFiltersChange({ sortBy: e.target.value as any })}
+            onChange={(e) => onFiltersChange({ sortBy: e.target.value as 'created' | 'earnings' | 'clicks' | 'conversions' })}
             className="w-full px-3 py-2 bg-gray-800/50 border border-gray-600/50 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
           >
             <option value="created">Date Created</option>

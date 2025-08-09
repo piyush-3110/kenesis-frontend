@@ -115,12 +115,8 @@ export interface CourseForMarketplacePage {
     duration: number;
   };
   thumbnail: string;
-  category: string;
   type: "video" | "document";
   createdAt: string;
-  // Optional access flags that may be provided by API when user is authenticated
-  isPurchased?: boolean;
-  purchaseDate?: string;
 }
 
 // New canonical name for marketplace listing items
@@ -136,4 +132,74 @@ export interface PaginatedResponse<T> {
     hasPrevPage: boolean;
     limit: number;
   };
+}
+
+// Module Management Types
+export interface Module {
+  id: string;
+  chapterId: string;
+  title: string;
+  description: string;
+  type: "video" | "document";
+  status: "draft" | "published";
+  order: number;
+  duration?: number; // in seconds
+  isPreview: boolean;
+  isPublished: boolean;
+  hasContent: boolean;
+  chapter?: {
+    id: string;
+    title: string;
+    order: number;
+  };
+}
+
+export interface ModuleStats {
+  totalModules: number;
+  videoModules: number;
+  documentModules: number;
+  previewModules: number;
+  totalDuration: number; // in seconds
+}
+
+export interface ModulesResponse {
+  modules: Module[];
+  stats: ModuleStats;
+}
+
+export interface ModuleContent {
+  mainFile?: {
+    url: string;
+    type: string;
+    size: number;
+    duration?: number; // for videos
+  };
+  attachments?: Array<{
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+  }>;
+}
+
+export interface ModuleProgress {
+  completed: boolean;
+  watchTime?: number; // in seconds
+  lastAccessedAt?: string;
+}
+
+export interface ModuleWithContent extends Module {
+  content?: ModuleContent;
+  progress?: ModuleProgress;
+}
+
+export interface ModuleContentResponse {
+  module: ModuleWithContent;
+}
+
+export interface ModuleFilters {
+  chapterId: string; // Required by backend API
+  status?: "draft" | "published";
+  type?: "video" | "document";
 }

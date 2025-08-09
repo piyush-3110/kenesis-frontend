@@ -62,6 +62,12 @@ const CourseReview: React.FC = () => {
           return chapterTotal + module.duration;
         }, 0)
       );
+      return (
+        total +
+        chapter.modules.reduce((chapterTotal, module) => {
+          return chapterTotal + (module.duration || 0);
+        }, 0)
+      );
     }, 0);
   };
 
