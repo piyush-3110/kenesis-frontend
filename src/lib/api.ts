@@ -822,7 +822,7 @@ class ApiClient {
       let hasFiles = false;
       const cleanedFormData = new FormData();
       
-      for (let [key, value] of formData.entries()) {
+      for (const [key, value] of formData.entries()) {
         // Skip excluded fields
         if (excludedFields.includes(key) || key.includes('content[') || key.includes('learningObjectives[')) {
           console.log(`🚫 Excluding field: ${key}`);
@@ -850,7 +850,7 @@ class ApiClient {
       }
 
       console.log('🧹 Cleaned FormData entries:');
-      for (let [key, value] of cleanedFormData.entries()) {
+      for (const [key, value] of cleanedFormData.entries()) {
         console.log(`  ✅ ${key}: ${value instanceof File ? `[File: ${value.name}]` : `${value} (${typeof value})`}`);
       }
 
@@ -863,7 +863,7 @@ class ApiClient {
         console.log('📝 No files detected, converting to JSON for proper types');
         const jsonData: any = {};
         
-        for (let [key, value] of cleanedFormData.entries()) {
+        for (const [key, value] of cleanedFormData.entries()) {
           // Handle special type conversions
           if (key === 'duration' || key === 'order') {
             const numValue = parseInt(value as string, 10);

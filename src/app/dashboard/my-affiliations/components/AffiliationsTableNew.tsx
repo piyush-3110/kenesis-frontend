@@ -1,6 +1,10 @@
-'use client';
+'use clinterface AffiliationsTableProps {
+  affiliations: AffiliationData[];
+}
 
-import React from 'react';
+const AffiliationsTable: React.FC<AffiliationsTableProps> = ({ 
+  affiliations 
+}) => {mport React from 'react';
 import Link from 'next/link';
 import { MoreVertical } from 'lucide-react';
 import { AffiliatedProduct } from '../types';

@@ -82,7 +82,7 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
       setNewSectionContent('');
       setForceUpdate(false);
     }
-  }, [isOpen, module]);
+  }, [isOpen, module]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadModuleData = async () => {
     try {
@@ -378,6 +378,7 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
       
       // Log the form data being sent
       console.log('📦 FormData entries:');
+      /* eslint-disable prefer-const */
       for (let [key, value] of updateData.entries()) {
         console.log(`  ${key}:`, value instanceof File ? `[File: ${value.name}]` : value);
       }

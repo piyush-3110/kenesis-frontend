@@ -74,6 +74,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <div className="p-0 h-full flex flex-col">
           {/* Thumbnail */}
           <div className="relative h-48 rounded-t-lg overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={product.thumbnail || '/images/landing/product.png'}
               alt={product.title}

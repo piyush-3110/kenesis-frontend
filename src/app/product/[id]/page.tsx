@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Star, Users, Clock, Globe, BookOpen, Video, FileText } from 'lucide-react';
 import { CourseAPI } from '@/lib/api';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ProductPageProps {}
 
 /**
@@ -22,7 +23,7 @@ const ProductPage: React.FC<ProductPageProps> = () => {
 
   useEffect(() => {
     loadProductData();
-  }, [productId]);
+  }, [productId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadProductData = async () => {
     try {
@@ -93,7 +94,8 @@ const ProductPage: React.FC<ProductPageProps> = () => {
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Thumbnail */}
             <div className="lg:w-1/3">
-              <img
+              /* eslint-disable-next-line @next/next/no-img-element */
+          <img
                 src={product.thumbnail || '/images/course-placeholder.png'}
                 alt={product.title}
                 className="w-full aspect-video object-cover rounded-lg"

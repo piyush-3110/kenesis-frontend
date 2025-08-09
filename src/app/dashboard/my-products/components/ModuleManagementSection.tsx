@@ -115,7 +115,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   const loadAllChaptersModules = async () => {
     try {
       let allModules: any[] = [];
-      let aggregatedStats = {
+      const aggregatedStats = {
         totalModules: 0,
         videoModules: 0,
         documentModules: 0,

@@ -56,13 +56,13 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
     if (chapters.length > 0 && !selectedChapter) {
       setSelectedChapter(chapters[0].id);
     }
-  }, [chapters, selectedChapter]);
+  }, [chapters, selectedChapter]);  
 
   useEffect(() => {
     if (selectedChapter) {
       loadModules();
     }
-  }, [selectedChapter, filters]);
+  }, [selectedChapter, filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadModules = async () => {
     if (!selectedChapter) {
@@ -134,7 +134,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   const loadAllChaptersModules = async () => {
     try {
       let allModules: any[] = [];
-      let aggregatedStats = {
+      const aggregatedStats = {
         totalModules: 0,
         videoModules: 0,
         documentModules: 0,

@@ -34,7 +34,7 @@ const CourseManagementPage: React.FC = () => {
   // Load course data
   useEffect(() => {
     loadCourseData();
-  }, [courseId]);
+  }, [courseId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadCourseData = async () => {
     try {

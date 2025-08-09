@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Mail, ArrowLeft, CheckCircle, Clock, RefreshCw } from 'lucide-react';
+import { Mail, ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -29,7 +29,6 @@ const EmailVerificationPage: React.FC = () => {
     clearVerificationError
   } = useAuthActions();
 
-  const [isVerified, setIsVerified] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
 
   // Get token from URL params for direct verification links
@@ -60,7 +59,6 @@ const EmailVerificationPage: React.FC = () => {
     try {
       setVerificationStatus('pending');
       await verifyEmail(token);
-      setIsVerified(true);
       setVerificationStatus('success');
       
       addToast({

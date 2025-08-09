@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 
@@ -79,7 +78,7 @@ const ComingSoon: React.FC<ComingSoonProps> = ({
       
       {/* Footer text */}
       <p className="text-gray-500 mt-8 text-sm">
-        We're working hard to bring you the best experience. Stay tuned!
+        We&apos;re working hard to bring you the best experience. Stay tuned!
       </p>
     </div>
   );

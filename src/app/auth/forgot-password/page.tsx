@@ -120,7 +120,7 @@ const ForgotPasswordPage: React.FC = () => {
                     Forgot Password?
                   </h1>
                   <p className="text-gray-400 text-sm md:text-base">
-                    No worries! Enter your email and we'll send you a reset link
+                    No worries! Enter your email and we&apos;ll send you a reset link
                   </p>
                 </div>
 
@@ -182,7 +182,7 @@ const ForgotPasswordPage: React.FC = () => {
                     Check Your Email
                   </h1>
                   <p className="text-gray-400 text-sm md:text-base mb-6">
-                    We've sent a password reset link to{' '}
+                    We&apos;ve sent a password reset link to{' '}
                     <span className="text-white font-medium">{email}</span>
                   </p>
 
@@ -215,7 +215,7 @@ const ForgotPasswordPage: React.FC = () => {
           {/* Help Text */}
           <div className="mt-8 text-center">
             <p className="text-gray-400 text-sm">
-              Didn't receive the email? Check your spam folder or{' '}
+              Didn&apos;t receive the email? Check your spam folder or{' '}
               <Link href="/support" className="text-blue-400 hover:text-blue-300 transition-colors">
                 contact support
               </Link>

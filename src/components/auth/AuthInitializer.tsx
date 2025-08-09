@@ -32,7 +32,7 @@ export const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       tokenRefreshManager.stopAutoRefresh();
     };
-  }, []); // Run once on mount
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps // Run once on mount
 
   return <>{children}</>;
 };

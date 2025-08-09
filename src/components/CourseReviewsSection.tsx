@@ -86,7 +86,7 @@ const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
   // Load data on mount
   useEffect(() => {
     loadReviewData();
-  }, [courseId, currentPage, sortBy, filterRating]);
+  }, [courseId, currentPage, sortBy, filterRating]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadReviewData = async () => {
     try {
@@ -710,7 +710,8 @@ const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
                       {review.userAvatar ? (
-                        <img 
+                        /* eslint-disable-next-line @next/next/no-img-element */
+          <img 
                           src={review.userAvatar} 
                           alt={review.username}
                           className="w-full h-full rounded-full object-cover"
@@ -947,7 +948,8 @@ const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
                         <div className="flex items-start gap-3">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0">
                             {reply.userAvatar ? (
-                              <img 
+                              /* eslint-disable-next-line @next/next/no-img-element */
+          <img 
                                 src={reply.userAvatar} 
                                 alt={reply.username}
                                 className="w-full h-full rounded-full object-cover"

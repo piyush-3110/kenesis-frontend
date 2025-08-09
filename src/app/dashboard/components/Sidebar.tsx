@@ -2,19 +2,18 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
 import { SidebarProps } from '../types';
 import { useDashboardStore } from '../store/useDashboardStore';
 import { useAuthStore, useAuthActions, useUserProfile } from '@/store/useAuthStore';
 import { 
   DASHBOARD_MENU_ITEMS, 
   DASHBOARD_BOTTOM_ITEMS, 
-  DASHBOARD_CONFIG,
   DASHBOARD_COLORS 
 } from '../constants';
 import NavigationItem from './NavigationItem';
 import UserProfile from './UserProfile';
 import { cn } from '@/lib/utils';
-import { X, Menu } from 'lucide-react';
 
 /**
  * Sidebar Component
@@ -28,14 +27,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   onItemClick,
 }) => {
   const router = useRouter();
-  const authStore = useAuthStore();
   const { logout } = useAuthActions();
   const {
     selectedMenuItem,
     setSelectedMenuItem,
-    setSidebarCollapsed,
     initializeDashboard,
-    connectWallet,
     disconnectWallet,
   } = useDashboardStore();
 
@@ -56,12 +52,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { fetchUserProfile } = useUserProfile();
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Initialize dashboard data on mount
   useEffect(() => {
     initializeDashboard();
-  }, [initializeDashboard]);
+  }, [initializeDashboard]);  
 
   const handleItemClick = (itemId: string) => {
     setSelectedMenuItem(itemId);

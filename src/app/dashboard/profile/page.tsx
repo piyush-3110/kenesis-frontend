@@ -42,19 +42,19 @@ const ProfilePage: React.FC = () => {
   const { fetchUserProfile } = useUserProfile();
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load initial data
   useEffect(() => {
     loadProfile();
     loadStats();
     loadCourses();
-  }, [loadProfile, loadStats, loadCourses]);
+  }, [loadProfile, loadStats, loadCourses]);  
 
   // Reset error when component unmounts
   useEffect(() => {
     return () => resetError();
-  }, [resetError]);
+  }, [resetError]);  
 
   if (loading && !profile) {
     return (

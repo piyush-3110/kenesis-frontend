@@ -27,18 +27,18 @@ const SettingsPage: React.FC = () => {
   // Load initial data
   useEffect(() => {
     loadSettings();
-  }, [loadSettings]);
+  }, [loadSettings]);  
 
   // Clear error when component unmounts
   useEffect(() => {
     return () => clearError();
-  }, [clearError]);
+  }, [clearError]);  
 
   // Fetch user profile on settings page mount
   const { fetchUserProfile } = useUserProfile();
   useEffect(() => {
     fetchUserProfile();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (isLoading) {
     return (

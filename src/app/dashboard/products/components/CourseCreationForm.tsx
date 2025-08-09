@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
  */
 const CourseCreationForm: React.FC = () => {
   const router = useRouter();
-  const { currentCourse, createCourse, updateCourse, setCurrentStep, setCurrentCourse } = useProductCreationStore();
+  const { currentCourse, setCurrentStep, setCurrentCourse } = useProductCreationStore();
   const { createCourse: createCourseAPI, loading: apiLoading, error: apiError, clearError } = useCreateCourse();
   const { logout } = useAuthActions();
   const { addToast } = useUIStore();
@@ -532,7 +532,8 @@ const CourseCreationForm: React.FC = () => {
               <div className="h-full bg-[#010519] rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
                 {thumbnailPreview ? (
                   <>
-                    <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+                    /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => {

@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useMyAffiliationsStore } from './store/useMyAffiliationsStore';
 import AffiliationsTable from './components/AffiliationsTable';

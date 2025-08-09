@@ -7,12 +7,10 @@ import { AffiliatedProduct } from '../types';
 
 interface AffiliationsTableProps {
   affiliations: AffiliatedProduct[];
-  onStatusUpdate?: (id: string, status: 'active' | 'inactive') => void;
 }
 
 const AffiliationsTable: React.FC<AffiliationsTableProps> = ({ 
-  affiliations, 
-  onStatusUpdate 
+  affiliations 
 }) => {
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
   

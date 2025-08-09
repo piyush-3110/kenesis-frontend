@@ -109,7 +109,7 @@ const ProductGrid: React.FC = () => {
           Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
           {searchQuery && (
             <span className="ml-1">
-              for "{searchQuery}"
+              for &quot;{searchQuery}&quot;
             </span>
           )}
           {activeFilter !== 'all' && (

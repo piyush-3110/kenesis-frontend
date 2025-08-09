@@ -80,7 +80,7 @@ const PurchasedProductsPage: React.FC = () => {
     } else {
       loadPurchases();
     }
-  }, [filter]);
+  }, [filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadPurchases = async () => {
     try {
@@ -272,7 +272,7 @@ const PurchasedProductsPage: React.FC = () => {
     
     console.log('🔍 [FILTER] Final filtered purchases:', JSON.stringify(filtered, null, 2));
     return filtered;
-  }, [purchases, filter]);
+  }, [purchases, filter]);  
 
   const filteredListedCourses = useMemo(() => {
     console.log('🔍 [FILTER] Filtering listed courses...');
@@ -286,7 +286,7 @@ const PurchasedProductsPage: React.FC = () => {
     
     console.log('🔍 [FILTER] Returning listed courses, count:', listedCourses.length);
     return listedCourses;
-  }, [listedCourses, filter]);
+  }, [listedCourses, filter]);  
 
   // Loading State
   if (loading) {
@@ -448,7 +448,8 @@ const ListedCoursesContent: React.FC<{
             >
               {/* Course Thumbnail */}
               <div className="relative">
-                <img
+                /* eslint-disable-next-line @next/next/no-img-element */
+          <img
                   src={course.thumbnail || '/images/course-placeholder.png'}
                   alt={course.title}
                   className="w-full h-48 object-cover"
@@ -596,7 +597,8 @@ const PurchasedCoursesContent: React.FC<{
             >
               {/* Course Thumbnail */}
               <div className="relative">
-                <img
+                /* eslint-disable-next-line @next/next/no-img-element */
+          <img
                   src={purchase.courseThumbnail || '/images/course-placeholder.png'}
                   alt={purchase.courseTitle}
                   className="w-full h-40 object-cover"

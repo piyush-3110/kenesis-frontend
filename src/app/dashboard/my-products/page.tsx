@@ -16,7 +16,6 @@ import DashboardLayout from '../components/DashboardLayout';
 import { useMyProductsStore } from './store/useMyProductsStore';
 import ProductCard from '@/shared/components/ProductCard';
 import GradientBox from '@/shared/components/GradientBox';
-import { cn } from '@/lib/utils';
 
 /**
  * MyProductsPage Component

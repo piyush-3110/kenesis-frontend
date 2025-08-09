@@ -68,7 +68,8 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
             {/* Thumbnail */}
             <div>
               <h4 className="text-sm font-medium text-gray-300 mb-2">Course Thumbnail</h4>
-              <img
+              /* eslint-disable-next-line @next/next/no-img-element */
+          <img
                 src={course.thumbnail || '/images/landing/product.png'}
                 alt={course.title}
                 className="w-full h-48 object-cover rounded-xl"

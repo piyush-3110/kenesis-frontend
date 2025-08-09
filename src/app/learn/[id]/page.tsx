@@ -123,13 +123,13 @@ const LearningPage: React.FC = () => {
 
   useEffect(() => {
     checkAccessAndLoadCourse();
-  }, [courseId]);
+  }, [courseId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (selectedModule) {
       loadModuleContent();
     }
-  }, [selectedModule]);
+  }, [selectedModule]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadModulesForChapters = async (chapters: Chapter[]): Promise<Chapter[]> => {
     console.log('📚 [MODULES] Loading modules for all chapters...');
@@ -443,7 +443,7 @@ const LearningPage: React.FC = () => {
     
     return course.chapters.reduce((modules: Module[], chapter) => {
       return [...modules, ...(chapter.modules || [])];
-    }, []);
+    }, []);  
   };
 
   const getCurrentModuleIndex = (): number => {

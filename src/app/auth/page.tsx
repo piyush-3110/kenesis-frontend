@@ -33,7 +33,6 @@ const AuthPage: React.FC = () => {
     forgotPasswordLoading,
     registerError,
     loginError,
-    forgotPasswordError,
     clearRegisterError,
     clearLoginError,
     clearForgotPasswordError,

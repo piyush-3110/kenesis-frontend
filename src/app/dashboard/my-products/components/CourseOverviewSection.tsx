@@ -52,7 +52,8 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Thumbnail */}
           <div className="lg:col-span-1">
-            <img
+            /* eslint-disable-next-line @next/next/no-img-element */
+          <img
               src={course.thumbnail || '/images/landing/product.png'}
               alt={course.title}
               className="w-full h-48 object-cover rounded-lg"
