@@ -1,22 +1,16 @@
-'use clinterface AffiliationsTableProps {
-  affiliations: AffiliationData[];
-}
+'use client';
 
-const AffiliationsTable: React.FC<AffiliationsTableProps> = ({ 
-  affiliations 
-}) => {mport React from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { MoreVertical } from 'lucide-react';
 import { AffiliatedProduct } from '../types';
 
 interface AffiliationsTableProps {
   affiliations: AffiliatedProduct[];
-  onStatusUpdate?: (id: string, status: 'active' | 'inactive') => void;
 }
 
 const AffiliationsTable: React.FC<AffiliationsTableProps> = ({ 
-  affiliations, 
-  onStatusUpdate 
+  affiliations
 }) => {
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
   
