@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Edit2, Trash2, FileText, Video } from 'lucide-react';
 import { CourseAPI } from '@/lib/api';
 import { DASHBOARD_COLORS } from '../../../constants';
+import ChapterEditModal from './ChapterEditModal';
 
 interface ChapterManagementSectionProps {
   courseId: string;
@@ -24,6 +25,7 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
 }) => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingChapter, setEditingChapter] = useState<string | null>(null);
+  const [selectedChapterForEdit, setSelectedChapterForEdit] = useState<any | null>(null);
 
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -45,6 +47,28 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
     } catch (error) {
       console.error('Failed to create chapter:', error);
     }
+  };
+
+  const handleEditChapter = (chapter: any) => {
+    console.log('📝 Opening chapter edit modal for:', chapter);
+    setSelectedChapterForEdit(chapter);
+    setEditingChapter(chapter.id);
+  };
+
+  const handleChapterUpdated = async () => {
+    console.log('🔄 Chapter updated, refreshing chapter list...');
+    try {
+      // Reload chapters after successful update
+      const chaptersResponse = await CourseAPI.getChapters(courseId, true);
+      if (chaptersResponse.success) {
+        onChaptersChange(chaptersResponse.data.chapters || []);
+      }
+    } catch (error) {
+      console.error('Failed to reload chapters:', error);
+    }
+    // Close edit modal
+    setEditingChapter(null);
+    setSelectedChapterForEdit(null);
   };
 
   const handleDeleteChapter = async (chapterId: string) => {
@@ -118,14 +142,16 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
                 {canEdit && (
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => setEditingChapter(chapter.id)}
+                      onClick={() => handleEditChapter(chapter)}
                       className="p-2 text-gray-400 hover:text-blue-400 transition-colors"
+                      title="Edit chapter"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button
                       onClick={() => handleDeleteChapter(chapter.id)}
                       className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                      title="Delete chapter"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -175,6 +201,20 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
         <CreateChapterModal
           onClose={() => setIsCreating(false)}
           onSave={handleCreateChapter}
+        />
+      )}
+
+      {/* Edit Chapter Modal */}
+      {editingChapter && selectedChapterForEdit && (
+        <ChapterEditModal
+          isOpen={true}
+          onClose={() => {
+            setEditingChapter(null);
+            setSelectedChapterForEdit(null);
+          }}
+          chapter={selectedChapterForEdit}
+          courseId={courseId}
+          onChapterUpdated={handleChapterUpdated}
         />
       )}
     </div>
