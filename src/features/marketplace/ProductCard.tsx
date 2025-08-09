@@ -3,7 +3,14 @@
 import type { ExtendedProduct } from "@/types/Review";
 import Image from "next/image";
 import Link from "next/link";
-import { Star, PlayCircle, FileText, CheckCircle, ShoppingCart, Lock } from "lucide-react";
+import {
+  Star,
+  PlayCircle,
+  FileText,
+  CheckCircle,
+  ShoppingCart,
+  Lock,
+} from "lucide-react";
 import { forwardRef } from "react";
 
 interface ProductCardProps {
@@ -12,7 +19,9 @@ interface ProductCardProps {
 
 const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
   ({ product }, ref) => {
-  const isPurchased = Boolean(product.isPurchased || product.courseAccess?.hasAccess);
+    const isPurchased = Boolean(
+      product.isPurchased || product.courseAccess?.hasAccess
+    );
 
     const getAccessBadge = () => {
       if (isPurchased) {
@@ -67,10 +76,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
     };
 
     return (
-      <Link
-        href={`/product/${product.id}`}
-        className="block group"
-      >
+      <Link href={`/product/${product.id}`} className="block group">
         <div
           ref={ref}
           className="w-full p-[0.73px] rounded-lg transition-all duration-300 hover:scale-[1.01] lg:hover:scale-[1.02] hover:shadow-lg group-hover:shadow-blue-500/20 relative"
@@ -98,7 +104,11 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
               {/* Product Image */}
               <div className="relative w-full sm:w-24 md:w-32 h-40 sm:h-24 md:h-32 flex-shrink-0">
                 <Image
-                  src={product.image || product.thumbnail || "/images/landing/product.png"}
+                  src={
+                    product.image ||
+                    product.thumbnail ||
+                    "/images/landing/product.png"
+                  }
                   alt={product.title}
                   fill
                   className={`object-cover rounded-lg transition-transform duration-300 group-hover:scale-105 ${
@@ -143,7 +153,9 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                   </h3>
 
                   {/* Author */}
-                  <p className="text-gray-400 text-sm mb-2 sm:mb-3">{product.author}</p>
+                  <p className="text-gray-400 text-sm mb-2 sm:mb-3">
+                    {product.author}
+                  </p>
 
                   {/* Rating */}
                   <div className="flex items-center gap-2 mb-2 sm:mb-3">
@@ -152,10 +164,15 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                         size={14}
                         className="text-yellow-400 fill-current"
                       />
-                      <span className="text-white text-sm font-medium">{product.rating}</span>
+                      <span className="text-white text-sm font-medium">
+                        {product.rating}
+                      </span>
                     </div>
                     <span className="text-gray-400 text-sm">
-                      ({product.reviewSummary?.totalReviews ?? product.reviewCount})
+                      (
+                      {product.reviewSummary?.totalReviews ??
+                        product.reviewCount}
+                      )
                     </span>
                   </div>
 
@@ -167,25 +184,29 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                   )}
 
                   {/* Course Topics Preview - Only for unpurchased courses */}
-      {!isPurchased && product.topics && product.topics.length > 0 && (
+                  {!isPurchased &&
+                    product.topics &&
+                    product.topics.length > 0 && (
                       <div className="mt-3 hidden sm:block">
                         <h4 className="text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">
                           Course Content:
                         </h4>
                         <div className="space-y-1">
-                          {product.topics.slice(0, 3).map((topic: string, index: number) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2 text-gray-400 text-xs"
-                            >
-                              <span className="text-gray-500 font-mono text-[10px] w-5">
-                                {String(index + 1).padStart(2, "0")}
-                              </span>
-                              <span className="line-clamp-1 flex-1">
-                                {topic}
-                              </span>
-                            </div>
-                          ))}
+                          {product.topics
+                            .slice(0, 3)
+                            .map((topic: string, index: number) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-2 text-gray-400 text-xs"
+                              >
+                                <span className="text-gray-500 font-mono text-[10px] w-5">
+                                  {String(index + 1).padStart(2, "0")}
+                                </span>
+                                <span className="line-clamp-1 flex-1">
+                                  {topic}
+                                </span>
+                              </div>
+                            ))}
                           {product.topics.length > 3 && (
                             <div className="text-gray-500 text-xs italic ml-7">
                               +{product.topics.length - 3} more lessons
@@ -193,7 +214,7 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
                           )}
                         </div>
                       </div>
-        )}
+                    )}
                 </div>
               </div>
 
@@ -221,23 +242,25 @@ const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
             </div>
 
             {/* Mobile Topics Preview - Only for unpurchased courses */}
-    {!isPurchased && product.topics && product.topics.length > 0 && (
+            {!isPurchased && product.topics && product.topics.length > 0 && (
               <div className="mt-3 px-3 sm:hidden">
                 <h4 className="text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">
                   Course Content:
                 </h4>
                 <div className="space-y-1">
-                  {product.topics.slice(0, 4).map((topic: string, index: number) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 text-gray-400 text-xs"
-                    >
-                      <span className="text-gray-500 font-mono text-[10px] w-5">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span className="line-clamp-1 flex-1">{topic}</span>
-                    </div>
-                  ))}
+                  {product.topics
+                    .slice(0, 4)
+                    .map((topic: string, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-gray-400 text-xs"
+                      >
+                        <span className="text-gray-500 font-mono text-[10px] w-5">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="line-clamp-1 flex-1">{topic}</span>
+                      </div>
+                    ))}
                   {product.topics.length > 4 && (
                     <div className="text-gray-500 text-xs italic ml-7">
                       +{product.topics.length - 4} more lessons

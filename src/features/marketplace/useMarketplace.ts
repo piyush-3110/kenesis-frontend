@@ -1,25 +1,39 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Category, MarketplaceFilters, SortOptionItem, PriceRange } from '@/types/Product';
-import type { CourseForMarketplacePage as Product } from '@/types/Product';
-import type { PaginatedResponse } from '@/lib/marketplaceApi';
-import { fetchProducts, fetchCategories, fetchSortOptions, fetchPriceRange } from '@/lib/marketplaceApi';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Category,
+  MarketplaceFilters,
+  SortOptionItem,
+  PriceRange,
+} from "@/types/Product";
+import type { CourseForMarketplacePage as Product } from "@/types/Product";
+import type { PaginatedResponse } from "@/lib/marketplaceApi";
+import {
+  fetchProducts,
+  fetchCategories,
+  fetchSortOptions,
+  fetchPriceRange,
+} from "@/lib/marketplaceApi";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export function useMarketplace() {
   // State management
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sortOptions, setSortOptions] = useState<SortOptionItem[]>([]);
-  const [priceRange, setPriceRange] = useState<PriceRange>({ min: 0, max: 1000, currency: 'USD' });
-  const [filters, setFilters] = useState<MarketplaceFilters>({
-    category: '',
-    priceRange: { min: 0, max: 1000, currency: 'USD' },
-    searchQuery: '',
-    sortBy: 'most-relevant'
+  const [priceRange, setPriceRange] = useState<PriceRange>({
+    min: 0,
+    max: 1000,
+    currency: "USD",
   });
-  
+  const [filters, setFilters] = useState<MarketplaceFilters>({
+    category: "",
+    priceRange: { min: 0, max: 1000, currency: "USD" },
+    searchQuery: "",
+    sortBy: "most-relevant",
+  });
+
   // Pagination and loading states
   const [currentPage, setCurrentPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -27,14 +41,14 @@ export function useMarketplace() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Infinite scroll
   const [isFetchingNextPage, setIsFetchingNextPage] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
-  
+
   // Debounce search query to avoid excessive API calls
-  const debouncedSearchQuery = useDebounce(filters.searchQuery || '', 500);
-  
+  const debouncedSearchQuery = useDebounce(filters.searchQuery || "", 500);
+
   // Reset pagination when filters change
   const resetPagination = useCallback(() => {
     setCurrentPage(1);
@@ -43,42 +57,50 @@ export function useMarketplace() {
   }, []);
 
   // Load products with current filters and pagination
-  const loadProducts = useCallback(async (page: number = 1, isLoadMore: boolean = false) => {
-    if (isLoadMore) {
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
-    setError(null);
-
-    try {
-      const filtersWithSearch = {
-        ...filters,
-        searchQuery: debouncedSearchQuery
-      };
-      
-  const response: PaginatedResponse<Product> = await fetchProducts(filtersWithSearch, page, 10);
-      
+  const loadProducts = useCallback(
+    async (page: number = 1, isLoadMore: boolean = false) => {
       if (isLoadMore) {
-        // Append new products for infinite scroll
-        setProducts(prevProducts => [...prevProducts, ...response.data]);
+        setLoadingMore(true);
       } else {
-        // Replace products for new search/filter
-        setProducts(response.data);
+        setLoading(true);
       }
-      
-  setHasNextPage(response.pagination.hasNextPage);
-  setTotalCount(response.pagination.total);
-      setCurrentPage(page);
-      
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load products');
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-      setIsFetchingNextPage(false);
-    }
-  }, [filters, debouncedSearchQuery]);
+      setError(null);
+
+      try {
+        const filtersWithSearch = {
+          ...filters,
+          searchQuery: debouncedSearchQuery,
+        };
+
+        const response: PaginatedResponse<Product> = await fetchProducts(
+          filtersWithSearch,
+          page,
+          10
+        );
+
+        if (isLoadMore) {
+          // Append new products for infinite scroll
+          setProducts((prevProducts) => [...prevProducts, ...response.data]);
+        } else {
+          // Replace products for new search/filter
+          setProducts(response.data);
+        }
+
+        setHasNextPage(response.pagination.hasNextPage);
+        setTotalCount(response.pagination.total);
+        setCurrentPage(page);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Failed to load products"
+        );
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+        setIsFetchingNextPage(false);
+      }
+    },
+    [filters, debouncedSearchQuery]
+  );
 
   // Load more products for infinite scroll
   const loadMoreProducts = useCallback(async () => {
@@ -89,22 +111,28 @@ export function useMarketplace() {
   }, [currentPage, hasNextPage, loadingMore, isFetchingNextPage, loadProducts]);
 
   // Intersection observer for infinite scroll
-  const lastProductElementCallback = useCallback((node: HTMLDivElement | null) => {
-    if (loadingMore || isFetchingNextPage) return;
-    
-    if (observerRef.current) observerRef.current.disconnect();
-    
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasNextPage) {
-        loadMoreProducts();
-      }
-    }, {
-      threshold: 0.1,
-      rootMargin: '100px'
-    });
-    
-    if (node) observerRef.current.observe(node);
-  }, [loadingMore, isFetchingNextPage, hasNextPage, loadMoreProducts]);
+  const lastProductElementCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (loadingMore || isFetchingNextPage) return;
+
+      if (observerRef.current) observerRef.current.disconnect();
+
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasNextPage) {
+            loadMoreProducts();
+          }
+        },
+        {
+          threshold: 0.1,
+          rootMargin: "100px",
+        }
+      );
+
+      if (node) observerRef.current.observe(node);
+    },
+    [loadingMore, isFetchingNextPage, hasNextPage, loadMoreProducts]
+  );
 
   // Load categories on mount
   const loadCategories = useCallback(async () => {
@@ -112,7 +140,9 @@ export function useMarketplace() {
       const categoriesData = await fetchCategories();
       setCategories(categoriesData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load categories');
+      setError(
+        err instanceof Error ? err.message : "Failed to load categories"
+      );
     }
   }, []);
 
@@ -122,7 +152,9 @@ export function useMarketplace() {
       const sortOptionsData = await fetchSortOptions();
       setSortOptions(sortOptionsData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load sort options');
+      setError(
+        err instanceof Error ? err.message : "Failed to load sort options"
+      );
     }
   }, []);
 
@@ -132,18 +164,20 @@ export function useMarketplace() {
       const priceRangeData = await fetchPriceRange();
       setPriceRange(priceRangeData);
       // Update initial filter state with actual price range
-      setFilters(prev => ({
+      setFilters((prev) => ({
         ...prev,
-        priceRange: priceRangeData
+        priceRange: priceRangeData,
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load price range');
+      setError(
+        err instanceof Error ? err.message : "Failed to load price range"
+      );
     }
   }, []);
 
   // Load products when filters change
   useEffect(() => {
-    console.log('Filters changed, reloading products:', filters); // Debug log
+    console.log("Filters changed, reloading products:", filters); // Debug log
     resetPagination();
     loadProducts(1, false);
   }, [filters, debouncedSearchQuery, loadProducts, resetPagination]);
@@ -156,21 +190,24 @@ export function useMarketplace() {
   }, [loadCategories, loadSortOptions, loadPriceRange]);
 
   // Filter update functions
-  const updateFilters = useCallback((newFilters: Partial<MarketplaceFilters>) => {
-    console.log('Updating filters:', newFilters); // Debug log
-    setFilters(prev => {
-      const updated = { ...prev, ...newFilters };
-      console.log('Updated filters:', updated); // Debug log
-      return updated;
-    });
-  }, []);
+  const updateFilters = useCallback(
+    (newFilters: Partial<MarketplaceFilters>) => {
+      console.log("Updating filters:", newFilters); // Debug log
+      setFilters((prev) => {
+        const updated = { ...prev, ...newFilters };
+        console.log("Updated filters:", updated); // Debug log
+        return updated;
+      });
+    },
+    []
+  );
 
   const clearFilters = useCallback(() => {
     setFilters({
-      category: '',
+      category: "",
       priceRange: priceRange, // Use the actual price range from backend
-      searchQuery: '',
-      sortBy: 'most-relevant'
+      searchQuery: "",
+      sortBy: "most-relevant",
     });
   }, [priceRange]);
 
@@ -181,7 +218,7 @@ export function useMarketplace() {
     sortOptions,
     priceRange,
     filters,
-    
+
     // Loading states
     loading,
     loadingMore,
@@ -189,15 +226,15 @@ export function useMarketplace() {
     hasNextPage,
     totalCount,
     currentPage,
-    
+
     // Infinite scroll
     lastProductElementCallback,
     isFetchingNextPage,
-    
+
     // Actions
     updateFilters,
     clearFilters,
     loadMoreProducts,
-    refetch: () => loadProducts(1, false)
+    refetch: () => loadProducts(1, false),
   };
 }
