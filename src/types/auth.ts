@@ -3,7 +3,7 @@
  * All auth-related interfaces and types
  */
 
-import type { WalletAuthResponse } from '@/lib/api/types';
+import type { WalletAuthResponse } from "@/lib/api/types";
 
 /**
  * User interface for authentication store
