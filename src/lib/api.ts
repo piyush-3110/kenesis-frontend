@@ -180,10 +180,76 @@ export interface CreateCourseRequest {
   metadata?: string; // JSON string containing requirements, learningOutcomes, targetAudience
 }
 
+export interface UpdateCourseRequest {
+  title?: string;           // 3–100 chars, trimmed
+  shortDescription?: string; // 20–200 chars, trimmed
+  description?: string;     // 50–5000 chars, trimmed
+  level?: 'beginner' | 'intermediate' | 'advanced';
+  language?: string;        // Format: ^[a-z]{2}(-[A-Z]{2})?$ (e.g., "en", "en-US")
+  metadata?: {
+    requirements?: string[];     // max 10, each 1–200 chars
+    learningOutcomes?: string[]; // max 15, each 1–200 chars
+    targetAudience?: string[];   // max 10, each 1–100 chars
+  };
+  price?: number;          // Course price (accepted but not enforced by schema)
+}
+
+/**
+ * Course Update Response - following API documentation
+ */
+export interface UpdateCourseResponse {
+  id: string;
+  title: string;
+  slug: string;
+  type: string;
+  description: string;
+  shortDescription: string;
+  thumbnail: string;
+  status: string;
+  price: number;
+  instructor: {
+    id: string;
+    username: string;
+    avatar: string;
+  };
+  stats: {
+    rating: number;
+    reviewCount: number;
+    duration: number;
+  };
+  level: string;
+  language: string;
+  metadata: {
+    requirements: string[];
+    learningOutcomes: string[];
+    targetAudience: string[];
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CreateChapterRequest {
   title: string;
   description: string;
   order?: number;
+}
+
+// Chapter Update Request - following API documentation
+export interface UpdateChapterRequest {
+  title?: string;           // min: 3, max: 200, trimmed
+  description?: string;     // min: 10, max: 1000, trimmed
+  order?: number;          // integer, min: 1, max: 1000
+}
+
+// Chapter Update Response - following API documentation
+export interface UpdateChapterResponse {
+  id: string;
+  courseId: string;
+  title: string;
+  description: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CreateModuleRequest {
@@ -196,6 +262,39 @@ export interface CreateModuleRequest {
   isPreview?: boolean;
   mainFile?: File;
   attachments?: File[];
+}
+
+/**
+ * Module Update Request - matches new backend API
+ * PUT /api/courses/:id/modules/:moduleId
+ * All fields are optional for updates
+ */
+export interface UpdateModuleRequest {
+  title?: string;           // Module title (1-200 characters)
+  description?: string;     // Module description (max 1000 characters)
+  order?: number;          // Module order within chapter (minimum 1)
+  duration?: number;       // Module duration in seconds (minimum 0)
+  isPreview?: boolean;     // Whether module is a preview
+  mainFile?: File;         // Optional main content file
+  attachments?: File[];    // Optional array of attachment files (max 10)
+  // Note: Removed fields like prerequisites, learningOutcomes, resources, content, etc.
+  // as they are not supported by the new backend API
+}
+
+/**
+ * Module Update Response - matches new backend API
+ */
+export interface UpdateModuleResponse {
+  id: string;
+  chapterId: string;
+  title: string;
+  description: string;
+  type: 'video' | 'document';
+  order: number;
+  duration: number;
+  isPreview: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Published Course API Types (matching backend specification)
@@ -429,9 +528,10 @@ class ApiClient {
       }
 
       console.log(
-        `API Success [${response.status}]:`,
+        `✅ API Success [${response.status}]:`,
         data.message || "Request successful"
       );
+      console.log("📊 Response data:", data.data || data);
       return {
         success: true,
         message: data.message || "Success",
@@ -700,44 +800,88 @@ class ApiClient {
   /**
    * Update module details with proper type handling
    * Converts FormData to JSON when no files are present to ensure proper typing
+   * Filters out unwanted fields and handles type conversions
    */
   async updateModuleWithProperTypes<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
     try {
       console.log(`🚀 Making smart update request to: ${this.baseURL}${endpoint}`);
 
+      // Fields to exclude from the update
+      const excludedFields = [
+        'prerequisites',
+        'learningOutcome', 
+        'learningOutcomes',
+        'resource',
+        'resources',
+        'content',
+        'contentTitle',
+        'section'
+      ];
+
       // Check if FormData contains any files
       let hasFiles = false;
+      const cleanedFormData = new FormData();
+      
       for (let [key, value] of formData.entries()) {
+        // Skip excluded fields
+        if (excludedFields.includes(key) || key.includes('content[') || key.includes('learningObjectives[')) {
+          console.log(`🚫 Excluding field: ${key}`);
+          continue;
+        }
+
         if (value instanceof File) {
           hasFiles = true;
-          break;
+          cleanedFormData.append(key, value);
+        } else {
+          // Handle type conversions for FormData
+          if (key === 'duration' || key === 'order') {
+            const numValue = parseInt(value as string, 10);
+            if (!isNaN(numValue)) {
+              cleanedFormData.append(key, numValue.toString());
+            }
+          } else if (key === 'isRequired' || key === 'isPreview') {
+            // Convert string boolean values
+            const boolValue = value === 'true';
+            cleanedFormData.append(key, boolValue.toString());
+          } else {
+            cleanedFormData.append(key, value);
+          }
         }
+      }
+
+      console.log('🧹 Cleaned FormData entries:');
+      for (let [key, value] of cleanedFormData.entries()) {
+        console.log(`  ✅ ${key}: ${value instanceof File ? `[File: ${value.name}]` : `${value} (${typeof value})`}`);
       }
 
       if (hasFiles) {
         // Use FormData for file uploads
-        console.log('📎 Files detected, using FormData');
-        return this.putFormData<T>(endpoint, formData);
+        console.log('📎 Files detected, using cleaned FormData');
+        return this.putFormData<T>(endpoint, cleanedFormData);
       } else {
         // Convert to JSON for better type handling
         console.log('📝 No files detected, converting to JSON for proper types');
         const jsonData: any = {};
         
-        for (let [key, value] of formData.entries()) {
+        for (let [key, value] of cleanedFormData.entries()) {
           // Handle special type conversions
           if (key === 'duration' || key === 'order') {
-            jsonData[key] = parseInt(value as string, 10);
-          } else if (key === 'isRequired') {
+            const numValue = parseInt(value as string, 10);
+            if (!isNaN(numValue)) {
+              jsonData[key] = numValue;
+            }
+          } else if (key === 'isRequired' || key === 'isPreview') {
             jsonData[key] = value === 'true';
-          } else if (key.includes('[') && key.includes(']')) {
-            // Handle array/object notation like learningObjectives[0], content[text]
-            this.setNestedProperty(jsonData, key, value);
           } else {
             jsonData[key] = value;
           }
         }
         
-        console.log('🔄 Converted data:', jsonData);
+        console.log('🔄 Final JSON data with proper types:');
+        Object.entries(jsonData).forEach(([key, value]) => {
+          console.log(`  ✅ ${key}: ${value} (${typeof value})`);
+        });
+        console.log('📤 Sending JSON:', jsonData);
         return this.put<T>(endpoint, jsonData);
       }
     } catch (error) {
@@ -1002,8 +1146,23 @@ export const CourseAPI = {
    * Supports filtering, sorting, and pagination
    */
   getMyCourses: async (params?: GetMyCoursesParams): Promise<ApiResponse<MyCoursesResponse>> => {
-    console.log('Fetching my courses with params:', params);
-    return apiClient.getWithQuery('/api/courses/my-courses', params);
+    console.log('📚 [API] Starting getMyCourses request...');
+    console.log('📚 [API] Request params:', JSON.stringify(params, null, 2));
+    console.log('📚 [API] API endpoint: /api/courses/my-courses');
+    
+    const response = await apiClient.getWithQuery('/api/courses/my-courses', params) as ApiResponse<MyCoursesResponse>;
+    
+    console.log('📚 [API] getMyCourses response received:', JSON.stringify(response, null, 2));
+    
+    if (response.success) {
+      console.log('✅ [API] My courses fetched successfully');
+      console.log('✅ [API] Courses data:', JSON.stringify(response.data, null, 2));
+    } else {
+      console.error('❌ [API] Failed to fetch my courses:', response.message);
+      console.error('❌ [API] Full error response:', JSON.stringify(response, null, 2));
+    }
+    
+    return response;
   },
 
   /**
@@ -1011,7 +1170,23 @@ export const CourseAPI = {
    * GET /api/courses/{courseId}
    */
   getCourse: async (courseId: string): Promise<ApiResponse<any>> => {
-    return apiClient.get(`/api/courses/${courseId}`);
+    console.log('📖 [API] Starting getCourse request...');
+    console.log('📖 [API] Course ID:', courseId);
+    console.log('📖 [API] API endpoint: /api/courses/' + courseId);
+    
+    const response = await apiClient.get(`/api/courses/${courseId}`);
+    
+    console.log('📖 [API] getCourse response received:', JSON.stringify(response, null, 2));
+    
+    if (response.success) {
+      console.log('✅ [API] Course fetched successfully');
+      console.log('✅ [API] Course data:', JSON.stringify(response.data, null, 2));
+    } else {
+      console.error('❌ [API] Failed to fetch course:', response.message);
+      console.error('❌ [API] Full error response:', JSON.stringify(response, null, 2));
+    }
+    
+    return response;
   },
 
   /**
@@ -1019,8 +1194,28 @@ export const CourseAPI = {
    * PUT /api/courses/{courseId}
    * Requires authorization
    */
-  updateCourse: async (courseId: string, courseData: any): Promise<ApiResponse<any>> => {
-    return apiClient.put(`/api/courses/${courseId}`, courseData);
+  updateCourse: async (courseId: string, courseData: UpdateCourseRequest): Promise<ApiResponse<any>> => {
+    console.log('🎓 Updating course:', {
+      courseId,
+      hasTitle: !!courseData.title,
+      hasShortDescription: !!courseData.shortDescription,
+      hasDescription: !!courseData.description,
+      level: courseData.level,
+      language: courseData.language,
+      hasMetadata: !!courseData.metadata,
+      hasPrice: typeof courseData.price === 'number',
+      updateFields: Object.keys(courseData)
+    });
+
+    const response = await apiClient.put(`/api/courses/${courseId}`, courseData);
+    
+    if (response.success) {
+      console.log('✅ Course update successful');
+    } else {
+      console.error('❌ Course update failed:', response.message);
+    }
+
+    return response;
   },
 
   /**
@@ -1028,7 +1223,24 @@ export const CourseAPI = {
    * GET /api/courses/{courseId}/chapters
    */
   getChapters: async (courseId: string, includeModules: boolean = false): Promise<ApiResponse<any>> => {
-    return apiClient.getWithQuery(`/api/courses/${courseId}/chapters`, { includeModules });
+    console.log('📚 [API] Starting getChapters request...');
+    console.log('📚 [API] Course ID:', courseId);
+    console.log('📚 [API] Include modules:', includeModules);
+    console.log('📚 [API] API endpoint: /api/courses/' + courseId + '/chapters');
+    
+    const response = await apiClient.getWithQuery(`/api/courses/${courseId}/chapters`, { includeModules });
+    
+    console.log('📚 [API] getChapters response received:', JSON.stringify(response, null, 2));
+    
+    if (response.success) {
+      console.log('✅ [API] Chapters fetched successfully');
+      console.log('✅ [API] Chapters data:', JSON.stringify(response.data, null, 2));
+    } else {
+      console.error('❌ [API] Failed to fetch chapters:', response.message);
+      console.error('❌ [API] Full error response:', JSON.stringify(response, null, 2));
+    }
+    
+    return response;
   },
 
   /**
@@ -1042,9 +1254,31 @@ export const CourseAPI = {
   /**
    * Update chapter details
    * PUT /api/courses/{courseId}/chapters/{chapterId}
+   * Following the API documentation for chapter updates
    */
-  updateChapter: async (courseId: string, chapterId: string, chapterData: any): Promise<ApiResponse<any>> => {
-    return apiClient.put(`/api/courses/${courseId}/chapters/${chapterId}`, chapterData);
+  updateChapter: async (
+    courseId: string, 
+    chapterId: string, 
+    chapterData: UpdateChapterRequest
+  ): Promise<ApiResponse<UpdateChapterResponse>> => {
+    console.log('🚀 Chapter update request:', {
+      endpoint: `/api/courses/${courseId}/chapters/${chapterId}`,
+      method: 'PUT',
+      data: chapterData
+    });
+
+    const response = await apiClient.put<UpdateChapterResponse>(
+      `/api/courses/${courseId}/chapters/${chapterId}`, 
+      chapterData
+    );
+
+    console.log('📥 Chapter update response:', {
+      success: response.success,
+      message: response.message,
+      hasData: !!response.data
+    });
+
+    return response;
   },
 
   /**
@@ -1106,52 +1340,64 @@ export const CourseAPI = {
   /**
    * Get module content
    * GET /api/courses/{courseId}/modules/{moduleId}/content
+   * Updated to new endpoint format
    */
-  getModuleContent: async (courseId: string, chapterId: string, moduleId: string): Promise<ApiResponse<{
-    module: {
+  getModuleContent: async (courseId: string, moduleId: string): Promise<ApiResponse<{
+    id: string;
+    chapterId: string;
+    title: string;
+    description: string;
+    type: 'video' | 'document';
+    order: number;
+    duration: number;
+    videoUrl?: string;
+    attachments?: Array<{
       id: string;
-      title: string;
-      description: string;
-      type: 'video' | 'document';
-      duration?: number;
-      isPreview: boolean;
-      content?: {
-        mainFile?: {
-          url: string;
-          type: string;
-          size: number;
-          duration?: number;
-        };
-        attachments?: Array<{
-          id: string;
-          name: string;
-          url: string;
-          type: string;
-          size: number;
-        }>;
-      };
-      progress?: {
-        completed: boolean;
-        watchTime?: number;
-        lastAccessedAt?: string;
-      };
+      name: string;
+      url: string;
+      type: string;
+      size: number;
+    }>;
+    isPreview: boolean;
+    metadata?: {
+      accessedAt: string;
+      hasAccess: boolean;
     };
+    createdAt: string;
+    updatedAt: string;
   }>> => {
-    console.log('🔧 API getModuleContent called with:', { courseId, chapterId, moduleId });
-    console.log('🔧 CourseId type:', typeof courseId, 'ChapterId type:', typeof chapterId, 'ModuleId type:', typeof moduleId);
-    return apiClient.get(`/api/courses/${courseId}/chapters/${chapterId}/modules/${moduleId}/content`);
+    console.log('🎥 [API] Starting getModuleContent request...');
+    console.log('🎥 [API] Course ID:', courseId);
+    console.log('🎥 [API] Module ID:', moduleId);
+    console.log('🎥 [API] CourseId type:', typeof courseId, 'ModuleId type:', typeof moduleId);
+    console.log('🎥 [API] API endpoint: /api/courses/' + courseId + '/modules/' + moduleId + '/content');
+    
+    const response = await apiClient.get(`/api/courses/${courseId}/modules/${moduleId}/content`);
+    
+    console.log('🎥 [API] getModuleContent response received:', JSON.stringify(response, null, 2));
+    
+    if (response.success) {
+      console.log('✅ [API] Module content fetched successfully');
+      console.log('✅ [API] Module content data:', JSON.stringify(response.data, null, 2));
+    } else {
+      console.error('❌ [API] Failed to fetch module content:', response.message);
+      console.error('❌ [API] Full error response:', JSON.stringify(response, null, 2));
+    }
+    
+    return response as any;
   },
 
   /**
    * Update module details
-   * PUT /api/courses/{courseId}/chapters/{chapterId}/modules/{moduleId}
+   * PUT /api/courses/{courseId}/modules/{moduleId}
+   * New endpoint format as per backend API documentation
    */
-  updateModule: async (courseId: string, chapterId: string, moduleId: string, moduleData: FormData): Promise<ApiResponse<any>> => {
-    console.log('🔧 API updateModule called with:', { courseId, chapterId, moduleId });
-    console.log('🔧 CourseId type:', typeof courseId, 'ChapterId type:', typeof chapterId, 'ModuleId type:', typeof moduleId);
+  updateModule: async (courseId: string, moduleId: string, moduleData: FormData): Promise<ApiResponse<UpdateModuleResponse>> => {
+    console.log('🔧 API updateModule called with NEW ENDPOINT:', { courseId, moduleId });
+    console.log('🔧 CourseId type:', typeof courseId, 'ModuleId type:', typeof moduleId);
     console.log('🔧 FormData entries:', Array.from(moduleData.entries()));
     
-    return apiClient.updateModuleWithProperTypes(`/api/courses/${courseId}/chapters/${chapterId}/modules/${moduleId}`, moduleData);
+    return apiClient.updateModuleWithProperTypes<UpdateModuleResponse>(`/api/courses/${courseId}/modules/${moduleId}`, moduleData);
   },
 
   /**
@@ -1176,6 +1422,58 @@ export const CourseAPI = {
    */
   getCategories: async (): Promise<ApiResponse<Array<{ id: string; name: string; count: number }>>> => {
     return apiClient.get('/api/courses/categories');
+  },
+
+  /**
+   * Get user's purchased courses
+   * GET /api/courses/purchases/my-purchases
+   */
+  getMyPurchases: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: 'active' | 'expired' | 'all';
+  }): Promise<ApiResponse<any>> => {
+    console.log('🛒 [API] Starting getMyPurchases request...');
+    console.log('🛒 [API] Request params:', JSON.stringify(params, null, 2));
+    console.log('🛒 [API] API endpoint: /api/courses/purchases/my-purchases');
+    
+    const response = await apiClient.getWithQuery('/api/courses/purchases/my-purchases', params);
+    
+    console.log('🛒 [API] getMyPurchases response received:', JSON.stringify(response, null, 2));
+    
+    if (response.success) {
+      console.log('✅ [API] User purchases fetched successfully');
+      console.log('✅ [API] Purchases data:', JSON.stringify(response.data, null, 2));
+    } else {
+      console.error('❌ [API] Failed to fetch purchases:', response.message);
+      console.error('❌ [API] Full error response:', JSON.stringify(response, null, 2));
+    }
+
+    return response;
+  },
+
+  /**
+   * Check course access for a specific course
+   * GET /api/courses/purchases/access/{courseId}
+   */
+  checkCourseAccess: async (courseId: string): Promise<ApiResponse<any>> => {
+    console.log('🔐 [API] Starting checkCourseAccess request...');
+    console.log('🔐 [API] Course ID:', courseId);
+    console.log('🔐 [API] API endpoint: /api/courses/purchases/access/' + courseId);
+    
+    const response = await apiClient.get(`/api/courses/purchases/access/${courseId}`);
+    
+    console.log('🔐 [API] checkCourseAccess response received:', JSON.stringify(response, null, 2));
+    
+    if (response.success) {
+      console.log('✅ [API] Course access checked successfully');
+      console.log('✅ [API] Access data:', JSON.stringify(response.data, null, 2));
+    } else {
+      console.error('❌ [API] Failed to check course access:', response.message);
+      console.error('❌ [API] Full error response:', JSON.stringify(response, null, 2));
+    }
+
+    return response;
   },
 };
 
@@ -1215,71 +1513,42 @@ export const formatRetryAfter = (seconds: number): string => {
   return `${minutes} minute${minutes > 1 ? "s" : ""}`;
 };
 
-/**
- * Utility function to convert CreateCourseRequest to FormData
- * Following backend API specifications exactly
- */
-export const createCourseFormData = (courseData: CreateCourseRequest): FormData => {
-  const formData = new FormData();
-  
-  // Required fields
-  formData.append('title', courseData.title);
-  formData.append('description', courseData.description);
-  formData.append('shortDescription', courseData.shortDescription);
-  formData.append('type', courseData.type);
-  formData.append('level', courseData.level);
-  formData.append('language', courseData.language);
-  formData.append('price', courseData.price.toString());
-  formData.append('tokenToPayWith', courseData.tokenToPayWith);
-  formData.append('accessDuration', courseData.accessDuration.toString());
-  formData.append('affiliatePercentage', courseData.affiliatePercentage.toString());
-  formData.append('availableQuantity', courseData.availableQuantity.toString());
-  formData.append('thumbnail', courseData.thumbnail);
-  formData.append('previewVideo', courseData.previewVideo);
-  
-  // Optional fields
-  if (courseData.metadata) {
-    formData.append('metadata', courseData.metadata);
-  }
-  
-  return formData;
-};
 
 /**
  * Utility function to convert CreateModuleRequest to FormData
  */
-export const createModuleFormData = (moduleData: CreateModuleRequest): FormData => {
-  const formData = new FormData();
+// export const createModuleFormData = (moduleData: CreateModuleRequest): FormData => {
+//   const formData = new FormData();
   
-  // Required fields
-  formData.append('chapterId', moduleData.chapterId);
-  formData.append('title', moduleData.title);
-  formData.append('type', moduleData.type);
+//   // Required fields
+//   formData.append('chapterId', moduleData.chapterId);
+//   formData.append('title', moduleData.title);
+//   formData.append('type', moduleData.type);
   
-  // Optional fields
-  if (moduleData.description) {
-    formData.append('description', moduleData.description);
-  }
-  if (moduleData.order !== undefined) {
-    formData.append('order', moduleData.order.toString());
-  }
-  if (moduleData.duration !== undefined) {
-    formData.append('duration', moduleData.duration.toString());
-  }
-  if (moduleData.isPreview !== undefined) {
-    formData.append('isPreview', moduleData.isPreview.toString());
-  }
-  if (moduleData.mainFile) {
-    formData.append('mainFile', moduleData.mainFile);
-  }
-  if (moduleData.attachments) {
-    moduleData.attachments.forEach((attachment, index) => {
-      formData.append('attachments', attachment);
-    });
-  }
+//   // Optional fields
+//   if (moduleData.description) {
+//     formData.append('description', moduleData.description);
+//   }
+//   if (moduleData.order !== undefined) {
+//     formData.append('order', moduleData.order.toString());
+//   }
+//   if (moduleData.duration !== undefined) {
+//     formData.append('duration', moduleData.duration.toString());
+//   }
+//   if (moduleData.isPreview !== undefined) {
+//     formData.append('isPreview', moduleData.isPreview.toString());
+//   }
+//   if (moduleData.mainFile) {
+//     formData.append('mainFile', moduleData.mainFile);
+//   }
+//   if (moduleData.attachments) {
+//     moduleData.attachments.forEach((attachment, index) => {
+//       formData.append('attachments', attachment);
+//     });
+//   }
   
-  return formData;
-};
+//   return formData;
+// };
 
 /**
  * Utility function to convert CreateCourseRequest to FormData
