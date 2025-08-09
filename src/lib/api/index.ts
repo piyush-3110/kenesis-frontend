@@ -8,4 +8,5 @@ export * from './client';
 export * from './emailAuth';
 export * from './walletAuth';
 export * from './tokens';
+export * from './reviewApi';
 export { TokenManager } from '../tokenManager';
