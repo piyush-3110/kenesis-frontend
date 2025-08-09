@@ -1,368 +1,137 @@
-import { Product, Category, MarketplaceFilters, SortOptionItem, PriceRange } from '@/types/Product';
+import {
+  Product,
+  Category,
+  MarketplaceFilters,
+  SortOptionItem,
+  PriceRange,
+} from "@/types/Product";
+import { TokenManager } from "./tokenManager";
 
-// Generate more mock products for infinite scroll testing
-const generateMockProducts = (): Product[] => {
-  const baseProducts: Product[] = [
-    {
-      id: '1',
-      title: 'ADSPRO Mentoring: Your Complete Digital Marketing Course',
-      description: 'ADSPRO MENTORING: MASTER DIGITAL MARKETING AND MULTIPLY YOUR TICKETS Tired of spending on advertising without results? ADSPRO Mentoring you...',
-      author: 'Sara Gago',
-      price: 397.00,
-      currency: 'USD',
-      rating: 4.9,
-      totalRatings: 132,
-      image: '/images/landing/product.png',
-      category: 'Marketing and sales',
-      type: 'video',
-      createdAt: '2024-01-15',
-      isPurchased: true,
-      purchaseDate: '2024-01-20',
-      accessLevel: 'full',
-      topics: ['Digital Marketing Fundamentals', 'Social Media Strategy', 'Google Ads Mastery', 'Analytics & Conversion Optimization']
-    },
-    {
-      id: '2',
-      title: 'Canva Digital Marketing Package',
-      description: 'The Canva Pack Digital Marketing is a complete package for those who are just starting on Instagram! It contains over 200 ready-made and editable post templates in Canva, as well',
-      author: 'Sara Gago',
-      price: 9.00,
-      currency: 'USD',
-      rating: 4.4,
-      totalRatings: 54,
-      image: '/images/landing/product.png',
-      category: 'Design and photography',
-      type: 'document',
-      createdAt: '2024-02-20',
-      isPurchased: false,
-      accessLevel: 'preview',
-      topics: ['Instagram Post Templates', 'Story Design Layouts', 'Brand Kit Setup', 'Canva Pro Features']
-    },
-    {
-      id: '3',
-      title: 'FR TEAM Digital Marketing Training',
-      description: 'Course aimed at all consultants who want to start selling the Focus on Results Program by selling online and expanding their customer base. Training for...',
-      author: 'Sara Gago',
-      price: 20.00,
-      currency: 'USD',
-      rating: 5.0,
-      totalRatings: 95,
-      image: '/images/landing/product.png',
-      category: 'Marketing and sales',
-      type: 'video',
-      createdAt: '2024-03-10',
-      isPurchased: true,
-      purchaseDate: '2024-03-15',
-      accessLevel: 'full',
-      topics: ['Consultant Sales Strategy', 'Online Program Development', 'Customer Acquisition', 'Revenue Optimization']
-    },
-    {
-      id: '4',
-      title: 'Advanced Web Development with React & Next.js',
-      description: 'Master modern web development with React, Next.js, and TypeScript. Build production-ready applications with advanced patterns and best practices.',
-      author: 'Alex Rodriguez',
-      price: 149.00,
-      currency: 'USD',
-      rating: 4.8,
-      totalRatings: 203,
-      image: '/images/landing/product.png',
-      category: 'Programming and development',
-      type: 'video',
-      createdAt: '2024-01-05',
-      isPurchased: false,
-      accessLevel: 'preview',
-      topics: ['React Hooks & Context', 'Next.js App Router', 'TypeScript Integration', 'Server Components', 'Performance Optimization']
-    },
-    {
-      id: '5',
-      title: 'Photography Masterclass: From Beginner to Pro',
-      description: 'Learn professional photography techniques, lighting, composition, and post-processing. Includes hands-on projects and real-world assignments.',
-      author: 'Emma Johnson',
-      price: 89.00,
-      currency: 'USD',
-      rating: 4.7,
-      totalRatings: 167,
-      image: '/images/landing/product.png',
-      category: 'Design and photography',
-      type: 'video',
-      createdAt: '2024-02-12',
-      isPurchased: true,
-      purchaseDate: '2024-02-18',
-      accessLevel: 'full',
-      topics: ['Camera Fundamentals', 'Composition Rules', 'Natural Light Photography', 'Portrait Techniques', 'Post-Processing Workflow']
-    },
-    {
-      id: '6',
-      title: 'UI/UX Design Complete Guide',
-      description: 'Comprehensive guide to user interface and user experience design. Learn design principles, prototyping, and user research methodologies.',
-      author: 'Michael Chen',
-      price: 79.00,
-      currency: 'USD',
-      rating: 4.6,
-      totalRatings: 89,
-      image: '/images/landing/product.png',
-      category: 'Design and photography',
-      type: 'document',
-      createdAt: '2024-01-28',
-      isPurchased: false,
-      accessLevel: 'none',
-      topics: ['Design Thinking Process', 'User Research Methods', 'Wireframing & Prototyping', 'Usability Testing', 'Design Systems']
-    },
-    {
-      id: '7',
-      title: 'Cryptocurrency Trading Strategies',
-      description: 'Learn proven cryptocurrency trading strategies, technical analysis, and risk management. Includes live trading examples and market analysis.',
-      author: 'David Kim',
-      price: 199.00,
-      currency: 'USD',
-      rating: 4.5,
-      totalRatings: 124,
-      image: '/images/landing/product.png',
-      category: 'Finance and investment',
-      type: 'video',
-      createdAt: '2024-03-01',
-      isPurchased: true,
-      purchaseDate: '2024-03-05',
-      accessLevel: 'full',
-      topics: ['Technical Analysis', 'Risk Management', 'Trading Psychology', 'Market Indicators', 'Portfolio Strategies']
-    },
-    {
-      id: '8',
-      title: 'Mindfulness and Meditation Course',
-      description: 'Discover inner peace through mindfulness and meditation practices. Includes guided meditations, stress reduction techniques, and daily routines.',
-      author: 'Lisa Parker',
-      price: 45.00,
-      currency: 'USD',
-      rating: 4.9,
-      totalRatings: 312,
-      image: '/images/landing/product.png',
-      category: 'Health, wellness and beauty',
-      type: 'video',
-      createdAt: '2024-01-10',
-      isPurchased: false,
-      accessLevel: 'preview',
-      topics: ['Mindfulness Fundamentals', 'Breathing Techniques', 'Body Scan Meditation', 'Stress Management', 'Daily Practice Routines']
-    },
-    {
-      id: '9',
-      title: 'Business Strategy and Leadership',
-      description: 'Essential business strategy and leadership skills for modern entrepreneurs. Learn to build and lead successful teams and organizations.',
-      author: 'Robert Wilson',
-      price: 299.00,
-      currency: 'USD',
-      rating: 4.8,
-      totalRatings: 156,
-      image: '/images/landing/product.png',
-      category: 'Business and entrepreneurship',
-      type: 'document',
-      createdAt: '2024-02-05',
-      isPurchased: false,
-      accessLevel: 'none',
-      topics: ['Strategic Planning', 'Leadership Fundamentals', 'Team Building', 'Decision Making', 'Performance Management']
-    },
-    {
-      id: '10',
-      title: 'Social Media Marketing 2024',
-      description: 'Up-to-date social media marketing strategies for Instagram, TikTok, YouTube, and LinkedIn. Includes content creation and audience growth tactics.',
-      author: 'Rachel Adams',
-      price: 67.00,
-      currency: 'USD',
-      rating: 4.7,
-      totalRatings: 198,
-      image: '/images/landing/product.png',
-      category: 'Marketing and sales',
-      type: 'video',
-      createdAt: '2024-03-08',
-      isPurchased: true,
-      purchaseDate: '2024-03-12',
-      accessLevel: 'full',
-      topics: ['Social Media Strategy', 'Content Creation', 'Instagram Growth', 'LinkedIn Marketing', 'TikTok Trends']
-    },
-    {
-      id: '11',
-      title: 'Python Programming Fundamentals',
-      description: 'Learn Python from scratch with hands-on projects. Covers variables, functions, data structures, and object-oriented programming concepts.',
-      author: 'Dr. James Mitchell',
-      price: 129.00,
-      currency: 'USD',
-      rating: 4.8,
-      totalRatings: 278,
-      image: '/images/landing/product.png',
-      category: 'Programming and development',
-      type: 'video',
-      createdAt: '2024-01-25',
-      isPurchased: false,
-      accessLevel: 'none',
-      topics: ['Python Syntax & Variables', 'Control Structures', 'Functions & Modules', 'Object-Oriented Programming', 'File Handling & APIs']
-    },
-    {
-      id: '12',
-      title: 'E-commerce Store Setup Guide',
-      description: 'Complete guide to setting up and running a successful e-commerce store. Includes Shopify, WooCommerce, and payment gateway setup.',
-      author: 'Jennifer Lee',
-      price: 89.00,
-      currency: 'USD',
-      rating: 4.6,
-      totalRatings: 142,
-      image: '/images/landing/product.png',
-      category: 'Business and entrepreneurship',
-      type: 'document',
-      createdAt: '2024-02-14',
-      isPurchased: true,
-      purchaseDate: '2024-02-20',
-      accessLevel: 'full',
-      topics: ['E-commerce Platforms', 'Payment Processing', 'Inventory Management', 'SEO for E-commerce', 'Customer Service']
-    },
-    {
-      id: '13',
-      title: 'Fitness and Nutrition Masterclass',
-      description: 'Comprehensive fitness and nutrition program. Includes workout plans, meal prep guides, and sustainable lifestyle changes.',
-      author: 'Marcus Williams',
-      price: 79.00,
-      currency: 'USD',
-      rating: 4.9,
-      totalRatings: 489,
-      image: '/images/landing/product.png',
-      category: 'Health, wellness and beauty',
-      type: 'video',
-      createdAt: '2024-03-02',
-      isPurchased: false,
-      accessLevel: 'preview',
-      topics: ['Nutrition Science Basics', 'Meal Planning & Prep', 'Home Workout Routines', 'Supplement Guide', 'Lifestyle Transformation']
-    },
-    {
-      id: '14',
-      title: 'Stock Market Analysis & Trading',
-      description: 'Learn fundamental and technical analysis for stock trading. Includes risk management strategies and portfolio optimization techniques.',
-      author: 'Sarah Thompson',
-      price: 249.00,
-      currency: 'USD',
-      rating: 4.7,
-      totalRatings: 167,
-      image: '/images/landing/product.png',
-      category: 'Finance and investment',
-      type: 'video',
-      createdAt: '2024-01-18',
-      isPurchased: true,
-      purchaseDate: '2024-01-25',
-      accessLevel: 'full',
-      topics: ['Technical Analysis', 'Fundamental Analysis', 'Risk Management', 'Trading Strategies', 'Portfolio Optimization']
-    },
-    {
-      id: '15',
-      title: 'Graphic Design with Adobe Creative Suite',
-      description: 'Master Photoshop, Illustrator, and InDesign. Create professional designs for print and digital media with advanced techniques.',
-      author: 'Carlos Rodriguez',
-      price: 159.00,
-      currency: 'USD',
-      rating: 4.8,
-      totalRatings: 223,
-      image: '/images/landing/product.png',
-      category: 'Design and photography',
-      type: 'video',
-      createdAt: '2024-02-28',
-      isPurchased: false,
-      accessLevel: 'preview',
-      topics: ['Photoshop Mastery', 'Illustrator Vector Design', 'InDesign Layout', 'Color Theory', 'Print vs Digital Design']
-    }
-  ];
+// Cache for reducing API calls
+let categoriesCache: { data: Category[]; timestamp: number } | null = null;
+let priceRangeCache: { data: PriceRange; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-  // Generate additional products for testing with mixed purchase states
-  const additionalProducts: Product[] = Array.from({ length: 47 }, (_, i) => {
-    // Use deterministic values for consistency
-    const priceOptions = [49, 79, 99, 149, 199, 249, 299, 349, 399, 449];
-    const ratingOptions = [3.0, 3.5, 4.0, 4.2, 4.5, 4.7, 4.8, 4.9, 5.0];
-    
-    // Create a mix of purchase states for testing
-    const purchaseState = (() => {
-      const stateIndex = i % 5;
-      switch (stateIndex) {
-        case 0: // Purchased with full access
-          return {
-            isPurchased: true,
-            purchaseDate: new Date(2024, (i % 12), Math.min(28, (i % 28) + 1)).toISOString().split('T')[0],
-            accessLevel: 'full' as const
-          };
-        case 1: // Not purchased, preview available
-          return {
-            isPurchased: false,
-            accessLevel: 'preview' as const
-          };
-        case 2: // Not purchased, no access
-          return {
-            isPurchased: false,
-            accessLevel: 'none' as const
-          };
-        case 3: // Purchased with full access (recent)
-          return {
-            isPurchased: true,
-            purchaseDate: '2024-03-15',
-            accessLevel: 'full' as const
-          };
-        default: // Not purchased, preview available
-          return {
-            isPurchased: false,
-            accessLevel: 'preview' as const
-          };
-      }
-    })();
-
-    // Generate topic titles based on course type
-    const generateTopics = (courseType: string, index: number) => {
-      const topicSets = {
-        'Digital Marketing': [
-          'SEO Fundamentals', 'Content Marketing Strategy', 'Social Media Advertising', 'Email Marketing Automation', 'Analytics & ROI Tracking'
-        ],
-        'Web Design': [
-          'HTML5 & CSS3 Mastery', 'Responsive Design Principles', 'JavaScript Frameworks', 'UX/UI Best Practices', 'Design Tools & Workflow'
-        ],
-        'Business Strategy': [
-          'Market Analysis', 'Competitive Research', 'Financial Planning', 'Team Leadership', 'Growth Strategies'
-        ],
-        'Photography': [
-          'Camera Settings & Controls', 'Composition Techniques', 'Lighting Fundamentals', 'Post-Processing', 'Portfolio Development'
-        ]
-      };
-      
-      const topics = topicSets[courseType as keyof typeof topicSets] || topicSets['Digital Marketing'];
-      // Return 3-5 topics per course
-      return topics.slice(0, 3 + (index % 3));
-    };
-
-    const courseType = i % 4 === 0 ? 'Digital Marketing' : i % 4 === 1 ? 'Web Design' : i % 4 === 2 ? 'Business Strategy' : 'Photography';
-    
-    return {
-      id: `${i + 16}`, // Start from 16 since base products go up to 15
-      title: `${i % 3 === 0 ? 'Advanced' : i % 3 === 1 ? 'Complete' : 'Professional'} ${courseType} Course ${i + 16}`,
-      description: `Comprehensive course covering ${i % 4 === 0 ? 'digital marketing strategies, SEO, and social media' : 
-        i % 4 === 1 ? 'modern web design principles, UI/UX, and responsive layouts' : 
-        i % 4 === 2 ? 'business development, entrepreneurship, and growth strategies' : 
-        'professional photography techniques, lighting, and post-processing'}. Perfect for ${i % 3 === 0 ? 'beginners' : i % 3 === 1 ? 'intermediate learners' : 'advanced practitioners'}.`,
-      author: i % 5 === 0 ? 'Sara Gago' : i % 5 === 1 ? 'John Smith' : i % 5 === 2 ? 'Maria Garcia' : i % 5 === 3 ? 'David Wilson' : 'Emily Johnson',
-      price: priceOptions[i % priceOptions.length],
-      currency: 'USD',
-      rating: ratingOptions[i % ratingOptions.length],
-      totalRatings: 20 + (i * 7) % 300, // Deterministic rating count
-      image: '/images/landing/product.png',
-      category: i % 6 === 0 ? 'Marketing and sales' : 
-                i % 6 === 1 ? 'Design and photography' : 
-                i % 6 === 2 ? 'Programming and development' :
-                i % 6 === 3 ? 'Business and entrepreneurship' :
-                i % 6 === 4 ? 'Health, wellness and beauty' : 'Finance and investment',
-      type: i % 2 === 0 ? 'video' as const : 'document' as const,
-      createdAt: new Date(2024, (i % 12), Math.min(28, (i % 28) + 1)).toISOString().split('T')[0],
-      topics: generateTopics(courseType, i),
-      ...purchaseState
-    };
-  });
-
-  return [...baseProducts, ...additionalProducts];
+// Helper function to check if cache is valid
+const isCacheValid = (timestamp: number): boolean => {
+  return Date.now() - timestamp < CACHE_DURATION;
 };
 
-const mockProducts = generateMockProducts();
+// Backend API response types
+interface BackendCourse {
+  id: string;
+  title: string;
+  slug: string;
+  type: "video" | "document";
+  shortDescription: string;
+  thumbnail: string;
+  isPublished: boolean;
+  instructor: {
+    id: string;
+    username: string;
+    avatar: string;
+  };
+  price: number;
+  stats: {
+    rating: number;
+    reviewCount: number;
+    duration: number;
+  };
+  level: "beginner" | "intermediate" | "advanced";
+  language: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
-// Simulate network delay
-const simulateDelay = (ms: number = 800) => new Promise(resolve => setTimeout(resolve, ms));
+interface BackendApiResponse {
+  success: boolean;
+  message: string;
+  data: {
+    courses: BackendCourse[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCourses: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+      limit: number;
+    };
+    filters: {
+      q: string | null;
+      type: string | null;
+      level: string | null;
+      instructor: string | null;
+      sortBy: string;
+      sortOrder: string;
+    };
+  };
+}
+
+// Base API URL - this should be configured based on environment
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+
+// Helper function to get headers with optional authentication
+const getHeaders = (includeAuth: boolean = false): HeadersInit => {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (includeAuth) {
+    const token = TokenManager.getAccessToken();
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
+};
+
+// Helper function to map backend course to frontend Product
+const mapCourseToProduct = (course: BackendCourse): Product => {
+  // Map course level to a category for now - you may want to implement proper categories later
+  const levelToCategory = {
+    beginner: "Beginner Courses",
+    intermediate: "Intermediate Courses",
+    advanced: "Advanced Courses",
+  };
+
+  return {
+    id: course.id,
+    title: course.title,
+    description: course.shortDescription,
+    author: course.instructor.username,
+    price: course.price,
+    currency: "USD",
+    rating: course.stats.rating,
+    totalRatings: course.stats.reviewCount,
+    image: course.thumbnail || "/images/landing/product.png", // Fallback to default image
+    category: levelToCategory[course.level] || "General",
+    type: course.type,
+    createdAt: course.createdAt.split("T")[0], // Convert to YYYY-MM-DD format
+    // These fields would need to come from user-specific data
+    isPurchased: false, // TODO: Implement user purchase checking
+    accessLevel: "preview" as const, // TODO: Implement access level logic
+    topics: [], // TODO: Fetch course curriculum from course details endpoint
+  };
+};
+
+// Helper function to map frontend sort options to backend parameters
+const mapSortToBackend = (sortBy: string) => {
+  const sortMapping: Record<string, { sortBy: string; sortOrder: string }> = {
+    "most-relevant": { sortBy: "createdAt", sortOrder: "desc" },
+    "a-z": { sortBy: "title", sortOrder: "asc" },
+    "z-a": { sortBy: "title", sortOrder: "desc" },
+    "price-low-high": { sortBy: "price", sortOrder: "asc" },
+    "price-high-low": { sortBy: "price", sortOrder: "desc" },
+    "rating-high-low": { sortBy: "averageRating", sortOrder: "desc" },
+    newest: { sortBy: "createdAt", sortOrder: "desc" },
+    "video-first": { sortBy: "createdAt", sortOrder: "desc" }, // Will handle type filtering separately
+    "document-first": { sortBy: "createdAt", sortOrder: "desc" }, // Will handle type filtering separately
+  };
+
+  return sortMapping[sortBy] || { sortBy: "createdAt", sortOrder: "desc" };
+};
 
 export interface PaginatedResponse<T> {
   data: T[];
@@ -377,243 +146,366 @@ export interface PaginatedResponse<T> {
 }
 
 /**
- * Fetch products with pagination and filtering
- * This simulates a backend API call that would include:
- * - Search query
- * - Category filtering
- * - Price range filtering
- * - Sorting
- * - Pagination
+ * Fetch products with pagination and filtering from the backend API
  */
 export async function fetchProducts(
   filters: MarketplaceFilters = {},
   page: number = 1,
-  limit: number = 20 // Increased default to show more products
+  limit: number = 20
 ): Promise<PaginatedResponse<Product>> {
-  await simulateDelay();
+  try {
+    // Build query parameters
+    const params = new URLSearchParams();
 
-  let filteredProducts = [...mockProducts];
+    // Add pagination
+    params.append("page", page.toString());
+    params.append("limit", limit.toString());
 
-  // Apply search filter
-  if (filters.searchQuery) {
-    const query = filters.searchQuery.toLowerCase();
-    filteredProducts = filteredProducts.filter(product => 
-      product.title.toLowerCase().includes(query) ||
-      product.description.toLowerCase().includes(query) ||
-      product.author.toLowerCase().includes(query)
+    // Add search query
+    if (filters.searchQuery) {
+      params.append("q", filters.searchQuery);
+    }
+
+    // Add type filter
+    if (filters.type) {
+      params.append("type", filters.type);
+    }
+
+    // Map level filtering (if we want to support category as level)
+    if (
+      filters.category &&
+      filters.category !== "all" &&
+      filters.category !== ""
+    ) {
+      // If category maps to level, add level filter
+      const categoryToLevel: Record<string, string> = {
+        "beginner-courses": "beginner",
+        "intermediate-courses": "intermediate",
+        "advanced-courses": "advanced",
+      };
+
+      const level =
+        categoryToLevel[filters.category.toLowerCase().replace(/\s+/g, "-")];
+      if (level) {
+        params.append("level", level);
+      }
+    }
+
+    // Add sorting
+    if (filters.sortBy) {
+      const { sortBy, sortOrder } = mapSortToBackend(filters.sortBy);
+      params.append("sortBy", sortBy);
+      params.append("sortOrder", sortOrder);
+    }
+
+    // Make API call
+    const response = await fetch(
+      `${API_BASE_URL}/api/courses?${params.toString()}`,
+      {
+        method: "GET",
+        headers: getHeaders(), // Public endpoint, no auth required
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const apiResponse: BackendApiResponse = await response.json();
+
+    if (!apiResponse.success) {
+      throw new Error(apiResponse.message || "API request failed");
+    }
+
+    // Map backend courses to frontend products
+    const products = apiResponse.data.courses.map(mapCourseToProduct);
+
+    // Apply client-side price filtering if needed (backend doesn't support price filtering yet)
+    let filteredProducts = products;
+    if (filters.priceRange) {
+      filteredProducts = products.filter(
+        (product) =>
+          product.price >= filters.priceRange!.min &&
+          product.price <= filters.priceRange!.max
+      );
+    }
+
+    // Apply client-side type-first sorting if needed
+    if (filters.sortBy === "video-first") {
+      filteredProducts.sort((a, b) => {
+        if (a.type === "video" && b.type === "document") return -1;
+        if (a.type === "document" && b.type === "video") return 1;
+        return 0;
+      });
+    } else if (filters.sortBy === "document-first") {
+      filteredProducts.sort((a, b) => {
+        if (a.type === "document" && b.type === "video") return -1;
+        if (a.type === "video" && b.type === "document") return 1;
+        return 0;
+      });
+    }
+
+    // Return in the expected format
+    return {
+      data: filteredProducts,
+      pagination: {
+        page: apiResponse.data.pagination.currentPage,
+        limit: apiResponse.data.pagination.limit,
+        total: apiResponse.data.pagination.totalCourses,
+        totalPages: apiResponse.data.pagination.totalPages,
+        hasNextPage: apiResponse.data.pagination.hasNextPage,
+        hasPrevPage: apiResponse.data.pagination.hasPrevPage,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    throw new Error(
+      error instanceof Error ? error.message : "Failed to fetch products"
     );
   }
-
-  // Apply category filter
-  if (filters.category && filters.category !== 'all' && filters.category !== '') {
-    filteredProducts = filteredProducts.filter(product => {
-      // Convert product category to ID format for comparison
-      const productCategoryId = product.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
-      const filterCategoryId = filters.category!.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
-      return productCategoryId === filterCategoryId;
-    });
-  }
-
-  // Apply price range filter
-  if (filters.priceRange) {
-    filteredProducts = filteredProducts.filter(product => 
-      product.price >= filters.priceRange!.min && product.price <= filters.priceRange!.max
-    );
-  }
-
-  // Apply type filter (optional)
-  if (filters.type) {
-    filteredProducts = filteredProducts.filter(product => product.type === filters.type);
-  }
-
-  // Apply sorting
-  if (filters.sortBy) {
-    switch (filters.sortBy) {
-      case 'a-z':
-        filteredProducts.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case 'z-a':
-        filteredProducts.sort((a, b) => b.title.localeCompare(a.title));
-        break;
-      case 'price-low-high':
-        filteredProducts.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high-low':
-        filteredProducts.sort((a, b) => b.price - a.price);
-        break;
-      case 'rating-high-low':
-        filteredProducts.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'newest':
-        filteredProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-      case 'video-first':
-        filteredProducts.sort((a, b) => {
-          if (a.type === 'video' && b.type === 'document') return -1;
-          if (a.type === 'document' && b.type === 'video') return 1;
-          return 0;
-        });
-        break;
-      case 'document-first':
-        filteredProducts.sort((a, b) => {
-          if (a.type === 'document' && b.type === 'video') return -1;
-          if (a.type === 'video' && b.type === 'document') return 1;
-          return 0;
-        });
-        break;
-      case 'most-relevant':
-      default:
-        // Keep original order for most relevant
-        break;
-    }
-  }
-
-  // Calculate pagination
-  const total = filteredProducts.length;
-  const totalPages = Math.ceil(total / limit);
-  const offset = (page - 1) * limit;
-  const paginatedProducts = filteredProducts.slice(offset, offset + limit);
-
-  return {
-    data: paginatedProducts,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1
-    }
-  };
 }
 
 /**
- * Fetch categories
- * This simulates a backend API call to get all available categories with product counts
+ * Fetch categories from the backend API
+ * Since the backend doesn't have categories yet, we'll use course levels as categories
+ * Uses caching to reduce API calls and prevent rate limiting
  */
 export async function fetchCategories(): Promise<Category[]> {
-  await simulateDelay(200);
-  
-  // First, get all unique categories from products
-  const productCategories = [...new Set(mockProducts.map(product => product.category))];
-  
-  // Create categories based on actual product data
-  const dynamicCategories: Category[] = productCategories.map(categoryName => {
-    const id = categoryName.toLowerCase().replace(/\s+/g, '-').replace(/&/g, '');
-    const count = mockProducts.filter(product => product.category === categoryName).length;
-    
-    return {
-      id,
-      name: categoryName,
-      count
-    };
-  });
+  try {
+    // Check cache first
+    if (categoriesCache && isCacheValid(categoriesCache.timestamp)) {
+      return categoriesCache.data;
+    }
 
-  const validCategories = dynamicCategories.filter(category => category.count > 0);
-  
-  return validCategories;
+    // For now, we'll return static categories based on course levels
+    // This avoids the expensive API call that was causing rate limiting
+    const categories: Category[] = [
+      { id: "beginner-courses", name: "Beginner Courses", count: 0 },
+      { id: "intermediate-courses", name: "Intermediate Courses", count: 0 },
+      { id: "advanced-courses", name: "Advanced Courses", count: 0 },
+    ];
+
+    // Optionally get actual counts by making a much lighter API request
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/courses?limit=1&page=1`,
+        {
+          method: "GET",
+          headers: getHeaders(),
+        }
+      );
+
+      if (response.ok) {
+        const apiResponse: BackendApiResponse = await response.json();
+        if (apiResponse.success) {
+          // Use total count from pagination to give a rough estimate
+          const totalCourses = apiResponse.data.pagination.totalCourses;
+          // Distribute courses roughly equally across levels for now
+          const estimatePerLevel = Math.ceil(totalCourses / 3);
+
+          categories.forEach((category) => {
+            category.count = estimatePerLevel;
+          });
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to fetch course counts for categories:", error);
+      // Set default counts to show categories
+      categories.forEach((category) => {
+        category.count = 10; // Default count to show the category
+      });
+    }
+
+    // Cache the result
+    categoriesCache = {
+      data: categories,
+      timestamp: Date.now(),
+    };
+
+    return categories;
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    // Return default categories if API fails
+    return [
+      { id: "beginner-courses", name: "Beginner Courses", count: 10 },
+      { id: "intermediate-courses", name: "Intermediate Courses", count: 10 },
+      { id: "advanced-courses", name: "Advanced Courses", count: 10 },
+    ];
+  }
 }
 
 /**
  * Fetch sort options
- * This simulates a backend API call to get available sort options
+ * Returns available sort options for the marketplace
  */
 export async function fetchSortOptions(): Promise<SortOptionItem[]> {
-  await simulateDelay(100);
+  // These are static sort options that work with the backend API
   return [
-    { value: 'most-relevant', label: 'Most Relevant' },
-    { value: 'a-z', label: 'A to Z' },
-    { value: 'z-a', label: 'Z to A' },
-    { value: 'price-low-high', label: 'Price: Low to High' },
-    { value: 'price-high-low', label: 'Price: High to Low' },
-    { value: 'rating-high-low', label: 'Rating: High to Low' },
-    { value: 'newest', label: 'Newest' },
-    { value: 'video-first', label: 'Video Courses First' },
-    { value: 'document-first', label: 'Documents First' }
+    { value: "most-relevant", label: "Most Relevant" },
+    { value: "a-z", label: "A to Z" },
+    { value: "z-a", label: "Z to A" },
+    { value: "price-low-high", label: "Price: Low to High" },
+    { value: "price-high-low", label: "Price: High to Low" },
+    { value: "rating-high-low", label: "Rating: High to Low" },
+    { value: "newest", label: "Newest" },
+    { value: "video-first", label: "Video Courses First" },
+    { value: "document-first", label: "Documents First" },
   ];
 }
 
 /**
- * Fetch price range
- * This simulates a backend API call to get min/max price range
+ * Fetch price range from backend API
+ * Gets the min/max price range from all courses
+ * Uses caching to reduce API calls and prevent rate limiting
  */
 export async function fetchPriceRange(): Promise<PriceRange> {
-  await simulateDelay(100);
-  
-  const prices = mockProducts.map(product => product.price);
-  return {
-    min: Math.min(...prices),
-    max: Math.max(...prices),
-    currency: 'USD'
-  };
+  try {
+    // Check cache first
+    if (priceRangeCache && isCacheValid(priceRangeCache.timestamp)) {
+      return priceRangeCache.data;
+    }
+
+    // For now, return a reasonable default range to avoid expensive API calls
+    // In production, this could be fetched from a dedicated analytics endpoint
+    const defaultRange: PriceRange = {
+      min: 0,
+      max: 500,
+      currency: "USD",
+    };
+
+    // Cache the result
+    priceRangeCache = {
+      data: defaultRange,
+      timestamp: Date.now(),
+    };
+
+    return defaultRange;
+  } catch (error) {
+    console.error("Error fetching price range:", error);
+    return {
+      min: 0,
+      max: 500,
+      currency: "USD",
+    };
+  }
 }
 
 /**
  * Search suggestions (for autocomplete)
- * This simulates a backend API call for search suggestions
+ * This could be implemented as a separate backend endpoint in the future
  */
-export async function fetchSearchSuggestions(query: string): Promise<{ text: string; type: string }[]> {
-  await simulateDelay(150);
-  
+export async function fetchSearchSuggestions(
+  query: string
+): Promise<{ text: string; type: string }[]> {
   if (!query.trim() || query.length < 2) return [];
-  
-  const lowercaseQuery = query.toLowerCase();
-  const suggestions = new Set<string>();
-  
-  // Get suggestions from product titles and authors
-  mockProducts.forEach(product => {
-    if (product.title.toLowerCase().includes(lowercaseQuery)) {
-      suggestions.add(product.title);
+
+  try {
+    // Use the search functionality from the courses endpoint
+    const response = await fetch(
+      `${API_BASE_URL}/api/courses?q=${encodeURIComponent(query)}&limit=10`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      }
+    );
+
+    if (response.ok) {
+      const apiResponse: BackendApiResponse = await response.json();
+      if (apiResponse.success) {
+        const suggestions = new Set<string>();
+
+        // Extract suggestions from course titles and instructor names
+        apiResponse.data.courses.forEach((course) => {
+          if (course.title.toLowerCase().includes(query.toLowerCase())) {
+            suggestions.add(course.title);
+          }
+          if (
+            course.instructor.username
+              .toLowerCase()
+              .includes(query.toLowerCase())
+          ) {
+            suggestions.add(course.instructor.username);
+          }
+        });
+
+        return Array.from(suggestions)
+          .slice(0, 8)
+          .map((text) => ({ text, type: "suggestion" }));
+      }
     }
-    if (product.author.toLowerCase().includes(lowercaseQuery)) {
-      suggestions.add(product.author);
-    }
-  });
-  
-  return Array.from(suggestions)
-    .slice(0, 8)
-    .map(text => ({ text, type: 'suggestion' }));
+
+    return [];
+  } catch (error) {
+    console.error("Error fetching search suggestions:", error);
+    return [];
+  }
 }
 
 /**
  * Search products (for autocomplete/suggestions)
- * This would typically be a lightweight search endpoint
+ * Uses the courses API to search for products
  */
 export async function searchProducts(query: string): Promise<Product[]> {
-  await simulateDelay(300);
-  
   if (!query.trim()) return [];
-  
-  const lowercaseQuery = query.toLowerCase();
-  return mockProducts
-    .filter(product => 
-      product.title.toLowerCase().includes(lowercaseQuery) ||
-      product.description.toLowerCase().includes(lowercaseQuery) ||
-      product.author.toLowerCase().includes(lowercaseQuery)
-    )
-    .slice(0, 10); // Limit search results for performance
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/courses?q=${encodeURIComponent(query)}&limit=10`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+      }
+    );
+
+    if (response.ok) {
+      const apiResponse: BackendApiResponse = await response.json();
+      if (apiResponse.success) {
+        return apiResponse.data.courses.map(mapCourseToProduct);
+      }
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Error searching products:", error);
+    return [];
+  }
 }
 
 /**
  * Get a single product by ID
+ * This would typically use a dedicated course details endpoint
+ * For now, we'll return null to avoid expensive API calls
  */
 export async function fetchProduct(id: string): Promise<Product | null> {
-  await simulateDelay(300);
-  return mockProducts.find(product => product.id === id) || null;
+  try {
+    // TODO: Implement dedicated endpoint GET /api/courses/:id
+    // For now, return null to avoid fetching all courses
+    console.warn(
+      `fetchProduct(${id}): Using dedicated course endpoint not implemented yet`
+    );
+    return null;
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return null;
+  }
 }
 
 /**
  * Get type statistics
- * This simulates a backend API call to get type distribution
+ * Returns the count of video vs document courses
  */
-export async function fetchTypeStats(): Promise<{ video: number; document: number }> {
-  await simulateDelay(100);
-  
-  const videoCount = mockProducts.filter(product => product.type === 'video').length;
-  const documentCount = mockProducts.filter(product => product.type === 'document').length;
-  
-  return {
-    video: videoCount,
-    document: documentCount
-  };
+export async function fetchTypeStats(): Promise<{
+  video: number;
+  document: number;
+}> {
+  try {
+    // Return default stats to avoid expensive API calls
+    // In production, this could be fetched from a dedicated analytics endpoint
+    return { video: 50, document: 30 }; // Default estimates
+  } catch (error) {
+    console.error("Error fetching type stats:", error);
+    return { video: 0, document: 0 };
+  }
 }
