@@ -4,6 +4,9 @@
  * Follows integration.md guidelines for clean, secure integration
  */
 
+import { TokenManager } from "@/features/auth/tokenManager";
+import { http } from "./http/axios";
+
 // Environment configuration
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ||
@@ -422,33 +425,33 @@ export interface Course {
 /**
  * Token Management Utilities
  */
-export const TokenManager = {
-  getAccessToken: (): string | null => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("kenesis_access_token");
-  },
+// export const TokenManager = {
+//   getAccessToken: (): string | null => {
+//     if (typeof window === "undefined") return null;
+//     return localStorage.getItem("kenesis_access_token");
+//   },
 
-  getRefreshToken: (): string | null => {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem("kenesis_refresh_token");
-  },
+//   getRefreshToken: (): string | null => {
+//     if (typeof window === "undefined") return null;
+//     return localStorage.getItem("kenesis_refresh_token");
+//   },
 
-  setTokens: (tokens: AuthTokens): void => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem("kenesis_access_token", tokens.accessToken);
-    localStorage.setItem("kenesis_refresh_token", tokens.refreshToken);
-  },
+//   setTokens: (tokens: AuthTokens): void => {
+//     if (typeof window === "undefined") return;
+//     localStorage.setItem("kenesis_access_token", tokens.accessToken);
+//     localStorage.setItem("kenesis_refresh_token", tokens.refreshToken);
+//   },
 
-  clearTokens: (): void => {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("kenesis_access_token");
-    localStorage.removeItem("kenesis_refresh_token");
-  },
+//   clearTokens: (): void => {
+//     if (typeof window === "undefined") return;
+//     localStorage.removeItem("kenesis_access_token");
+//     localStorage.removeItem("kenesis_refresh_token");
+//   },
 
-  hasTokens: (): boolean => {
-    return !!(TokenManager.getAccessToken() && TokenManager.getRefreshToken());
-  },
-};
+//   hasTokens: (): boolean => {
+//     return !!(TokenManager.getAccessToken() && TokenManager.getRefreshToken());
+//   },
+// };
 
 /**
  * Core API Client
@@ -1183,7 +1186,7 @@ export const CourseAPI = {
     console.log("📖 [API] Course ID:", courseId);
     console.log("📖 [API] API endpoint: /api/courses/" + courseId);
 
-    const response = await apiClient.get(`/api/courses/${courseId}`);
+    const response = await http.get(`/api/courses/${courseId}`);
 
     console.log(
       "📖 [API] getCourse response received:",
@@ -1292,7 +1295,7 @@ export const CourseAPI = {
     courseId: string,
     chapterId: string
   ): Promise<ApiResponse<any>> => {
-    return apiClient.get(`/api/courses/${courseId}/chapters/${chapterId}`);
+    return http.get(`/api/courses/${courseId}/chapters/${chapterId}`);
   },
 
   /**
@@ -1333,7 +1336,7 @@ export const CourseAPI = {
     courseId: string,
     chapterId: string
   ): Promise<ApiResponse<any>> => {
-    return apiClient.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
+    return http.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
   },
 
   /**
@@ -1342,31 +1345,22 @@ export const CourseAPI = {
    */
   getModulesForChapter: async (
     chapterId: string,
-    params?: {
-      status?: "draft" | "published";
-      type?: "video" | "document";
-      includeUnpublished?: boolean;
-      sortBy?: "order" | "createdAt" | "title";
-      sortOrder?: "asc" | "desc";
-      page?: number;
-      limit?: number;
-      includeStats?: boolean;
-    }
+    courseId: string
   ): Promise<
     ApiResponse<{
-      modules: any[];
-      stats?: {
-        totalModules: number;
-        videoModules: number;
-        documentModules: number;
-        previewModules: number;
-        totalDuration: number;
-      };
+      modules: {
+        id: string;
+        title: string;
+        description?: string;
+        type: string;
+        order: number;
+        duration: number;
+        isPreview: boolean;
+      }[];
     }>
   > => {
-    return apiClient.getWithQuery(
-      `/api/courses/modules/chapters/${chapterId}/modules`,
-      params
+    return http.get(
+      `/api/courses/${courseId}/chapters/${chapterId}?includeModules=true`
     );
   },
 
@@ -1448,7 +1442,7 @@ export const CourseAPI = {
         "/content"
     );
 
-    const response = await apiClient.get(
+    const response = await http.get(
       `/api/courses/${courseId}/modules/${moduleId}/content`
     );
 
@@ -1514,7 +1508,7 @@ export const CourseAPI = {
     chapterId: string,
     moduleId: string
   ): Promise<ApiResponse<any>> => {
-    return apiClient.delete(
+    return http.delete(
       `/api/courses/${courseId}/chapters/${chapterId}/modules/${moduleId}`
     );
   },
@@ -1524,7 +1518,7 @@ export const CourseAPI = {
    * DELETE /api/courses/{courseId}
    */
   deleteCourse: async (courseId: string): Promise<ApiResponse<any>> => {
-    return apiClient.delete(`/api/courses/${courseId}`);
+    return http.delete(`/api/courses/${courseId}`);
   },
 
   /**
@@ -1534,7 +1528,7 @@ export const CourseAPI = {
   getCategories: async (): Promise<
     ApiResponse<Array<{ id: string; name: string; count: number }>>
   > => {
-    return apiClient.get("/api/courses/categories");
+    return http.get("/api/courses/categories");
   },
 
   /**
@@ -1588,7 +1582,7 @@ export const CourseAPI = {
       "🔐 [API] API endpoint: /api/courses/purchases/access/" + courseId
     );
 
-    const response = await apiClient.get(
+    const response = await http.get(
       `/api/courses/purchases/access/${courseId}`
     );
 
@@ -1629,7 +1623,7 @@ export const UserAPI = {
    * Requires Authorization header
    */
   getProfile: async (): Promise<ApiResponse<{ user: ApiUser }>> => {
-    return apiClient.get<{ user: ApiUser }>("/api/users/profile");
+    return http.get<{ user: ApiUser }>("/api/users/profile");
   },
 };
 
