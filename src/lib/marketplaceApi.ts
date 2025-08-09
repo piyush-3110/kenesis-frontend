@@ -5,7 +5,7 @@ import {
   PriceRange,
   CourseForMarketplacePage,
 } from "@/types/Product";
-import { TokenManager } from "./tokenManager";
+import { TokenManager } from "@/features/auth/tokenManager";
 
 // Cache for reducing API calls
 let categoriesCache: { data: Category[]; timestamp: number } | null = null;
