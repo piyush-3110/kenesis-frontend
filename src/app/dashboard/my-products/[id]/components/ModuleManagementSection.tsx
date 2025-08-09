@@ -608,12 +608,37 @@ const ModuleCard: React.FC<{
     
     try {
       setLoadingContent(true);
-      const response = await CourseAPI.getModuleContent(courseId, module.chapterId, module.id);
+      console.log('🔍 Loading module content for:', { courseId, moduleId: module.id });
+      
+      // Updated to use new API endpoint format
+      const response = await CourseAPI.getModuleContent(courseId, module.id);
+      
+      console.log('📥 Module content response:', response);
+      
       if (response.success && response.data) {
-        setModuleContent(response.data.module);
+        console.log('✅ Module content loaded successfully:', response.data);
+        setModuleContent(response.data);
+      } else {
+        console.error('❌ Failed to load module content:', response.message);
+        // Show error toast
+        if (typeof window !== 'undefined') {
+          const { useUIStore } = await import('@/store/useUIStore');
+          useUIStore.getState().addToast({
+            type: 'error',
+            message: response.message || 'Failed to load module content'
+          });
+        }
       }
     } catch (error) {
-      console.error('Failed to load module content:', error);
+      console.error('❌ Error loading module content:', error);
+      // Show error toast
+      if (typeof window !== 'undefined') {
+        const { useUIStore } = await import('@/store/useUIStore');
+        useUIStore.getState().addToast({
+          type: 'error',
+          message: 'Failed to load module content. Please try again.'
+        });
+      }
     } finally {
       setLoadingContent(false);
     }

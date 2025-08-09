@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Video, FileText, Edit2, Trash2, Download, Eye, Filter, ChevronDown } from 'lucide-react';
+import { Video, FileText, Edit2, Trash2, Download, Eye, Filter, ChevronDown } from 'lucide-react';
 import { CourseAPI } from '@/lib/api';
 import { Module } from '@/types/Product';
 
@@ -56,6 +56,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
     if (selectedChapter) {
       loadModules();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedChapter, filters]);
 
   const loadModules = async () => {
@@ -485,12 +486,22 @@ const ModuleCard: React.FC<{
     
     try {
       setLoadingContent(true);
-      const response = await CourseAPI.getModuleContent(courseId, module.chapterId, module.id);
+      console.log('🔍 Loading module content for:', { courseId, moduleId: module.id });
+      
+      // Updated to use new API endpoint format (removed chapterId parameter)
+      const response = await CourseAPI.getModuleContent(courseId, module.id);
+      
+      console.log('📥 Module content response:', response);
+      
       if (response.success && response.data) {
-        setModuleContent(response.data.module);
+        console.log('✅ Module content loaded successfully:', response.data);
+        // Backend returns data directly, not wrapped in a 'module' property
+        setModuleContent(response.data);
+      } else {
+        console.error('❌ Failed to load module content:', response.message);
       }
     } catch (error) {
-      console.error('Failed to load module content:', error);
+      console.error('❌ Error loading module content:', error);
     } finally {
       setLoadingContent(false);
     }
@@ -629,40 +640,33 @@ const ModuleCard: React.FC<{
                 </span>
               </div>
 
-              {/* Main File */}
-              {moduleContent.content?.mainFile && (
+              {/* Main Content - Video or Document */}
+              {moduleContent.videoUrl && (
                 <div className="space-y-2">
-                  <h5 className="text-white font-medium text-sm">Main Content</h5>
+                  <h5 className="text-white font-medium text-sm">Video Content</h5>
                   <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        {module.type === 'video' ? 
-                          <Video size={20} className="text-purple-400" /> : 
-                          <FileText size={20} className="text-blue-400" />
-                        }
+                        <Video size={20} className="text-purple-400" />
                         <div>
-                          <p className="text-white font-medium">
-                            {module.type === 'video' ? 'Video File' : 'Document'}
-                          </p>
+                          <p className="text-white font-medium">Video File</p>
                           <div className="flex items-center gap-3 text-xs text-gray-400">
-                            <span>{moduleContent.content.mainFile.type}</span>
-                            <span>•</span>
-                            <span>{formatFileSize(moduleContent.content.mainFile.size)}</span>
-                            {moduleContent.content.mainFile.duration && (
+                            <span>Video Content</span>
+                            {moduleContent.duration && (
                               <>
                                 <span>•</span>
-                                <span>{formatDuration(moduleContent.content.mainFile.duration)}</span>
+                                <span>{formatDuration(moduleContent.duration)}</span>
                               </>
                             )}
                           </div>
                         </div>
                       </div>
                       <a
-                        href={moduleContent.content.mainFile.url}
+                        href={moduleContent.videoUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
-                        title="Open Content"
+                        title="Open Video"
                       >
                         <Download size={16} />
                       </a>
@@ -671,14 +675,40 @@ const ModuleCard: React.FC<{
                 </div>
               )}
 
+              {/* Document Content (if no video URL but is document type) */}
+              {!moduleContent.videoUrl && module.type === 'document' && (
+                <div className="space-y-2">
+                  <h5 className="text-white font-medium text-sm">Document Content</h5>
+                  <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText size={20} className="text-blue-400" />
+                        <div>
+                          <p className="text-white font-medium">Document</p>
+                          <div className="flex items-center gap-3 text-xs text-gray-400">
+                            <span>Document Content</span>
+                            {moduleContent.duration && (
+                              <>
+                                <span>•</span>
+                                <span>{formatDuration(moduleContent.duration)}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Attachments */}
-              {moduleContent.content?.attachments && moduleContent.content.attachments.length > 0 && (
+              {moduleContent.attachments && moduleContent.attachments.length > 0 && (
                 <div className="space-y-2">
                   <h5 className="text-white font-medium text-sm">
-                    Attachments ({moduleContent.content.attachments.length})
+                    Attachments ({moduleContent.attachments.length})
                   </h5>
                   <div className="space-y-2">
-                    {moduleContent.content.attachments.map((attachment: any, index: number) => (
+                    {moduleContent.attachments.map((attachment: any, index: number) => (
                       <div key={attachment.id || index} className="bg-gray-800 rounded-lg p-3 border border-gray-700">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
@@ -708,34 +738,26 @@ const ModuleCard: React.FC<{
                 </div>
               )}
 
-              {/* Module Statistics */}
-              {moduleContent.stats && (
+              {/* Module Metadata */}
+              {moduleContent.metadata && (
                 <div className="space-y-2">
-                  <h5 className="text-white font-medium text-sm">Statistics</h5>
+                  <h5 className="text-white font-medium text-sm">Access Information</h5>
                   <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      {moduleContent.stats.viewCount !== undefined && (
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      {moduleContent.metadata.hasAccess !== undefined && (
                         <div>
-                          <p className="text-gray-400">Views</p>
-                          <p className="text-white font-medium">{moduleContent.stats.viewCount}</p>
+                          <p className="text-gray-400">Access Status</p>
+                          <p className={`font-medium ${moduleContent.metadata.hasAccess ? 'text-green-400' : 'text-red-400'}`}>
+                            {moduleContent.metadata.hasAccess ? 'Has Access' : 'No Access'}
+                          </p>
                         </div>
                       )}
-                      {moduleContent.stats.completionRate !== undefined && (
+                      {moduleContent.metadata.accessedAt && (
                         <div>
-                          <p className="text-gray-400">Completion Rate</p>
-                          <p className="text-white font-medium">{(moduleContent.stats.completionRate * 100).toFixed(1)}%</p>
-                        </div>
-                      )}
-                      {moduleContent.stats.avgWatchTime !== undefined && (
-                        <div>
-                          <p className="text-gray-400">Avg Watch Time</p>
-                          <p className="text-white font-medium">{formatDuration(moduleContent.stats.avgWatchTime)}</p>
-                        </div>
-                      )}
-                      {moduleContent.stats.downloadCount !== undefined && (
-                        <div>
-                          <p className="text-gray-400">Downloads</p>
-                          <p className="text-white font-medium">{moduleContent.stats.downloadCount}</p>
+                          <p className="text-gray-400">Last Accessed</p>
+                          <p className="text-white font-medium">
+                            {new Date(moduleContent.metadata.accessedAt).toLocaleDateString()}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -744,10 +766,16 @@ const ModuleCard: React.FC<{
               )}
 
               {/* No Content Available */}
-              {!moduleContent.content?.mainFile && (!moduleContent.content?.attachments || moduleContent.content.attachments.length === 0) && (
+              {!moduleContent.videoUrl && (!moduleContent.attachments || moduleContent.attachments.length === 0) && (
                 <div className="text-center py-4">
                   <FileText className="mx-auto mb-2 text-gray-500" size={24} />
                   <p className="text-gray-400 text-sm">No content files available for this module</p>
+                  {module.type === 'video' && (
+                    <p className="text-gray-500 text-xs mt-1">Video content has not been uploaded yet</p>
+                  )}
+                  {module.type === 'document' && (
+                    <p className="text-gray-500 text-xs mt-1">Document content has not been uploaded yet</p>
+                  )}
                 </div>
               )}
             </div>

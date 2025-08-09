@@ -408,9 +408,11 @@ const CourseManagementPage: React.FC = () => {
         {/* Modals */}
         {isEditModalOpen && (
           <CourseEditModal
+            isOpen={isEditModalOpen}
             course={course}
+            courseId={courseId}
             onClose={() => setIsEditModalOpen(false)}
-            onSave={handleCourseUpdate}
+            onCourseUpdated={loadCourseData}
           />
         )}
 

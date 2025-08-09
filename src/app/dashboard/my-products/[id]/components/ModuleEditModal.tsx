@@ -89,13 +89,18 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
       setLoadingContent(true);
       setError(null);
 
-      // Load full module data including content
-      const response = await CourseAPI.getModuleContent(courseId, module.chapterId, module.id);
+      console.log('📊 Loading module content for editing...');
+      // Updated to use new API endpoint format
+      const response = await CourseAPI.getModuleContent(courseId, module.id);
+      
+      console.log('📥 Module content response:', response);
       
       let moduleData;
       if (response.success && response.data) {
-        moduleData = response.data.module || response.data;
+        console.log('✅ Module content loaded for editing:', response.data);
+        moduleData = response.data;
       } else {
+        console.error('❌ Failed to load module content for editing:', response.message);
         // Fallback to basic module data
         moduleData = module;
       }
@@ -377,7 +382,8 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
         console.log(`  ${key}:`, value instanceof File ? `[File: ${value.name}]` : value);
       }
 
-      const response = await CourseAPI.updateModule(courseId, module.chapterId || module.chapter?.id, module.id, updateData);
+      // Updated to use new API endpoint format: PUT /api/courses/:id/modules/:moduleId
+      const response = await CourseAPI.updateModule(courseId, module.id, updateData);
 
       if (response.success) {
         console.log('✅ Module updated successfully');

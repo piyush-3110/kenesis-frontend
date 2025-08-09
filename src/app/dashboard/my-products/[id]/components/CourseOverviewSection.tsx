@@ -63,13 +63,34 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
           }}
         >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Thumbnail */}
-          <div className="lg:col-span-1">
-            <img
-              src={course.thumbnail || '/images/landing/product.png'}
-              alt={course.title}
-              className="w-full h-48 object-cover rounded-xl"
-            />
+          {/* Thumbnail and Preview Video */}
+          <div className="lg:col-span-1 space-y-4">
+            {/* Thumbnail */}
+            <div>
+              <h4 className="text-sm font-medium text-gray-300 mb-2">Course Thumbnail</h4>
+              <img
+                src={course.thumbnail || '/images/landing/product.png'}
+                alt={course.title}
+                className="w-full h-48 object-cover rounded-xl"
+              />
+            </div>
+
+            {/* Preview Video */}
+            {course.previewVideo && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-300 mb-2">Course Preview</h4>
+                <video
+                  src={course.previewVideo}
+                  className="w-full h-48 object-cover rounded-xl bg-gray-800"
+                  controls
+                  preload="metadata"
+                  controlsList="nodownload"
+                >
+                  <source src={course.previewVideo} type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            )}
           </div>
 
           {/* Course Info */}
