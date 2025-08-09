@@ -120,17 +120,21 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
       setLoading(true);
       setError(null);
 
-      // Simulate API calls - replace with actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Mock user data
-      const mockUser: DashboardUser = {
-        id: '1',
-        name: 'Zyan',
-        email: 'zyan@kinesis.com',
-        avatar: '/images/landing/avatar1.png',
-        isConnected: false,
-      };
+      // Get real user data from auth store instead of mock data
+      const { useAuthStore } = await import('@/store/useAuthStore');
+      const authUser = useAuthStore.getState().user;
+      
+      if (authUser) {
+        const dashboardUser: DashboardUser = {
+          id: authUser.id,
+          name: authUser.username || authUser.email?.split('@')[0] || 'User',
+          email: authUser.email || '',
+          avatar: '', // No avatar in API yet, will be added later
+          isConnected: authUser.isWalletConnected || false,
+          walletAddress: authUser.walletAddress || undefined,
+        };
+        setUser(dashboardUser);
+      }
 
       // Mock metrics
       const mockMetrics: DashboardMetric[] = [
@@ -206,7 +210,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
         },
       ];
 
-      setUser(mockUser);
+      // Don't set mockUser anymore since we're using real user data above
       setMetrics(mockMetrics);
       setTransactions(mockTransactions);
 
