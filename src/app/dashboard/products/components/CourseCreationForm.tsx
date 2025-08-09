@@ -17,6 +17,7 @@ import {
 import { Upload, X, ArrowRight, Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TokenManager } from "@/features/auth/tokenManager";
+import Image from "next/image";
 
 /**
  * CourseCreationForm Component
@@ -736,11 +737,12 @@ const CourseCreationForm: React.FC = () => {
               <div className="h-full bg-[#010519] rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
                 {thumbnailPreview ? (
                   <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={thumbnailPreview}
                       alt="Thumbnail preview"
                       className="w-full h-full object-cover"
+                      width={500}
+                      height={200}
                     />
                     <button
                       type="button"

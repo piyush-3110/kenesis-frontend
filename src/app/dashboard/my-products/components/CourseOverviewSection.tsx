@@ -1,7 +1,16 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Clock, Users, Star, Globe, BookOpen, Calendar, DollarSign } from 'lucide-react';
+import React from "react";
+import {
+  Clock,
+  Users,
+  Star,
+  Globe,
+  BookOpen,
+  Calendar,
+  DollarSign,
+} from "lucide-react";
+import Image from "next/image";
 
 interface CourseOverviewSectionProps {
   course: any;
@@ -12,9 +21,12 @@ interface CourseOverviewSectionProps {
  * Course Overview Section
  * Displays comprehensive course information including metadata, stats, and content details
  */
-const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, canEdit }) => {
+const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
+  course,
+  canEdit,
+}) => {
   const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
-  
+
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -24,24 +36,28 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
   const formatDate = (dateString: string): string => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } catch {
-      return 'Unknown';
+      return "Unknown";
     }
   };
 
   const getLevelColor = (level: string): string => {
     switch (level) {
-      case 'beginner': return 'bg-green-500/20 text-green-400 border-green-500/30';
-      case 'intermediate': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
-      case 'advanced': return 'bg-red-500/20 text-red-400 border-red-500/30';
-      default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      case "beginner":
+        return "bg-green-500/20 text-green-400 border-green-500/30";
+      case "intermediate":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+      case "advanced":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
+      default:
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30";
     }
   };
 
@@ -52,23 +68,32 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Thumbnail */}
           <div className="lg:col-span-1">
-            /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-              src={course.thumbnail || '/images/landing/product.png'}
+            <Image
+              src={course.thumbnail || "/images/landing/product.png"}
               alt={course.title}
               className="w-full h-48 object-cover rounded-lg"
+              width={500}
+              height={200}
             />
           </div>
 
           {/* Course Info */}
           <div className="lg:col-span-2 space-y-4">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-2">{course.title}</h2>
-              <p className="text-gray-300 leading-relaxed">{course.description}</p>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                {course.title}
+              </h2>
+              <p className="text-gray-300 leading-relaxed">
+                {course.description}
+              </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getLevelColor(course.level)}`}>
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium border ${getLevelColor(
+                  course.level
+                )}`}
+              >
                 {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
               </span>
               <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
@@ -91,7 +116,9 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
             </div>
             <div>
               <p className="text-gray-400 text-sm">Enrollments</p>
-              <p className="text-white text-lg font-semibold">{course.stats?.enrollmentCount || 0}</p>
+              <p className="text-white text-lg font-semibold">
+                {course.stats?.enrollmentCount || 0}
+              </p>
             </div>
           </div>
         </div>
@@ -104,7 +131,8 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
             <div>
               <p className="text-gray-400 text-sm">Rating</p>
               <p className="text-white text-lg font-semibold">
-                {course.stats?.rating?.toFixed(1) || 'N/A'} ({course.stats?.reviewCount || 0})
+                {course.stats?.rating?.toFixed(1) || "N/A"} (
+                {course.stats?.reviewCount || 0})
               </p>
             </div>
           </div>
@@ -118,7 +146,9 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
             <div>
               <p className="text-gray-400 text-sm">Duration</p>
               <p className="text-white text-lg font-semibold">
-                {course.stats?.duration ? formatDuration(course.stats.duration) : 'N/A'}
+                {course.stats?.duration
+                  ? formatDuration(course.stats.duration)
+                  : "N/A"}
               </p>
             </div>
           </div>
@@ -132,7 +162,8 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
             <div>
               <p className="text-gray-400 text-sm">Content</p>
               <p className="text-white text-lg font-semibold">
-                {course.stats?.chapterCount || 0} chapters, {course.stats?.moduleCount || 0} modules
+                {course.stats?.chapterCount || 0} chapters,{" "}
+                {course.stats?.moduleCount || 0} modules
               </p>
             </div>
           </div>
@@ -143,55 +174,83 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Metadata */}
         <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Course Information</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Course Information
+          </h3>
           <div className="space-y-4">
-            {course.metadata?.requirements && course.metadata.requirements.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Requirements</h4>
-                <ul className="space-y-1">
-                  {course.metadata.requirements.map((req: string, index: number) => (
-                    <li key={index} className="text-gray-400 text-sm flex items-center gap-2">
-                      <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
-                      {req}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {course.metadata?.requirements &&
+              course.metadata.requirements.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-300 mb-2">
+                    Requirements
+                  </h4>
+                  <ul className="space-y-1">
+                    {course.metadata.requirements.map(
+                      (req: string, index: number) => (
+                        <li
+                          key={index}
+                          className="text-gray-400 text-sm flex items-center gap-2"
+                        >
+                          <div className="w-1 h-1 bg-blue-400 rounded-full"></div>
+                          {req}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
 
-            {course.metadata?.learningOutcomes && course.metadata.learningOutcomes.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Learning Outcomes</h4>
-                <ul className="space-y-1">
-                  {course.metadata.learningOutcomes.map((outcome: string, index: number) => (
-                    <li key={index} className="text-gray-400 text-sm flex items-center gap-2">
-                      <div className="w-1 h-1 bg-green-400 rounded-full"></div>
-                      {outcome}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {course.metadata?.learningOutcomes &&
+              course.metadata.learningOutcomes.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-300 mb-2">
+                    Learning Outcomes
+                  </h4>
+                  <ul className="space-y-1">
+                    {course.metadata.learningOutcomes.map(
+                      (outcome: string, index: number) => (
+                        <li
+                          key={index}
+                          className="text-gray-400 text-sm flex items-center gap-2"
+                        >
+                          <div className="w-1 h-1 bg-green-400 rounded-full"></div>
+                          {outcome}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
 
-            {course.metadata?.targetAudience && course.metadata.targetAudience.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-300 mb-2">Target Audience</h4>
-                <ul className="space-y-1">
-                  {course.metadata.targetAudience.map((audience: string, index: number) => (
-                    <li key={index} className="text-gray-400 text-sm flex items-center gap-2">
-                      <div className="w-1 h-1 bg-purple-400 rounded-full"></div>
-                      {audience}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {course.metadata?.targetAudience &&
+              course.metadata.targetAudience.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-300 mb-2">
+                    Target Audience
+                  </h4>
+                  <ul className="space-y-1">
+                    {course.metadata.targetAudience.map(
+                      (audience: string, index: number) => (
+                        <li
+                          key={index}
+                          className="text-gray-400 text-sm flex items-center gap-2"
+                        >
+                          <div className="w-1 h-1 bg-purple-400 rounded-full"></div>
+                          {audience}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
           </div>
         </div>
 
         {/* Timeline & Pricing */}
         <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Course Settings</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Course Settings
+          </h3>
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <Calendar className="text-blue-400" size={16} />
@@ -224,16 +283,21 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
                 <DollarSign className="text-yellow-400" size={16} />
                 <div>
                   <p className="text-gray-300 text-sm">Pricing</p>
-                  <p className="text-white text-lg font-semibold">{formatPrice(course.price)}</p>
+                  <p className="text-white text-lg font-semibold">
+                    {formatPrice(course.price)}
+                  </p>
                 </div>
               </div>
-              
+
               {course.tokenToPayWith && course.tokenToPayWith.length > 0 && (
                 <div className="mt-2">
                   <p className="text-gray-400 text-xs">Accepted tokens:</p>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {course.tokenToPayWith.map((token: string) => (
-                      <span key={token} className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded">
+                      <span
+                        key={token}
+                        className="px-2 py-1 bg-gray-700 text-gray-300 text-xs rounded"
+                      >
                         {token}
                       </span>
                     ))}
@@ -245,13 +309,17 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
                 <div>
                   <p className="text-gray-400">Access Duration</p>
                   <p className="text-white">
-                    {course.accessDuration === -1 ? 'Unlimited' : `${course.accessDuration} days`}
+                    {course.accessDuration === -1
+                      ? "Unlimited"
+                      : `${course.accessDuration} days`}
                   </p>
                 </div>
                 <div>
                   <p className="text-gray-400">Available Quantity</p>
                   <p className="text-white">
-                    {course.availableQuantity === -1 ? 'Unlimited' : course.availableQuantity}
+                    {course.availableQuantity === -1
+                      ? "Unlimited"
+                      : course.availableQuantity}
                   </p>
                 </div>
               </div>
@@ -259,7 +327,10 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
               {course.affiliatePercentage > 0 && (
                 <div className="mt-2">
                   <p className="text-gray-400 text-sm">
-                    Affiliate Commission: <span className="text-white">{course.affiliatePercentage / 100}%</span>
+                    Affiliate Commission:{" "}
+                    <span className="text-white">
+                      {course.affiliatePercentage / 100}%
+                    </span>
                   </p>
                 </div>
               )}
@@ -269,42 +340,48 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({ course, c
       </div>
 
       {/* Status Information */}
-      {course.status !== 'draft' && (
+      {course.status !== "draft" && (
         <div className="bg-gray-800 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Status Information</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Status Information
+          </h3>
           <div className="space-y-3">
             {course.submittedAt && (
               <div className="text-sm">
                 <span className="text-gray-400">Submitted for review: </span>
-                <span className="text-white">{formatDate(course.submittedAt)}</span>
+                <span className="text-white">
+                  {formatDate(course.submittedAt)}
+                </span>
               </div>
             )}
-            
-            {course.status === 'rejected' && (
+
+            {course.status === "rejected" && (
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
                 <p className="text-red-400 text-sm">
-                  This course was rejected. You can edit and resubmit it for review.
+                  This course was rejected. You can edit and resubmit it for
+                  review.
                 </p>
               </div>
             )}
-            
-            {course.status === 'submitted' && (
+
+            {course.status === "submitted" && (
               <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                 <p className="text-yellow-400 text-sm">
-                  This course is under review. You'll be notified once the review is complete.
+                  This course is under review. You'll be notified once the
+                  review is complete.
                 </p>
               </div>
             )}
-            
-            {course.status === 'approved' && (
+
+            {course.status === "approved" && (
               <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <p className="text-blue-400 text-sm">
                   This course has been approved and will be published soon.
                 </p>
               </div>
             )}
-            
-            {course.status === 'published' && (
+
+            {course.status === "published" && (
               <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                 <p className="text-green-400 text-sm">
                   This course is live and available for purchase.
