@@ -8,10 +8,10 @@ import {
   Loader2,
   ExternalLink,
 } from "lucide-react";
-import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
 import { UsePurchaseFlowReturn } from "../hooks/usePurchaseFlow";
 import TokenSelector from "@/components/product/TokenSelector";
 import type { CourseResponse } from "@/lib/api/courseApi";
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 
 interface CourseAccess {
   hasAccess: boolean;
@@ -51,13 +51,8 @@ const PurchaseSection: React.FC<PurchaseSectionProps> = ({
     }
   }, [tokenToPayWith, selectedToken]);
 
-  const {
-    purchasing,
-    handlePurchase,
-    handleWalletConnected,
-    purchaseButtonState,
-    nftResult,
-  } = purchaseFlow;
+  const { purchasing, handlePurchase, purchaseButtonState, nftResult } =
+    purchaseFlow;
 
   const renderPurchaseButton = () => {
     // Show loading state while checking course access
@@ -122,11 +117,7 @@ const PurchaseSection: React.FC<PurchaseSectionProps> = ({
               <p className="text-blue-400 text-sm mb-3">
                 Connect your wallet to complete the purchase
               </p>
-              <EnhancedWalletConnectButton
-                variant="default"
-                onConnected={handleWalletConnected}
-                className="w-full"
-              />
+              <SiweAuthButton />
             </div>
           </div>
         );

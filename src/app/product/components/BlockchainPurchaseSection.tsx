@@ -14,8 +14,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useAccount } from "wagmi";
-import { EnhancedWalletConnectButton } from "@/components/wallet/EnhancedWalletConnectButton";
-import { useIsAuthenticated } from "@/store/auth";
+import { useAuth } from "@/features/auth/AuthProvider";
 import TokenSelector from "@/components/product/TokenSelector";
 import { SmartContractPurchase } from "@/components/web3/SmartContractPurchase";
 import { validateTokensForPurchase } from "@/lib/contracts/chainConfig";
@@ -26,6 +25,7 @@ import type {
   PurchaseRecord,
   CourseAccess as ApiCourseAccess,
 } from "@/lib/api/purchaseApi";
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 
 interface CourseAccess {
   hasAccess: boolean;
@@ -63,7 +63,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   >("idle");
 
   // Authentication and wallet state
-  const isAuthenticated = useIsAuthenticated();
+  const { isAuthenticated } = useAuth();
   const { address: connectedWalletAddress, isConnected: isWalletConnected } =
     useAccount();
 
@@ -249,11 +249,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
               <p className="text-blue-400 text-sm mb-3">
                 Connect your wallet to complete the purchase
               </p>
-              <EnhancedWalletConnectButton
-                variant="default"
-                onConnected={() => {}} // No need for callback, state updates automatically
-                className="w-full"
-              />
+              <SiweAuthButton />
             </div>
           </div>
         );

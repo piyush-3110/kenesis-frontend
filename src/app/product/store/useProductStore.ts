@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { ExtendedProduct, Review, CourseContent } from '@/types/Review';
+import { ExtendedProduct, Review, CourseContent } from "@/types/Review";
 
 interface ProductState {
   // Product data

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "wagmi";
-import { useIsAuthenticated, useAuthUser } from "@/store/auth";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { purchaseCourse } from "@/lib/productApi";
 import { purchaseCourseWithNFT } from "@/lib/nft/purchaseFlow";
 import type { CourseResponse } from "@/lib/api/courseApi";
@@ -32,13 +32,9 @@ export const usePurchaseFlow = (
   const router = useRouter();
 
   // Authentication and wallet state
-  const isAuthenticated = useIsAuthenticated();
-  const user = useAuthUser();
+  const { isAuthenticated } = useAuth();
   const { address: connectedWalletAddress } = useAccount();
-
-  const isWalletConnected = Boolean(
-    user?.walletAddress && user?.isWalletConnected && connectedWalletAddress
-  );
+  const isWalletConnected = Boolean(connectedWalletAddress);
 
   const handlePurchase = async (
     productId: string,
