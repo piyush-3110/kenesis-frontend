@@ -80,20 +80,21 @@ interface SettingsActions {
 
 type SettingsStore = SettingsState & SettingsActions;
 
-// Mock data for development
-const mockProfileSettings: ProfileSettings = {
-  firstName: 'Sarah',
-  lastName: 'Johnson',
-  displayName: 'Dr. Sarah Johnson',
-  email: 'sarah.johnson@kenesis.com',
-  bio: 'Passionate educator with 10+ years of experience in machine learning and data science. I specialize in making complex AI concepts accessible to everyone, from beginners to advanced practitioners.',
-  avatar: '/images/landing/seller1.png',
-  coverImage: '/images/landing/girls.png',
-  location: 'San Francisco, CA',
-  phone: '+1 (555) 123-4567',
-  timezone: 'America/Los_Angeles',
+// Default/empty profile settings
+const defaultProfileSettings: ProfileSettings = {
+  firstName: '',
+  lastName: '',
+  displayName: '',
+  email: '',
+  bio: '',
+  avatar: '',
+  coverImage: '',
+  location: '',
+  phone: '',
+  timezone: 'UTC',
 };
 
+// Mock data for development - will be replaced with real API data
 const mockNotificationSettings: NotificationSettings = {
   emailReports: true,
   pushNotifications: true,
@@ -121,7 +122,7 @@ const mockPrivacySettings: PrivacySettings = {
 };
 
 const initialState: SettingsState = {
-  profile: mockProfileSettings,
+  profile: defaultProfileSettings,
   notifications: mockNotificationSettings,
   socialLinks: mockSocialLinks,
   privacy: mockPrivacySettings,
@@ -201,16 +202,37 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Mock data is already set in initial state
-      // In real implementation, you would fetch from API here
+      // Get real user data from auth store
+      const { useAuthStore } = await import('@/store/useAuthStore');
+      const authUser = useAuthStore.getState().user;
       
-      set({ 
-        isLoading: false,
-        hasUnsavedChanges: false,
-      });
+      if (authUser) {
+        // Map auth user to profile settings
+        const profileSettings: ProfileSettings = {
+          firstName: '', // API doesn't have firstName/lastName split yet
+          lastName: '',
+          displayName: authUser.username || '',
+          email: authUser.email || '',
+          bio: authUser.bio || '',
+          avatar: '', // No avatar in API yet
+          coverImage: '',
+          location: '',
+          phone: '',
+          timezone: 'UTC',
+        };
+        
+        set({ 
+          profile: profileSettings,
+          isLoading: false,
+          hasUnsavedChanges: false,
+        });
+      } else {
+        // No user data, keep defaults
+        set({ 
+          isLoading: false,
+          hasUnsavedChanges: false,
+        });
+      }
     } catch (error) {
       setError('Failed to load settings');
       console.error('Settings load error:', error);
@@ -252,7 +274,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
   resetChanges: () => {
     set({
-      profile: mockProfileSettings,
+      profile: defaultProfileSettings,
       notifications: mockNotificationSettings,
       socialLinks: mockSocialLinks,
       privacy: mockPrivacySettings,
