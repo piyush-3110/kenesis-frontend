@@ -4,6 +4,7 @@ import {
   Users, 
   Wallet, 
   ShoppingCart, 
+  ShoppingBag,
   TrendingUp, 
   Mail, 
   Flame, 
@@ -97,6 +98,12 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     label: 'My Products',
     icon: FolderOpen,
     href: '/dashboard/my-products',
+  },
+  {
+    id: 'purchased-products',
+    label: 'Purchased Products',
+    icon: ShoppingBag,
+    href: '/dashboard/purchased-products',
   },
   {
     id: 'affiliate-showcase',
