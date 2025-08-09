@@ -36,6 +36,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "kenesis-development-bucket.s3.us-east-2.amazonaws.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };
