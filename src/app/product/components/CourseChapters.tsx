@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useChapterModules } from "@/hooks/useChapterQuery";
+import Link from "next/link";
 
 /**
  * CourseChapters Component
@@ -174,7 +175,8 @@ const CourseChapters: React.FC<CourseChaptersProps> = ({
                 {modulesToDisplay
                   .sort((a: Module, b: Module) => a.order - b.order)
                   .map((module: Module, moduleIndex: number) => (
-                    <div
+                    <Link
+                      href={`/learn/${courseId}`}
                       key={module.id}
                       className="flex items-center gap-3 p-3 rounded-lg bg-gray-800/50 hover:bg-gray-800/70 transition-colors"
                     >
@@ -208,7 +210,7 @@ const CourseChapters: React.FC<CourseChaptersProps> = ({
                           </span>
                         )}
                       </div>
-                    </div>
+                    </Link>
                   ))}
               </div>
             ) : (
