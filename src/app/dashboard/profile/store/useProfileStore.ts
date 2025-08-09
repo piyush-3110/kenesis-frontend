@@ -117,13 +117,40 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     set({ loading: true, error: null });
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Get real user data from auth store
+      const { useAuthStore } = await import('@/store/useAuthStore');
+      const authUser = useAuthStore.getState().user;
       
-      set({ 
-        profile: mockProfile,
-        loading: false 
-      });
+      if (authUser) {
+        // Map auth user to instructor profile
+        const profile: InstructorProfile = {
+          id: authUser.id,
+          name: authUser.username || authUser.email?.split('@')[0] || 'User',
+          title: 'Instructor', // Default title since API doesn't have this yet
+          avatar: '', // No avatar in API yet
+          bio: authUser.bio || 'Welcome to my profile! I\'m excited to share my knowledge and help you learn.',
+          location: '', // No location in API yet
+          joinedDate: authUser.createdAt || new Date().toISOString(),
+          verified: authUser.emailVerified || false,
+          social: {
+            website: '',
+            twitter: '',
+            linkedin: '',
+            youtube: ''
+          }
+        };
+        
+        set({ 
+          profile,
+          loading: false 
+        });
+      } else {
+        // No user data
+        set({ 
+          profile: null,
+          loading: false 
+        });
+      }
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to load profile',
