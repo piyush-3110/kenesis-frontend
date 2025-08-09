@@ -7,6 +7,7 @@ import {
   type LoginResponse,
   type WalletAuthResponse,
   type WalletUser,
+  UserAPI,
 } from "@/lib/api";
 import {
   useRegister,
@@ -254,12 +255,24 @@ export const useAuthActions = () => {
     // Register action following the task requirements
     register: async (userData: SignupData) => {
       try {
+        console.log('🚀 Starting registration process for:', { 
+          username: userData.username, 
+          email: userData.email,
+          hasBio: !!userData.bio 
+        });
+        
         const response = await registerHook.register({
           username: userData.username,
           email: userData.email,
           password: userData.password,
           confirmPassword: userData.confirmPassword,
           bio: userData.bio,
+        });
+
+        console.log('📥 Registration response received:', {
+          success: !!response,
+          userVerified: response?.user?.emailVerified,
+          hasTokens: !!(response?.accessToken && response?.refreshToken)
         });
 
         if (!response) {
@@ -274,16 +287,19 @@ export const useAuthActions = () => {
 
         // Only store tokens if email is verified (per task requirements)
         if (response.user.emailVerified) {
+          console.log('✅ Email verified - storing user and tokens');
           setUser(user);
           setTokens(tokens);
           return { user, needsVerification: false, canAccessDashboard: true };
         } else {
+          console.log('⚠️ Email not verified - storing user without tokens');
           // Set user but don't store tokens
           setUser(user);
           // Don't store tokens for unverified users
           return { user, needsVerification: true, canAccessDashboard: false };
         }
       } catch (error) {
+        console.error('❌ Registration error:', error);
         throw error;
       }
     },
@@ -291,7 +307,15 @@ export const useAuthActions = () => {
     // Login action
     login: async (data: LoginData) => {
       try {
+        console.log('🚀 Starting login process for:', { email: data.email });
+        
         const response = await loginHook.login(data);
+
+        console.log('📥 Login response received:', {
+          success: !!response,
+          userVerified: response?.user?.emailVerified,
+          hasTokens: !!(response?.tokens?.accessToken && response?.tokens?.refreshToken)
+        });
 
         if (!response) {
           throw new Error("Login failed - no response received");
@@ -305,6 +329,7 @@ export const useAuthActions = () => {
 
         // Only store tokens if email is verified (per task requirements)
         if (response.user.emailVerified) {
+          console.log('✅ Email verified - storing user and tokens, starting auto-refresh');
           setUser(user);
           setTokens(tokens);
 
@@ -328,11 +353,13 @@ export const useAuthActions = () => {
 
           return { user, needsVerification: false, canAccessDashboard: true };
         } else {
+          console.log('⚠️ Email not verified - storing user without tokens');
           setUser(user);
           // Don't store tokens for unverified users
           return { user, needsVerification: true, canAccessDashboard: false };
         }
       } catch (error) {
+        console.error('❌ Login error:', error);
         throw error;
       }
     },
@@ -826,3 +853,46 @@ export const useAuthMethod = () =>
   useAuthStore((state) => state.user?.authMethod);
 export const useWalletMetadata = () =>
   useAuthStore((state) => state.user?.walletMetadata);
+
+/**
+ * User Profile Hook
+ * Provides user profile fetching functionality
+ */
+export const useUserProfile = () => {
+  const { setUser } = useAuthStore();
+  const { addToast } = useUIStore();
+
+  const fetchUserProfile = async () => {
+    try {
+      console.log('🔍 Fetching user profile...');
+      const response = await UserAPI.getProfile();
+      
+      console.log('📥 User profile response:', response);
+      
+      if (response.success && response.data?.user) {
+        const mappedUser = mapApiUserToUser(response.data.user);
+        console.log('✅ User profile fetched successfully:', mappedUser);
+        setUser(mappedUser);
+        return mappedUser;
+      } else {
+        console.error("❌ Failed to fetch user profile:", response.message);
+        addToast({
+          type: "error",
+          message: response.message || "Failed to fetch user profile",
+        });
+        return null;
+      }
+    } catch (error) {
+      console.error("❌ Error fetching user profile:", error);
+      addToast({
+        type: "error",
+        message: "Failed to fetch user profile. Please try again.",
+      });
+      return null;
+    }
+  };
+
+  return {
+    fetchUserProfile,
+  };
+};
