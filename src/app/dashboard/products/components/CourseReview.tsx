@@ -1,13 +1,24 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useProductCreationStore } from '../store/useProductCreationStore';
-import { useSubmitCourseForReview } from '@/hooks/useCourse';
-import { useAuthActions } from '@/store/useAuthStore';
-import { useUIStore } from '@/store/useUIStore';
-import { ArrowLeft, FileText, Play, Headphones, Users, Clock, DollarSign, Send, CheckCircle, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useProductCreationStore } from "../store/useProductCreationStore";
+import { useSubmitCourseForReview } from "@/hooks/useCourse";
+import { useLogout } from "@/features/auth/hooks";
+import { useUIStore } from "@/store/useUIStore";
+import {
+  ArrowLeft,
+  FileText,
+  Play,
+  Headphones,
+  Users,
+  Clock,
+  DollarSign,
+  Send,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 /**
  * CourseReview Component
@@ -15,40 +26,56 @@ import { cn } from '@/lib/utils';
  */
 const CourseReview: React.FC = () => {
   const router = useRouter();
-  const { currentCourse, setCurrentStep, resetCreation } = useProductCreationStore();
-  const { submitForReview: submitCourseAPI, loading: apiLoading, error: apiError, clearError } = useSubmitCourseForReview();
-  const { logout } = useAuthActions();
+  const { currentCourse, setCurrentStep, resetCreation } =
+    useProductCreationStore();
+  const {
+    submitForReview: submitCourseAPI,
+    loading: apiLoading,
+    error: apiError,
+    clearError,
+  } = useSubmitCourseForReview();
+  const logout = useLogout();
   const { addToast } = useUIStore();
-  
-  const [submissionNotes, setSubmissionNotes] = useState('');
+
+  const [submissionNotes, setSubmissionNotes] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const getModuleIcon = (type: string) => {
     switch (type) {
-      case 'video': return <Play className="w-4 h-4" />;
-      case 'audio': return <Headphones className="w-4 h-4" />;
-      case 'pdf': return <FileText className="w-4 h-4" />;
-      default: return <FileText className="w-4 h-4" />;
+      case "video":
+        return <Play className="w-4 h-4" />;
+      case "audio":
+        return <Headphones className="w-4 h-4" />;
+      case "pdf":
+        return <FileText className="w-4 h-4" />;
+      default:
+        return <FileText className="w-4 h-4" />;
     }
   };
 
   const getTotalDuration = () => {
     if (!currentCourse) return 0;
     return currentCourse.chapters.reduce((total, chapter) => {
-      return total + chapter.modules.reduce((chapterTotal, module) => {
-        return chapterTotal + module.duration;
-      }, 0);
+      return (
+        total +
+        chapter.modules.reduce((chapterTotal, module) => {
+          return chapterTotal + module.duration;
+        }, 0)
+      );
     }, 0);
   };
 
   const getTotalModules = () => {
     if (!currentCourse) return 0;
-    return currentCourse.chapters.reduce((total, chapter) => total + chapter.modules.length, 0);
+    return currentCourse.chapters.reduce(
+      (total, chapter) => total + chapter.modules.length,
+      0
+    );
   };
 
   const handleSubmitForApproval = async () => {
     if (!currentCourse?.id) {
-      addToast({ type: 'error', message: 'No course found to submit.' });
+      addToast({ type: "error", message: "No course found to submit." });
       return;
     }
 
@@ -56,56 +83,80 @@ const CourseReview: React.FC = () => {
     clearError();
 
     try {
-      const result = await submitCourseAPI(currentCourse.id, submissionNotes.trim() || undefined);
+      const result = await submitCourseAPI(
+        currentCourse.id,
+        submissionNotes.trim() || undefined
+      );
 
       if (result.success) {
         setIsSubmitted(true);
-        addToast({ type: 'success', message: result.message || 'Course submitted for review!' });
-        
+        addToast({
+          type: "success",
+          message: result.message || "Course submitted for review!",
+        });
+
         // Reset the creation flow after 3 seconds and redirect to dashboard
         setTimeout(() => {
           resetCreation();
-          router.push('/dashboard/products');
+          router.push("/dashboard/products");
         }, 3000);
       } else {
         // Handle specific error scenarios
         if (result.isUnauthorized) {
-          await logout();
-          addToast({ type: 'error', message: 'Session expired. Please log in again.' });
-          router.push('/');
+          await logout.mutateAsync();
+          addToast({
+            type: "error",
+            message: "Session expired. Please log in again.",
+          });
+          router.push("/");
           return;
         }
 
         if (result.isForbidden) {
-          addToast({ type: 'error', message: 'You are not authorized to submit this course.' });
+          addToast({
+            type: "error",
+            message: "You are not authorized to submit this course.",
+          });
           return;
         }
 
         if (result.isNotFound) {
-          addToast({ type: 'error', message: 'Course not found. Please refresh and try again.' });
+          addToast({
+            type: "error",
+            message: "Course not found. Please refresh and try again.",
+          });
           return;
         }
 
         if (result.isRateLimit) {
-          addToast({ type: 'error', message: result.message });
+          addToast({ type: "error", message: result.message });
           return;
         }
 
         if (result.isValidationError) {
-          addToast({ type: 'error', message: result.message });
+          addToast({ type: "error", message: result.message });
           return;
         }
 
         if (result.isNotReady) {
-          addToast({ type: 'error', message: 'Course not ready for submission.' });
+          addToast({
+            type: "error",
+            message: "Course not ready for submission.",
+          });
           return;
         }
 
-        addToast({ type: 'error', message: result.message || 'Failed to submit course' });
+        addToast({
+          type: "error",
+          message: result.message || "Failed to submit course",
+        });
       }
     } catch (error) {
-      console.error('Course submission error:', error);
-      addToast({ type: 'error', message: 'Something went wrong while submitting the course.' });
+      console.error("Course submission error:", error);
+      addToast({
+        type: "error",
+        message: "Something went wrong while submitting the course.",
+      });
     }
   };
 
@@ -114,7 +165,7 @@ const CourseReview: React.FC = () => {
       <div className="text-center">
         <p className="text-gray-400">No course data found.</p>
         <button
-          onClick={() => setCurrentStep('course')}
+          onClick={() => setCurrentStep("course")}
           className="mt-4 px-6 py-2 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white rounded-lg"
         >
           Start Over
@@ -128,10 +179,13 @@ const CourseReview: React.FC = () => {
       <div className="max-w-2xl mx-auto text-center py-12">
         <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-lg p-8 border border-green-500/20">
           <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-4">Course Submitted Successfully!</h2>
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Course Submitted Successfully!
+          </h2>
           <p className="text-gray-400 mb-6">
-            Your course "{currentCourse.title}" has been submitted for admin review. 
-            You'll receive an email notification once the review is complete.
+            Your course {currentCourse.title} has been submitted for admin
+            review. You&apos;ll receive an email notification once the review is
+            complete.
           </p>
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
             <p className="text-blue-400 text-sm">
@@ -156,30 +210,36 @@ const CourseReview: React.FC = () => {
           <div className="text-2xl font-bold text-white">{totalChapters}</div>
           <div className="text-gray-400 text-sm">Chapters</div>
         </div>
-        
+
         <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-lg p-6 border border-gray-700 text-center">
           <FileText className="w-8 h-8 text-[#0680FF] mx-auto mb-2" />
           <div className="text-2xl font-bold text-white">{totalModules}</div>
           <div className="text-gray-400 text-sm">Modules</div>
         </div>
-        
+
         <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-lg p-6 border border-gray-700 text-center">
           <Clock className="w-8 h-8 text-[#0680FF] mx-auto mb-2" />
-          <div className="text-2xl font-bold text-white">{Math.round(totalDuration / 60)}h {totalDuration % 60}m</div>
+          <div className="text-2xl font-bold text-white">
+            {Math.round(totalDuration / 60)}h {totalDuration % 60}m
+          </div>
           <div className="text-gray-400 text-sm">Total Duration</div>
         </div>
-        
+
         <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-lg p-6 border border-gray-700 text-center">
           <DollarSign className="w-8 h-8 text-[#0680FF] mx-auto mb-2" />
-          <div className="text-2xl font-bold text-white">${currentCourse.price}</div>
+          <div className="text-2xl font-bold text-white">
+            ${currentCourse.price}
+          </div>
           <div className="text-gray-400 text-sm">Price</div>
         </div>
       </div>
 
       {/* Course Details */}
       <div className="bg-gradient-to-r from-gray-900/30 to-gray-800/30 rounded-lg p-8 border border-gray-700">
-        <h2 className="text-2xl font-bold text-white mb-6">{currentCourse.title}</h2>
-        
+        <h2 className="text-2xl font-bold text-white mb-6">
+          {currentCourse.title}
+        </h2>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column */}
           <div className="space-y-6">
@@ -187,14 +247,18 @@ const CourseReview: React.FC = () => {
               <h3 className="font-semibold text-white mb-2">Course Type</h3>
               <p className="text-gray-400">{currentCourse.type}</p>
             </div>
-            
+
             <div>
-              <h3 className="font-semibold text-white mb-2">Short Description</h3>
+              <h3 className="font-semibold text-white mb-2">
+                Short Description
+              </h3>
               <p className="text-gray-400">{currentCourse.shortDescription}</p>
             </div>
-            
+
             <div>
-              <h3 className="font-semibold text-white mb-2">Level & Language</h3>
+              <h3 className="font-semibold text-white mb-2">
+                Level & Language
+              </h3>
               <div className="flex gap-4">
                 <span className="px-3 py-1 bg-[#0680FF]/10 text-[#0680FF] rounded-full text-sm">
                   {currentCourse.level}
@@ -204,12 +268,15 @@ const CourseReview: React.FC = () => {
                 </span>
               </div>
             </div>
-            
+
             <div>
               <h3 className="font-semibold text-white mb-2">Payment Tokens</h3>
               <div className="flex flex-wrap gap-2">
-                {currentCourse.tokensToPayWith.map(token => (
-                  <span key={token} className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm">
+                {currentCourse.tokensToPayWith.map((token) => (
+                  <span
+                    key={token}
+                    className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full text-sm"
+                  >
                     {token}
                   </span>
                 ))}
@@ -219,8 +286,12 @@ const CourseReview: React.FC = () => {
 
           {/* Right Column */}
           <div>
-            <h3 className="font-semibold text-white mb-2">Detailed Description</h3>
-            <p className="text-gray-400 leading-relaxed">{currentCourse.description}</p>
+            <h3 className="font-semibold text-white mb-2">
+              Detailed Description
+            </h3>
+            <p className="text-gray-400 leading-relaxed">
+              {currentCourse.description}
+            </p>
           </div>
         </div>
       </div>
@@ -228,9 +299,12 @@ const CourseReview: React.FC = () => {
       {/* Chapters and Modules */}
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-white">Course Content</h2>
-        
+
         {currentCourse.chapters.map((chapter, chapterIndex) => (
-          <div key={chapter.id} className="bg-gradient-to-r from-gray-900/20 to-gray-800/20 rounded-lg border border-gray-700">
+          <div
+            key={chapter.id}
+            className="bg-gradient-to-r from-gray-900/20 to-gray-800/20 rounded-lg border border-gray-700"
+          >
             {/* Chapter Header */}
             <div className="p-6 border-b border-gray-700">
               <div className="flex items-start justify-between">
@@ -245,7 +319,11 @@ const CourseReview: React.FC = () => {
                     {chapter.modules.length} modules
                   </div>
                   <div className="text-xs text-gray-500">
-                    {chapter.modules.reduce((total, module) => total + module.duration, 0)} min
+                    {chapter.modules.reduce(
+                      (total, module) => total + module.duration,
+                      0
+                    )}{" "}
+                    min
                   </div>
                 </div>
               </div>
@@ -254,7 +332,10 @@ const CourseReview: React.FC = () => {
             {/* Modules */}
             <div className="p-6 space-y-3">
               {chapter.modules.map((module, moduleIndex) => (
-                <div key={module.id} className="flex items-center justify-between p-4 bg-gray-800/30 rounded-lg">
+                <div
+                  key={module.id}
+                  className="flex items-center justify-between p-4 bg-gray-800/30 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <div className="text-[#0680FF]">
                       {getModuleIcon(module.type)}
@@ -270,7 +351,9 @@ const CourseReview: React.FC = () => {
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-400 text-sm">{module.description}</p>
+                      <p className="text-gray-400 text-sm">
+                        {module.description}
+                      </p>
                     </div>
                   </div>
                   <div className="text-right text-sm text-gray-500">
@@ -286,7 +369,9 @@ const CourseReview: React.FC = () => {
 
       {/* Validation Checklist */}
       <div className="bg-gradient-to-r from-blue-900/20 to-indigo-900/20 rounded-lg p-6 border border-blue-500/20">
-        <h3 className="font-semibold text-white mb-4">Pre-submission Checklist</h3>
+        <h3 className="font-semibold text-white mb-4">
+          Pre-submission Checklist
+        </h3>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-400" />
@@ -294,7 +379,9 @@ const CourseReview: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-400" />
-            <span className="text-gray-300">{totalChapters} chapters created</span>
+            <span className="text-gray-300">
+              {totalChapters} chapters created
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-400" />
@@ -310,7 +397,7 @@ const CourseReview: React.FC = () => {
       {/* Action Buttons */}
       <div className="flex justify-between pt-6">
         <button
-          onClick={() => setCurrentStep('modules')}
+          onClick={() => setCurrentStep("modules")}
           className="flex items-center gap-2 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 transition-colors"
           disabled={apiLoading}
         >
@@ -344,7 +431,9 @@ const CourseReview: React.FC = () => {
 
       {/* Submission Notes */}
       <div className="bg-[#0A0B1A] rounded-lg p-6 border border-[#1E2139] mt-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Submission Notes (Optional)</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">
+          Submission Notes (Optional)
+        </h3>
         <div className="bg-gradient-to-r from-[#0680FF] to-[#022ED2] p-[2px] rounded-lg">
           <textarea
             value={submissionNotes}
@@ -355,7 +444,9 @@ const CourseReview: React.FC = () => {
             maxLength={500}
           />
         </div>
-        <p className="text-gray-400 text-sm mt-2">{submissionNotes.length}/500 characters</p>
+        <p className="text-gray-400 text-sm mt-2">
+          {submissionNotes.length}/500 characters
+        </p>
       </div>
 
       {/* Display API errors */}
