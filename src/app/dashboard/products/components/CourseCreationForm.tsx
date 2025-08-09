@@ -124,10 +124,10 @@ const CourseCreationForm: React.FC = () => {
     if (formData.affiliatePercentage < 0) newErrors.affiliatePercentage = 'Affiliate commission cannot be negative';
     if (formData.affiliatePercentage > 50) newErrors.affiliatePercentage = 'Affiliate commission cannot exceed 50%';
     
-    // Learning outcomes validation - MANDATORY minimum 3
-    const learningOutcomes = formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim()) || [];
+    // Learning outcomes validation - MANDATORY minimum 3 with non-empty content
+    const learningOutcomes = formData.metadata?.learningOutcomes?.filter(outcome => outcome.trim().length > 0) || [];
     if (learningOutcomes.length < 3) {
-      newErrors.learningOutcomes = 'At least 3 learning outcomes are required';
+      newErrors.learningOutcomes = 'At least 3 non-empty learning outcomes are required';
     }
     
     if (!thumbnailFile) newErrors.thumbnail = 'Thumbnail image is required';
