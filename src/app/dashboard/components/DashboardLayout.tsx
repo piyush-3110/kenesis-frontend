@@ -7,6 +7,7 @@ import { DASHBOARD_COLORS } from "../constants";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { useUserProfile } from "@/store/useAuthStore";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -135,7 +136,4 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 };
 
 export default DashboardLayout;
-function useUserProfile(): { fetchUserProfile: any; } {
-  throw new Error("Function not implemented.");
-}
 
