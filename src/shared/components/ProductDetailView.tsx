@@ -54,6 +54,33 @@ interface ProductDetailViewProps {
   isAffiliate?: boolean;
   backLink: string;
   backLabel: string;
+  affiliateStats?: {
+    commissionRate?: number;
+    commissionAmount?: number;
+    activeAffiliates?: number;
+    recentAffiliateSales?: number;
+    recentAffiliateEarnings?: number;
+    // New optional fields for richer affiliate details
+    lifetimeSales?: number;
+    lifetimeEarnings?: number;
+  };
+  affiliateMeta?: {
+    shortDescription?: string;
+    level?: string;
+    language?: string;
+    type?: "video" | "document";
+    totalDuration?: number;
+    totalPages?: number;
+    availableQuantity?: number;
+    soldCount?: number;
+    tokenToPayWith?: string | string[];
+    publishedAt?: string;
+    isAvailable?: boolean;
+    // Additional affiliate program metadata
+    status?: "active" | "paused";
+    joinedAt?: string;
+    lastSaleAt?: string | null;
+  };
   primaryAction?: {
     label: string;
     onClick: () => void;
@@ -61,6 +88,12 @@ interface ProductDetailViewProps {
     disabled?: boolean;
     icon?: React.ReactNode;
     variant?: "purchase" | "affiliate";
+  };
+  affiliateActions?: {
+    onCopyLink?: () => void;
+    onOpenLink?: () => void;
+    link?: string;
+    copying?: boolean;
   };
   onSubmitReview?: (rating: number, comment: string) => Promise<void>;
   onLikeReview?: (reviewId: string) => Promise<void>;
@@ -73,7 +106,10 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
   isAffiliate = false,
   backLink,
   backLabel,
+  affiliateStats,
+  affiliateMeta,
   primaryAction,
+  affiliateActions,
   onSubmitReview,
   onLikeReview,
   onMarkComplete,
@@ -182,7 +218,7 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                   )}
                 </div>
                 <div className="text-white font-semibold">
-                  {product.type === "video"
+                  {(affiliateMeta?.type ?? product.type) === "video"
                     ? "Video Course"
                     : "Document Course"}
                 </div>
@@ -202,9 +238,15 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
               <div className="bg-gray-900/50 rounded-lg p-4 text-center border border-gray-800">
                 <Users size={24} className="text-green-400 mx-auto mb-2" />
                 <div className="text-white font-semibold">
-                  {product.purchasedBy.length}
+                  {isAffiliate && affiliateStats?.activeAffiliates !== undefined
+                    ? affiliateStats.activeAffiliates
+                    : product.purchasedBy.length}
                 </div>
-                <div className="text-gray-400 text-sm">Students</div>
+                <div className="text-gray-400 text-sm">
+                  {isAffiliate && affiliateStats?.activeAffiliates !== undefined
+                    ? "Affiliates"
+                    : "Students"}
+                </div>
               </div>
             </div>
           </div>
@@ -217,6 +259,38 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
               </h1>
 
               <p className="text-gray-400 text-lg mb-4">by {product.author}</p>
+
+              {isAffiliate && affiliateMeta?.shortDescription && (
+                <p className="text-gray-300 leading-relaxed mb-4">
+                  {affiliateMeta.shortDescription}
+                </p>
+              )}
+
+              {isAffiliate &&
+                (affiliateMeta?.level ||
+                  affiliateMeta?.language ||
+                  affiliateMeta?.tokenToPayWith) && (
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
+                    {affiliateMeta.level && (
+                      <span className="inline-flex items-center px-2 py-1 rounded bg-gray-900/60 border border-gray-700/60 text-xs text-white">
+                        Level {affiliateMeta.level}
+                      </span>
+                    )}
+                    {affiliateMeta.language && (
+                      <span className="inline-flex items-center px-2 py-1 rounded bg-gray-900/60 border border-gray-700/60 text-xs text-white">
+                        Language {affiliateMeta.language}
+                      </span>
+                    )}
+                    {affiliateMeta.tokenToPayWith && (
+                      <span className="inline-flex items-center px-2 py-1 rounded bg-gray-900/60 border border-gray-700/60 text-xs text-white">
+                        Currency{" "}
+                        {Array.isArray(affiliateMeta.tokenToPayWith)
+                          ? affiliateMeta.tokenToPayWith.join(", ")
+                          : affiliateMeta.tokenToPayWith}
+                      </span>
+                    )}
+                  </div>
+                )}
 
               {/* Rating */}
               <div className="flex items-center gap-3 mb-6">
@@ -236,6 +310,8 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
               <div className="text-white text-4xl font-bold">
                 ${product.price.toFixed(2)}
               </div>
+
+              {/* Affiliate motivation + meta strip removed to avoid duplicate info (now shown in Affiliate Details below) */}
 
               {/* Certificate Badge */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-600/30">
@@ -311,7 +387,188 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
         </div>
 
         {/* Full-width Course Topics Section - Only for unpurchased courses or affiliate showcase */}
-        {(isAffiliate || !product.courseAccess.hasAccess) &&
+        {/* Affiliate Details section replaces "What you'll learn" on affiliate pages */}
+        {isAffiliate ? (
+          <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12 bg-gradient-to-br from-gray-900/80 to-gray-800/60 border-y border-gray-700/50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
+              <h2 className="text-white text-2xl lg:text-3xl font-bold mb-8 text-center">
+                Affiliate Details
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+                {/* Commission */}
+                <div className="rounded-lg p-4 bg-gradient-to-r from-purple-900/40 to-pink-900/30 border border-purple-700/40">
+                  <div className="text-gray-300 text-sm">Commission</div>
+                  <div className="text-white text-xl font-semibold">
+                    {affiliateStats?.commissionRate ?? 0}%
+                    {typeof affiliateStats?.commissionAmount === "number" && (
+                      <span className="text-gray-300 text-base font-medium ml-2">
+                        (${affiliateStats.commissionAmount.toFixed(2)} per sale)
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {/* Earnings 30d */}
+                <div className="rounded-lg p-4 bg-gray-900/60 border border-gray-700/60">
+                  <div className="text-gray-300 text-sm">Earnings (30d)</div>
+                  <div className="text-white text-xl font-semibold">
+                    $
+                    {Number(
+                      affiliateStats?.recentAffiliateEarnings || 0
+                    ).toFixed(2)}
+                  </div>
+                </div>
+                {/* Sales 30d */}
+                <div className="rounded-lg p-4 bg-gray-900/60 border border-gray-700/60">
+                  <div className="text-gray-300 text-sm">
+                    Affiliate Sales (30d)
+                  </div>
+                  <div className="text-white text-xl font-semibold">
+                    {affiliateStats?.recentAffiliateSales ?? 0}
+                  </div>
+                </div>
+
+                {/* Lifetime Earnings */}
+                <div className="rounded-lg p-4 bg-gray-900/60 border border-gray-700/60">
+                  <div className="text-gray-300 text-sm">Lifetime Earnings</div>
+                  <div className="text-white text-xl font-semibold">
+                    ${Number(affiliateStats?.lifetimeEarnings || 0).toFixed(2)}
+                  </div>
+                </div>
+                {/* Lifetime Sales */}
+                <div className="rounded-lg p-4 bg-gray-900/60 border border-gray-700/60">
+                  <div className="text-gray-300 text-sm">
+                    Affiliate Sales (All Time)
+                  </div>
+                  <div className="text-white text-xl font-semibold">
+                    {affiliateStats?.lifetimeSales ?? 0}
+                  </div>
+                </div>
+                {/* Status */}
+                {affiliateMeta?.status && (
+                  <div className="rounded-lg p-4 bg-gray-900/60 border border-gray-700/60">
+                    <div className="text-gray-300 text-sm">Status</div>
+                    <div className="text-white text-xl font-semibold capitalize">
+                      {affiliateMeta.status}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Meta grid */}
+              {affiliateMeta && (
+                <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 max-w-6xl mx-auto">
+                  {affiliateMeta.tokenToPayWith && (
+                    <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
+                      <div className="text-gray-400 text-xs">Currency</div>
+                      <div className="text-white text-sm font-medium truncate">
+                        {Array.isArray(affiliateMeta.tokenToPayWith)
+                          ? affiliateMeta.tokenToPayWith.join(", ")
+                          : affiliateMeta.tokenToPayWith}
+                      </div>
+                    </div>
+                  )}
+                  {affiliateMeta.isAvailable !== undefined && (
+                    <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
+                      <div className="text-gray-400 text-xs">Availability</div>
+                      <div className="text-white text-sm font-medium">
+                        {affiliateMeta.isAvailable
+                          ? "Available"
+                          : "Unavailable"}
+                      </div>
+                    </div>
+                  )}
+                  {affiliateMeta.availableQuantity !== undefined && (
+                    <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
+                      <div className="text-gray-400 text-xs">Available</div>
+                      <div className="text-white text-sm font-medium">
+                        {affiliateMeta.availableQuantity === -1
+                          ? "Unlimited"
+                          : affiliateMeta.availableQuantity}
+                      </div>
+                    </div>
+                  )}
+                  {affiliateMeta.soldCount !== undefined && (
+                    <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
+                      <div className="text-gray-400 text-xs">
+                        Units Sold (All Time)
+                      </div>
+                      <div className="text-white text-sm font-medium">
+                        {affiliateMeta.soldCount}
+                      </div>
+                    </div>
+                  )}
+                  {affiliateMeta.publishedAt && (
+                    <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
+                      <div className="text-gray-400 text-xs">Published</div>
+                      <div className="text-white text-sm font-medium">
+                        {new Date(
+                          affiliateMeta.publishedAt
+                        ).toLocaleDateString()}
+                      </div>
+                    </div>
+                  )}
+                  {affiliateMeta.joinedAt && (
+                    <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
+                      <div className="text-gray-400 text-xs">Joined</div>
+                      <div className="text-white text-sm font-medium">
+                        {new Date(affiliateMeta.joinedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  )}
+                  {affiliateMeta.lastSaleAt !== undefined && (
+                    <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
+                      <div className="text-gray-400 text-xs">Last Sale</div>
+                      <div className="text-white text-sm font-medium">
+                        {affiliateMeta.lastSaleAt
+                          ? new Date(affiliateMeta.lastSaleAt).toLocaleString()
+                          : "—"}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Actions and link */}
+              {(affiliateActions?.onCopyLink ||
+                affiliateActions?.onOpenLink ||
+                affiliateActions?.link) && (
+                <div className="mt-6 max-w-6xl mx-auto">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {affiliateActions?.onCopyLink && (
+                      <button
+                        onClick={affiliateActions.onCopyLink}
+                        disabled={!!affiliateActions?.copying}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                      >
+                        <span>Copy Affiliate Link</span>
+                      </button>
+                    )}
+                    {affiliateActions?.onOpenLink && (
+                      <button
+                        onClick={affiliateActions.onOpenLink}
+                        className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                      >
+                        <span>Open Affiliate Link</span>
+                      </button>
+                    )}
+                  </div>
+                  {affiliateActions?.link && (
+                    <div className="mt-4 p-3 bg-gray-800/50 rounded-lg">
+                      <p className="text-gray-400 text-sm mb-1">
+                        Affiliate Link:
+                      </p>
+                      <p className="text-gray-300 text-sm font-mono break-all">
+                        {affiliateActions.link}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          // Non-affiliate learn section retained for marketing context only
+          !product.courseAccess.hasAccess &&
           product.topics &&
           product.topics.length > 0 && (
             <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] mb-12 bg-gradient-to-br from-gray-900/80 to-gray-800/60 border-y border-gray-700/50">
@@ -347,8 +604,6 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                             )}
                           </div>
                         </button>
-
-                        {/* Expandable content */}
                         <div
                           className={`transition-all duration-300 ease-in-out ${
                             isExpanded
@@ -390,7 +645,8 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                 </div>
               </div>
             </div>
-          )}
+          )
+        )}
 
         {/* Course Content (if user has access) */}
         {!isAffiliate &&
