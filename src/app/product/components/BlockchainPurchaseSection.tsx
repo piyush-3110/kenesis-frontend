@@ -13,7 +13,7 @@ import {
   ShoppingCart,
   ExternalLink,
 } from "lucide-react";
-import { useAccount } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { isAddress } from "viem";
 import { useAuth } from "@/features/auth/AuthProvider";
 import TokenSelector from "@/components/product/TokenSelector";
@@ -27,7 +27,7 @@ import type {
   CourseAccess as ApiCourseAccess,
 } from "@/lib/api/purchaseApi";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
-import { InlineChainSwitch, useChainSwitchRequired } from "@/components/web3/ChainSwitch";
+import { useChainSwitchRequired } from "@/components/web3/ChainSwitch";
 import { useUIStore } from "@/store/useUIStore";
 
 interface CourseAccess {
@@ -116,6 +116,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   // Detect if a chain switch is required for the currently selected token
   // Always call hook to respect Rules of Hooks; pass empty string when none selected
   const chainSwitchInfo = useChainSwitchRequired(selectedToken || "");
+  const { switchChain } = useSwitchChain();
 
   // Generate NFT metadata when purchase is initiated
   const generateNFTAndStartPurchase = async () => {
@@ -203,7 +204,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     setPurchaseStep("idle"); // Reset state
   };
 
-  const handleStartPurchase = () => {
+  const handleStartPurchase = async () => {
     if (
       !course ||
       !selectedToken ||
@@ -218,6 +219,20 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     if (affiliateAddress === "__SELF__") {
       addToast({ type: "warning", message: "You cannot use your own wallet as a referral." });
       return;
+    }
+
+    // If the selected token requires a different chain, switch automatically first
+    if (chainSwitchInfo.needsSwitch && chainSwitchInfo.requiredChainId) {
+      try {
+        addToast({ type: "info", message: `Switching to ${chainSwitchInfo.requiredChainName}...` });
+        await switchChain({ chainId: chainSwitchInfo.requiredChainId });
+        // Small delay to allow provider state to settle
+        await new Promise((r) => setTimeout(r, 800));
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Failed to switch network";
+        addToast({ type: "error", message: msg });
+        return;
+      }
     }
 
     generateNFTAndStartPurchase();
@@ -304,10 +319,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
               />
             )}
 
-            {/* Inline chain switch helper if token requires a different network */}
-            {selectedToken && chainSwitchInfo.needsSwitch && (
-              <InlineChainSwitch tokenString={selectedToken} className="mt-1" />
-            )}
+            {/* We auto-switch on purchase; no separate switch button here */}
 
             {/* Warning when no token is selected */}
             {tokenToPayWith.length > 0 && !selectedToken && (

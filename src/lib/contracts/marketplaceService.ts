@@ -519,11 +519,8 @@ export const usePurchaseValidation = (params: ContractPurchaseParams) => {
     validationErrors.push("Marketplace is currently paused");
   }
 
-  if (chainId !== requiredChainId) {
-    validationErrors.push(
-      `Switch to ${tokenConfig?.symbol} chain to complete purchase`
-    );
-  }
+  // Note: We no longer add a validation error for chain mismatch.
+  // The UI will auto-switch chains on purchase; we surface the requirement via needsChainSwitch only.
 
   if (!tokenConfig) {
     validationErrors.push("Selected token is not supported");

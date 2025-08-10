@@ -103,7 +103,7 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
 
   return (
     <ConnectButton.Custom>
-      {({ account, openConnectModal, openAccountModal, mounted }) => {
+      {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
         const connected = mounted && !!account;
         const authed = isAuthenticated;
         const accountLabel = account?.displayName;
@@ -113,21 +113,22 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
           ? "connected"
           : "idle";
 
-        const baseStyles =
-          "flex items-center justify-center space-x-2 group transition-all duration-300 font-medium";
-        let buttonClass = `${baseStyles} px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg`;
+        const pill =
+          "relative inline-flex items-center gap-2 rounded-full px-4 py-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/40";
+        let buttonClass = `${pill} bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_0_0_0_rgba(59,130,246,0.0)] hover:shadow-[0_0_24px_4px_rgba(59,130,246,0.35)]`;
         if (state === "error") {
-          buttonClass = `${baseStyles} px-3 py-2 bg-red-600/20 border border-red-500/50 text-red-300 hover:bg-red-600/30 rounded-lg`;
+          buttonClass = `${pill} border border-red-500/50 bg-red-600/15 text-red-200 hover:bg-red-600/25`;
         } else if (state === "connected") {
-          buttonClass = `${baseStyles} px-3 py-2 bg-green-600/20 border border-green-500/50 text-green-300 hover:bg-green-600/30 rounded-lg`;
+          buttonClass = `${pill} border border-emerald-500/40 bg-emerald-600/15 text-emerald-200 hover:bg-emerald-600/25`;
         } else if (variant === "auth-page") {
-          buttonClass = `${baseStyles} w-full py-3 px-4 bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/30 hover:border-purple-400/50 text-white rounded-xl`;
+          buttonClass = `${pill} w-full py-3 bg-gradient-to-r from-fuchsia-600 to-indigo-600 text-white shadow-[0_0_24px_4px_rgba(99,102,241,0.25)] hover:shadow-[0_0_30px_6px_rgba(99,102,241,0.35)]`;
         } else if (variant === "dashboard") {
-          buttonClass = `${baseStyles} px-3 lg:px-4 py-2 lg:py-3 rounded-lg border border-blue-500/50 bg-gradient-to-r from-blue-600/20 to-transparent hover:from-blue-600/30 text-white`;
+          buttonClass = `${pill} bg-gradient-to-r from-blue-600/30 to-indigo-600/30 text-white border border-white/10 hover:from-blue-600/40 hover:to-indigo-600/40`;
         }
+
         return (
           <button
-            className={buttonClass + (busy ? " disabled:opacity-50" : "")}
+            className={buttonClass + (busy ? " opacity-80 cursor-not-allowed" : "")}
             onClick={async () => {
               if (!connected) {
                 if (typeof window !== "undefined")
@@ -141,13 +142,32 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
                 await runSiweFlow();
                 return;
               }
-              // Already connected and authenticated: open the account modal
               openAccountModal?.();
             }}
             disabled={busy}
             aria-busy={busy}
           >
-            {getLabel(connected, authed, accountLabel)}
+            <span className="inline-flex items-center gap-2">
+              {/* Status dot */}
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  state === "connected"
+                    ? "bg-emerald-400"
+                    : state === "error"
+                    ? "bg-red-400"
+                    : "bg-white/80"
+                }`}
+              />
+              <span className="font-medium">
+                {getLabel(connected, authed, accountLabel)}
+              </span>
+              {/* Chain badge when connected */}
+              {connected && chain?.name && (
+                <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
+                  {chain.name}
+                </span>
+              )}
+            </span>
           </button>
         );
       }}
