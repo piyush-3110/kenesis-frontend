@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { formatTokenList } from "@/lib/utils/tokenDisplay";
 
 type MinimalProduct = {
   id: string;
@@ -283,10 +284,7 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                     )}
                     {affiliateMeta.tokenToPayWith && (
                       <span className="inline-flex items-center px-2 py-1 rounded bg-gray-900/60 border border-gray-700/60 text-xs text-white">
-                        Currency{" "}
-                        {Array.isArray(affiliateMeta.tokenToPayWith)
-                          ? affiliateMeta.tokenToPayWith.join(", ")
-                          : affiliateMeta.tokenToPayWith}
+                        Currency {formatTokenList(affiliateMeta.tokenToPayWith)}
                       </span>
                     )}
                   </div>
@@ -461,9 +459,7 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                     <div className="rounded-lg p-3 bg-gray-900/60 border border-gray-700/60 text-center">
                       <div className="text-gray-400 text-xs">Currency</div>
                       <div className="text-white text-sm font-medium truncate">
-                        {Array.isArray(affiliateMeta.tokenToPayWith)
-                          ? affiliateMeta.tokenToPayWith.join(", ")
-                          : affiliateMeta.tokenToPayWith}
+                        {formatTokenList(affiliateMeta.tokenToPayWith)}
                       </div>
                     </div>
                   )}
