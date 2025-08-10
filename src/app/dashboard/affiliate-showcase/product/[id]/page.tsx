@@ -3,71 +3,73 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ExtendedProduct } from "@/types/Review";
-import { getNonAffiliatedProducts } from "@/app/dashboard/affiliate-showcase/api/affiliateApi";
 import { useToastStore } from "@/app/dashboard/affiliate-showcase/store/useToastStore";
-import { AffiliateProduct } from "@/app/dashboard/affiliate-showcase/types";
 import ProductDetailView from "@/shared/components/ProductDetailView";
 import { Link2 } from "lucide-react";
+import { AffiliateAPI } from "@/features/affiliate/api";
+import type { AvailableCourseDetail } from "@/features/affiliate/types";
+import { useJoinAffiliate } from "@/features/affiliate/hooks";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
 
 const AffiliateProductDetailPage: React.FC = () => {
   const params = useParams();
   const [product, setProduct] = useState<ExtendedProduct | null>(null);
+  const [courseDetail, setCourseDetail] =
+    useState<AvailableCourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
+  const [joining, setJoining] = useState(false);
   const { addToast } = useToastStore();
+  const { data: user } = useCurrentUser();
 
   useEffect(() => {
     const loadProduct = async () => {
       try {
         if (params.id) {
-          const response = await getNonAffiliatedProducts();
-          const foundProduct = response.data.find(
-            (p: AffiliateProduct) => p.id === params.id
-          );
-
-          if (foundProduct) {
-            // Convert AffiliateProduct to ExtendedProduct for the detail view
-            const extendedProduct: ExtendedProduct = {
-              ...foundProduct,
-              currency: "USD",
-              createdAt: new Date().toISOString(),
-              description:
-                foundProduct.description ||
-                `Learn ${foundProduct.title} with ${foundProduct.author}`,
-              // reviewCount is already on the base product; no separate totalRatings in ExtendedProduct
-              purchasedBy: [], // Not relevant for affiliate view
-              reviews: [],
-              reviewSummary: {
-                totalReviews: foundProduct.reviewCount,
-                averageRating: foundProduct.rating,
-                ratingDistribution: {
-                  5: Math.floor(foundProduct.reviewCount * 0.6),
-                  4: Math.floor(foundProduct.reviewCount * 0.2),
-                  3: Math.floor(foundProduct.reviewCount * 0.1),
-                  2: Math.floor(foundProduct.reviewCount * 0.05),
-                  1: Math.floor(foundProduct.reviewCount * 0.05),
-                },
-              },
-              // For affiliate view, show as if it's not purchased to display topics
-              courseAccess: {
-                hasAccess: false,
-                progress: 0,
-                purchaseDate: undefined,
-              },
-              // Add mock topics for affiliate products
-              topics: [
-                `Master ${foundProduct.category} fundamentals`,
-                `Advanced ${foundProduct.title
-                  .split(" ")[0]
-                  .toLowerCase()} techniques`,
-                "Industry best practices and trends",
-                "Hands-on projects and exercises",
-                "Professional certification preparation",
-              ],
-              image: foundProduct.thumbnail,
-            };
-            setProduct(extendedProduct);
+          const res = await AffiliateAPI.getAvailableCourse(String(params.id), {
+            includeStats: true,
+          });
+          const data = res.data;
+          if (!data.success || !data.data) {
+            throw new Error(data.message || "Course not found");
           }
+
+          const course: AvailableCourseDetail = data.data;
+
+          // Map backend course detail to ExtendedProduct for UI reuse
+          const extendedProduct: ExtendedProduct = {
+            id: course.id,
+            title: course.title,
+            author: course.instructor?.username || "Unknown",
+            price: course.price,
+            currency: "USD",
+            rating: course.stats?.averageRating ?? 0,
+            reviewCount: course.stats?.reviewCount ?? 0,
+            image: course.thumbnail,
+            thumbnail: course.thumbnail,
+            description: undefined,
+            createdAt: new Date().toISOString(),
+            category: undefined,
+            type: "video",
+            isPurchased: false,
+            purchasedBy: [],
+            reviews: [],
+            reviewSummary: {
+              averageRating: course.stats?.averageRating ?? 0,
+              totalReviews: course.stats?.reviewCount ?? 0,
+              ratingDistribution: {
+                5: Math.floor((course.stats?.reviewCount ?? 0) * 0.6),
+                4: Math.floor((course.stats?.reviewCount ?? 0) * 0.2),
+                3: Math.floor((course.stats?.reviewCount ?? 0) * 0.1),
+                2: Math.floor((course.stats?.reviewCount ?? 0) * 0.05),
+                1: Math.floor((course.stats?.reviewCount ?? 0) * 0.05),
+              },
+            },
+            courseAccess: { hasAccess: false },
+          };
+
+          setCourseDetail(course);
+          setProduct(extendedProduct);
+          // stats and commission preview passed separately via props below
         }
       } catch (error) {
         console.error("Failed to load product:", error);
@@ -84,33 +86,39 @@ const AffiliateProductDetailPage: React.FC = () => {
     loadProduct();
   }, [params.id, addToast]);
 
-  const handleGenerateReferralLink = async () => {
-    if (!product || generating) return;
+  const joinMutation = useJoinAffiliate(String(params.id || ""));
 
-    setGenerating(true);
+  const handleJoinAffiliate = async () => {
+    if (!product || joining) return;
+    setJoining(true);
     try {
-      // Simulate API call to generate referral link
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!user?.walletAddress) {
+        addToast({
+          title: "Wallet Required",
+          message:
+            "Connect your wallet in Settings to join affiliate programs.",
+          type: "error",
+        });
+        return;
+      }
 
-      const referralLink = `https://kenesis.com/ref/${product.id}?affiliate=user123`;
-
-      // Copy to clipboard
-      await navigator.clipboard.writeText(referralLink);
-
+      const res = await joinMutation.mutateAsync();
       addToast({
-        title: "Success",
-        message: "Referral link copied to clipboard!",
+        title: res.message.includes("rejoined")
+          ? "Rejoined Program"
+          : "Joined Program",
+        message: `You can now promote "${product.title}" and earn commissions.`,
         type: "success",
       });
-    } catch (error) {
-      console.error("Failed to generate referral link:", error);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       addToast({
-        title: "Error",
-        message: "Failed to generate referral link",
+        title: "Join Failed",
+        message: err?.message || "Please try again.",
         type: "error",
       });
     } finally {
-      setGenerating(false);
+      setJoining(false);
     }
   };
 
@@ -118,11 +126,14 @@ const AffiliateProductDetailPage: React.FC = () => {
     if (!product) return undefined;
 
     return {
-      label: generating ? "Generating..." : "Generate Referral Link",
-      onClick: handleGenerateReferralLink,
-      loading: generating,
-      disabled: generating,
-      icon: <Link2 size={20} />,
+      label:
+        joining || joinMutation.isPending
+          ? "Joining..."
+          : "Join Affiliate Program",
+      onClick: handleJoinAffiliate,
+      loading: joining || joinMutation.isPending,
+      disabled: joining || joinMutation.isPending,
+      icon: <Link2 size={20} />, // Use a better icon later (Handshake)
       variant: "affiliate" as const,
     };
   };
@@ -138,6 +149,36 @@ const AffiliateProductDetailPage: React.FC = () => {
       isAffiliate={true}
       backLink="/dashboard/affiliate-showcase"
       backLabel="Back to Affiliate Showcase"
+      affiliateStats={
+        courseDetail
+          ? {
+              commissionRate: courseDetail.commissionPreview?.commissionRate,
+              commissionAmount:
+                courseDetail.commissionPreview?.commissionAmount,
+              activeAffiliates: courseDetail.stats?.activeAffiliates,
+              recentAffiliateSales: courseDetail.stats?.recentAffiliateSales,
+              recentAffiliateEarnings:
+                courseDetail.stats?.recentAffiliateEarnings,
+            }
+          : undefined
+      }
+      affiliateMeta={
+        courseDetail
+          ? {
+              shortDescription: courseDetail.shortDescription,
+              level: courseDetail.level,
+              language: courseDetail.language,
+              type: courseDetail.type,
+              totalDuration: courseDetail.totalDuration,
+              totalPages: courseDetail.totalPages,
+              availableQuantity: courseDetail.availableQuantity,
+              soldCount: courseDetail.soldCount,
+              tokenToPayWith: courseDetail.tokenToPayWith,
+              publishedAt: courseDetail.publishedAt,
+              isAvailable: courseDetail.isAvailable,
+            }
+          : undefined
+      }
       primaryAction={getPrimaryAction()}
     />
   );
