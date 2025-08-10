@@ -3,8 +3,8 @@
  * Handles only blockchain-based purchases with NFT generation
  */
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Award,
   CheckCircle,
@@ -14,6 +14,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useAccount } from "wagmi";
+import { isAddress } from "viem";
 import { useAuth } from "@/features/auth/AuthProvider";
 import TokenSelector from "@/components/product/TokenSelector";
 import { SmartContractPurchase } from "@/components/web3/SmartContractPurchase";
@@ -26,6 +27,8 @@ import type {
   CourseAccess as ApiCourseAccess,
 } from "@/lib/api/purchaseApi";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
+import { InlineChainSwitch, useChainSwitchRequired } from "@/components/web3/ChainSwitch";
+import { useUIStore } from "@/store/useUIStore";
 
 interface CourseAccess {
   hasAccess: boolean;
@@ -52,6 +55,8 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   className = "",
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { addToast } = useUIStore();
   const [selectedToken, setSelectedToken] = useState<string | null>(
     tokenToPayWith.length > 0 ? tokenToPayWith[0] : null
   );
@@ -87,12 +92,30 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   // Token validation
   const tokenValidation = validateTokensForPurchase(tokenToPayWith);
 
+  // Referral handling from URL (?ref=0x....)
+  const referralFromUrl = searchParams?.get("ref") || undefined;
+  const affiliateAddress = useMemo(() => {
+    if (!referralFromUrl) return undefined;
+    if (!isAddress(referralFromUrl)) return undefined;
+    if (
+      connectedWalletAddress &&
+      referralFromUrl.toLowerCase() === connectedWalletAddress.toLowerCase()
+    ) {
+      return "__SELF__"; // marker to block self-referral
+    }
+    return referralFromUrl as `0x${string}`;
+  }, [referralFromUrl, connectedWalletAddress]);
+
   // Update selected token when available tokens change
   useEffect(() => {
     if (tokenToPayWith.length > 0 && !selectedToken) {
       setSelectedToken(tokenToPayWith[0]);
     }
   }, [tokenToPayWith, selectedToken]);
+
+  // Detect if a chain switch is required for the currently selected token
+  // Always call hook to respect Rules of Hooks; pass empty string when none selected
+  const chainSwitchInfo = useChainSwitchRequired(selectedToken || "");
 
   // Generate NFT metadata when purchase is initiated
   const generateNFTAndStartPurchase = async () => {
@@ -103,7 +126,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     setPurchaseStep("generating-nft");
     setNftResult(null);
 
-    try {
+  try {
       console.log("Generating NFT metadata for course purchase...");
 
       const nftPurchaseResult = await purchaseCourseWithNFT({
@@ -122,6 +145,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
         setPurchaseStep("ready-for-purchase");
       } else {
         console.error("NFT metadata creation failed:", nftPurchaseResult.error);
+        addToast({ type: "error", message: "Failed to prepare NFT certificate." });
         setPurchaseStep("idle");
       }
     } catch (error) {
@@ -132,6 +156,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       });
+      addToast({ type: "error", message: "Failed to prepare NFT certificate." });
       setPurchaseStep("idle");
     }
   };
@@ -148,6 +173,9 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   }) => {
     console.log("Blockchain purchase successful:", result);
 
+  // Toast for blockchain success
+  addToast({ type: "success", message: "Blockchain transaction confirmed." });
+
     // Log backend confirmation status
     if (result.backendConfirmation) {
       if (result.backendConfirmation.success) {
@@ -155,11 +183,13 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
           "✅ Backend confirmation successful:",
           result.backendConfirmation
         );
+    addToast({ type: "success", message: "Purchase confirmed. Course access activated." });
       } else {
         console.warn(
           "⚠️ Backend confirmation failed:",
           result.backendConfirmation.error
         );
+    addToast({ type: "warning", message: "Payment succeeded, but access activation failed. We will verify shortly." });
       }
     }
 
@@ -169,6 +199,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
 
   const handlePurchaseError = (error: string) => {
     console.error("Blockchain purchase failed:", error);
+  addToast({ type: "error", message: `Purchase failed: ${error}` });
     setPurchaseStep("idle"); // Reset state
   };
 
@@ -180,6 +211,12 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
       !tokenValidation.valid ||
       purchaseStep !== "idle"
     ) {
+      return;
+    }
+
+    // Block self-referral
+    if (affiliateAddress === "__SELF__") {
+      addToast({ type: "warning", message: "You cannot use your own wallet as a referral." });
       return;
     }
 
@@ -267,6 +304,11 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
               />
             )}
 
+            {/* Inline chain switch helper if token requires a different network */}
+            {selectedToken && chainSwitchInfo.needsSwitch && (
+              <InlineChainSwitch tokenString={selectedToken} className="mt-1" />
+            )}
+
             {/* Warning when no token is selected */}
             {tokenToPayWith.length > 0 && !selectedToken && (
               <div className="p-3 rounded-lg bg-yellow-600/20 border border-yellow-600/30 text-yellow-400">
@@ -330,6 +372,11 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
                   course={course}
                   selectedToken={selectedToken}
                   nftMetadataUri={nftResult.nftMetadataUri}
+                  affiliateAddress={
+                    affiliateAddress && affiliateAddress !== "__SELF__"
+                      ? (affiliateAddress as `0x${string}`)
+                      : undefined
+                  }
                   onPurchaseSuccess={handlePurchaseSuccess}
                   onPurchaseError={handlePurchaseError}
                 />
