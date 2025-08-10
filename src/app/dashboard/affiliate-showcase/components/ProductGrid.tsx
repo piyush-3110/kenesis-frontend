@@ -1,37 +1,58 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useAffiliateShowcaseStore } from '../store/useAffiliateShowcaseStore';
-import ProductCard from './ProductCard';
-import ErrorState from './ErrorState';
-import { AFFILIATE_COLORS } from '../constants';
+import React from "react";
+import { useAffiliateShowcaseStore } from "../store/useAffiliateShowcaseStore";
+import ProductCard from "./ProductCard";
+import ErrorState from "./ErrorState";
+import { AFFILIATE_COLORS } from "../constants";
+import { useAvailableAffiliateCourses } from "@/features/affiliate/hooks";
 
 /**
  * ProductGrid Component
  * Grid layout for displaying affiliate products with error handling
  */
 const ProductGrid: React.FC = () => {
-  const { 
-    filteredProducts, 
-    searchQuery, 
-    activeFilter, 
-    error, 
-    loadProducts,
-    clearError 
-  } = useAffiliateShowcaseStore();
+  const { searchQuery, activeFilter, error, clearError } =
+    useAffiliateShowcaseStore();
+  const { data, isLoading, isError, refetch } = useAvailableAffiliateCourses({
+    q: searchQuery || undefined,
+    // Backend supports sortBy, sortOrder; here we default to createdAt desc
+    sortBy: "createdAt",
+    sortOrder: "desc",
+    page: 1,
+    limit: 50,
+  });
+
+  type MaybeTyped = { type?: "video" | "document" };
+  const filteredProducts = (data?.courses || []).filter((c: MaybeTyped) => {
+    if (activeFilter === "all") return true;
+    // Honor backend type when present; otherwise allow all
+    return c.type ? c.type === activeFilter : true;
+  });
 
   const handleRetry = () => {
     clearError();
-    loadProducts();
+    refetch();
   };
 
   // Show error state if there's an error
-  if (error) {
+  if (error || isError) {
     return (
-      <ErrorState 
-        error={error} 
+      <ErrorState
+        error={error || "Failed to load affiliate courses"}
         onRetry={handleRetry}
       />
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div
+        className="py-12 text-center"
+        style={{ color: AFFILIATE_COLORS.TEXT_SECONDARY }}
+      >
+        Loading courses...
+      </div>
     );
   }
 
@@ -59,8 +80,8 @@ const ProductGrid: React.FC = () => {
             className="mb-2"
             style={{
               color: AFFILIATE_COLORS.TEXT_PRIMARY,
-              fontFamily: 'CircularXX, Inter, sans-serif',
-              fontSize: '18px',
+              fontFamily: "CircularXX, Inter, sans-serif",
+              fontSize: "18px",
               fontWeight: 500,
             }}
           >
@@ -69,21 +90,25 @@ const ProductGrid: React.FC = () => {
           <p
             style={{
               color: AFFILIATE_COLORS.TEXT_SECONDARY,
-              fontFamily: 'CircularXX, Inter, sans-serif',
-              fontSize: '16px',
+              fontFamily: "CircularXX, Inter, sans-serif",
+              fontSize: "16px",
               fontWeight: 450,
             }}
           >
             {searchQuery
-              ? `No products match &quot;${searchQuery}&quot; in the ${activeFilter === 'all' ? 'all categories' : activeFilter} section.`
-              : `No ${activeFilter === 'all' ? '' : activeFilter + ' '}products available at the moment.`}
+              ? `No products match "${searchQuery}" in the ${
+                  activeFilter === "all" ? "all categories" : activeFilter
+                } section.`
+              : `No ${
+                  activeFilter === "all" ? "" : activeFilter + " "
+                }products available at the moment.`}
           </p>
           <p
             className="mt-2"
             style={{
               color: AFFILIATE_COLORS.TEXT_SECONDARY,
-              fontFamily: 'CircularXX, Inter, sans-serif',
-              fontSize: '14px',
+              fontFamily: "CircularXX, Inter, sans-serif",
+              fontSize: "14px",
               fontWeight: 450,
             }}
           >
@@ -101,21 +126,18 @@ const ProductGrid: React.FC = () => {
         <p
           style={{
             color: AFFILIATE_COLORS.TEXT_SECONDARY,
-            fontFamily: 'CircularXX, Inter, sans-serif',
-            fontSize: '16px',
+            fontFamily: "CircularXX, Inter, sans-serif",
+            fontSize: "16px",
             fontWeight: 450,
           }}
         >
-          Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+          Showing {filteredProducts.length} product
+          {filteredProducts.length !== 1 ? "s" : ""}
           {searchQuery && (
-            <span className="ml-1">
-              for &quot;{searchQuery}&quot;
-            </span>
+            <span className="ml-1">for &quot;{searchQuery}&quot;</span>
           )}
-          {activeFilter !== 'all' && (
-            <span className="ml-1">
-              in {activeFilter} category
-            </span>
+          {activeFilter !== "all" && (
+            <span className="ml-1">in {activeFilter} category</span>
           )}
         </p>
       </div>
@@ -123,9 +145,22 @@ const ProductGrid: React.FC = () => {
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredProducts.map((product) => (
-          <ProductCard 
-            key={product.id} 
-            product={product} 
+          <ProductCard
+            key={product.id}
+            // Adapt ProductCard props by mapping AvailableCourse to expected shape
+            product={{
+              id: product.id,
+              title: product.title,
+              author: product.instructor?.username || "Unknown",
+              rating: product.averageRating ?? 0,
+              reviewCount: product.reviewCount ?? 0,
+              price: product.price,
+              commission: product.affiliatePercentage,
+              category: "",
+              type: (product as unknown as MaybeTyped).type ?? "video",
+              thumbnail: product.thumbnail || "/images/landing/product.png",
+              description: undefined,
+            }}
           />
         ))}
       </div>
