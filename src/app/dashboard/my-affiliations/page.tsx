@@ -35,7 +35,7 @@ const MyAffiliationsPage: React.FC = () => {
             /> */}
           </div>
           <span className="text-gray-400 text-sm">
-            {affiliations.length} products
+            {affiliations.length} programs
           </span>
         </div>
 
