@@ -3,6 +3,8 @@
  * Defines supported chains, tokens, and contract addresses for each environment
  */
 
+import { bscTestnet, sepolia } from "viem/chains";
+
 export interface TokenConfig {
   symbol: string;
   address: string;
@@ -50,9 +52,9 @@ export const CHAIN_CONFIGS: EnvironmentConfig = {
   // Development - using Sepolia testnet only
   development: [
     {
-      chainId: 11155111, // Sepolia
-      name: "Sepolia Testnet",
-      nativeSymbol: "ETH",
+      chainId: sepolia.id, // Sepolia
+      name: sepolia.name,
+      nativeSymbol: sepolia.nativeCurrency.symbol,
       contractAddress: "0xe72fdF3fF7cF6966af81d986092A123a14eA24fd", // Deployed Sepolia contract
       nftContractAddress:
         process.env.NEXT_PUBLIC_SEPOLIA_NFT_CONTRACT ||
@@ -71,6 +73,26 @@ export const CHAIN_CONFIGS: EnvironmentConfig = {
         },
       ],
       blockExplorer: "https://sepolia.etherscan.io",
+    },
+    {
+      chainId: bscTestnet.id, // BSC Testnet
+      name: bscTestnet.name,
+      nativeSymbol: bscTestnet.nativeCurrency.symbol,
+      contractAddress:
+        process.env.NEXT_PUBLIC_BSC_MARKETPLACE_CONTRACT ||
+        "0x3110faB13A44C694Cd2EB3a8f1cD129C4Ae620E1",
+      nftContractAddress:
+        process.env.NEXT_PUBLIC_BSC_NFT_CONTRACT ||
+        "0x6C501bc510F026a20945d810A95ACb6e82567df3",
+      supportedTokens: [
+        createNativeToken("BNB"),
+        {
+          symbol: "USDT",
+          address: "0xf09D0b4171bF7b72d15BC4dbb7109Ca121924fc1",
+          decimals: 18,
+        },
+      ],
+      blockExplorer: "https://testnet.bscscan.com",
     },
   ],
 
