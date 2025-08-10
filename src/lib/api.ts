@@ -1193,21 +1193,24 @@ export const CourseAPI = {
       JSON.stringify(response, null, 2)
     );
 
-    if (response.success) {
+    // Extract the actual API response from axios response.data
+    const apiResponse = response.data;
+
+    if (apiResponse.success) {
       console.log("✅ [API] Course fetched successfully");
       console.log(
         "✅ [API] Course data:",
-        JSON.stringify(response.data, null, 2)
+        JSON.stringify(apiResponse.data, null, 2)
       );
     } else {
-      console.error("❌ [API] Failed to fetch course:", response.message);
+      console.error("❌ [API] Failed to fetch course:", apiResponse.message);
       console.error(
         "❌ [API] Full error response:",
-        JSON.stringify(response, null, 2)
+        JSON.stringify(apiResponse, null, 2)
       );
     }
 
-    return response;
+    return apiResponse;
   },
 
   /**
@@ -1340,8 +1343,8 @@ export const CourseAPI = {
   },
 
   /**
-   * Get modules for a specific chapter (NEW - matches backend controller)
-   * GET /api/chapters/{chapterId}/modules
+   * Get modules for a specific chapter
+   * GET /api/courses/{courseId}/chapters/{chapterId}/modules
    */
   getModulesForChapter: async (
     chapterId: string,
@@ -1359,9 +1362,47 @@ export const CourseAPI = {
       }[];
     }>
   > => {
-    return http.get(
-      `/api/courses/${courseId}/chapters/${chapterId}?includeModules=true`
+    console.log("📚 [API] Starting getModulesForChapter request...");
+    console.log("📚 [API] Course ID:", courseId);
+    console.log("📚 [API] Chapter ID:", chapterId);
+    console.log(
+      "📚 [API] API endpoint: /api/courses/" +
+        courseId +
+        "/chapters/" +
+        chapterId +
+        "/modules"
     );
+
+    const response = await http.get(
+      `/api/courses/${courseId}/chapters/${chapterId}/modules`
+    );
+
+    console.log(
+      "📚 [API] getModulesForChapter response received:",
+      JSON.stringify(response, null, 2)
+    );
+
+    // Extract the actual API response from axios response.data
+    const apiResponse = response.data;
+
+    if (apiResponse.success) {
+      console.log("✅ [API] Modules fetched successfully");
+      console.log(
+        "✅ [API] Modules data:",
+        JSON.stringify(apiResponse.data, null, 2)
+      );
+    } else {
+      console.error(
+        "❌ [API] Failed to fetch modules:",
+        apiResponse.message
+      );
+      console.error(
+        "❌ [API] Full error response:",
+        JSON.stringify(apiResponse, null, 2)
+      );
+    }
+
+    return apiResponse;
   },
 
   /**
@@ -1393,11 +1434,12 @@ export const CourseAPI = {
 
   /**
    * Get module content
-   * GET /api/courses/{courseId}/modules/{moduleId}/content
-   * Updated to new endpoint format
+   * GET /api/courses/{courseId}/chapters/{chapterId}/modules/{moduleId}/content
+   * Updated to new endpoint format requiring chapterId
    */
   getModuleContent: async (
     courseId: string,
+    chapterId: string,
     moduleId: string
   ): Promise<
     ApiResponse<{
@@ -1410,11 +1452,10 @@ export const CourseAPI = {
       duration: number;
       videoUrl?: string;
       attachments?: Array<{
-        id: string;
         name: string;
         url: string;
-        type: string;
-        size: number;
+        fileSize: number;
+        mimeType: string;
       }>;
       isPreview: boolean;
       metadata?: {
@@ -1427,23 +1468,20 @@ export const CourseAPI = {
   > => {
     console.log("🎥 [API] Starting getModuleContent request...");
     console.log("🎥 [API] Course ID:", courseId);
+    console.log("🎥 [API] Chapter ID:", chapterId);
     console.log("🎥 [API] Module ID:", moduleId);
-    console.log(
-      "🎥 [API] CourseId type:",
-      typeof courseId,
-      "ModuleId type:",
-      typeof moduleId
-    );
     console.log(
       "🎥 [API] API endpoint: /api/courses/" +
         courseId +
+        "/chapters/" +
+        chapterId +
         "/modules/" +
         moduleId +
         "/content"
     );
 
     const response = await http.get(
-      `/api/courses/${courseId}/modules/${moduleId}/content`
+      `/api/courses/${courseId}/chapters/${chapterId}/modules/${moduleId}/content`
     );
 
     console.log(
@@ -1451,24 +1489,27 @@ export const CourseAPI = {
       JSON.stringify(response, null, 2)
     );
 
-    if (response.success) {
+    // Extract the actual API response from axios response.data
+    const apiResponse = response.data;
+
+    if (apiResponse.success) {
       console.log("✅ [API] Module content fetched successfully");
       console.log(
         "✅ [API] Module content data:",
-        JSON.stringify(response.data, null, 2)
+        JSON.stringify(apiResponse.data, null, 2)
       );
     } else {
       console.error(
         "❌ [API] Failed to fetch module content:",
-        response.message
+        apiResponse.message
       );
       console.error(
         "❌ [API] Full error response:",
-        JSON.stringify(response, null, 2)
+        JSON.stringify(apiResponse, null, 2)
       );
     }
 
-    return response as any;
+    return apiResponse;
   },
 
   /**
@@ -1591,24 +1632,27 @@ export const CourseAPI = {
       JSON.stringify(response, null, 2)
     );
 
-    if (response.success) {
+    // Extract the actual API response from axios response.data
+    const apiResponse = response.data;
+
+    if (apiResponse.success) {
       console.log("✅ [API] Course access checked successfully");
       console.log(
         "✅ [API] Access data:",
-        JSON.stringify(response.data, null, 2)
+        JSON.stringify(apiResponse.data, null, 2)
       );
     } else {
       console.error(
         "❌ [API] Failed to check course access:",
-        response.message
+        apiResponse.message
       );
       console.error(
         "❌ [API] Full error response:",
-        JSON.stringify(response, null, 2)
+        JSON.stringify(apiResponse, null, 2)
       );
     }
 
-    return response;
+    return apiResponse;
   },
 };
 
@@ -1623,7 +1667,37 @@ export const UserAPI = {
    * Requires Authorization header
    */
   getProfile: async (): Promise<ApiResponse<{ user: ApiUser }>> => {
-    return http.get<{ user: ApiUser }>("/api/users/profile");
+    console.log("👤 [API] Starting getProfile request...");
+    console.log("👤 [API] API endpoint: /api/users/profile");
+
+    const response = await http.get("/api/users/profile");
+
+    console.log(
+      "👤 [API] getProfile response received:",
+      JSON.stringify(response, null, 2)
+    );
+
+    // Extract the actual API response from axios response.data
+    const apiResponse = response.data;
+
+    if (apiResponse.success) {
+      console.log("✅ [API] User profile fetched successfully");
+      console.log(
+        "✅ [API] User data:",
+        JSON.stringify(apiResponse.data, null, 2)
+      );
+    } else {
+      console.error(
+        "❌ [API] Failed to fetch user profile:",
+        apiResponse.message
+      );
+      console.error(
+        "❌ [API] Full error response:",
+        JSON.stringify(apiResponse, null, 2)
+      );
+    }
+
+    return apiResponse;
   },
 };
 

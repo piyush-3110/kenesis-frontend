@@ -37,9 +37,16 @@ const SaveActions: React.FC = () => {
     }
   };
 
-  // Don't show actions if no changes have been made
+  // Show actions if there are unsaved changes OR if we're currently saving
   if (!hasUnsavedChanges && !isSaving) {
-    return null;
+    return (
+      <div className="flex items-center justify-end gap-3 py-4">
+        <div className="text-gray-400 text-sm flex items-center gap-2">
+          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <span>All changes saved</span>
+        </div>
+      </div>
+    );
   }
 
   return (

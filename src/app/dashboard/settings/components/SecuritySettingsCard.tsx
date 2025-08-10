@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import { Shield, Eye, EyeOff, Lock } from "lucide-react";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
+import { requestPasswordReset } from "../api/settingsApi";
+import { useUIStore } from "@/store/useUIStore";
 import GradientBox from "./GradientBox";
 
 /**
@@ -9,8 +12,12 @@ import GradientBox from "./GradientBox";
  * Handles password reset and security settings
  */
 const SecuritySettingsCard: React.FC = () => {
-  // Local submission state for simulated password update
+  const { data: currentUser } = useCurrentUser();
+  const { addToast } = useUIStore();
+  
+  // Local submission state for password update
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -98,9 +105,33 @@ const SecuritySettingsCard: React.FC = () => {
     }
   };
 
-  const handleOpenForgotPassword = () => {
-    // Redirect to forgot password page
-    window.location.href = "/auth/forgot-password";
+  const handleOpenForgotPassword = async () => {
+    if (!currentUser?.email) {
+      addToast({
+        type: "error",
+        message: "No email address found. Please ensure you have an email associated with your account.",
+      });
+      return;
+    }
+
+    try {
+      setIsResetting(true);
+      await requestPasswordReset(currentUser.email);
+      
+      addToast({
+        type: "success",
+        message: "Password reset email sent! Please check your inbox.",
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to send password reset email";
+      addToast({
+        type: "error",
+        message: errorMessage,
+      });
+      console.error("Password reset error:", error);
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   return (
@@ -141,16 +172,26 @@ const SecuritySettingsCard: React.FC = () => {
 
               <button
                 onClick={handleOpenForgotPassword}
-                className="w-full text-left p-4 bg-[#0A0E27] border border-gray-600 rounded-lg hover:border-blue-500 transition-all"
+                disabled={isResetting || !currentUser?.email}
+                className="w-full text-left p-4 bg-[#0A0E27] border border-gray-600 rounded-lg hover:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-white font-medium">Reset Password</div>
+                    <div className="text-white font-medium">
+                      {isResetting ? "Sending Reset Email..." : "Reset Password"}
+                    </div>
                     <div className="text-sm text-gray-400">
-                      Reset your password via email
+                      {!currentUser?.email 
+                        ? "Email required for password reset"
+                        : "Reset your password via email"
+                      }
                     </div>
                   </div>
-                  <Shield className="w-5 h-5 text-gray-400" />
+                  {isResetting ? (
+                    <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Shield className="w-5 h-5 text-gray-400" />
+                  )}
                 </div>
               </button>
             </div>

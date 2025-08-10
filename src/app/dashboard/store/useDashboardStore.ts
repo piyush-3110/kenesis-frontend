@@ -130,7 +130,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
 
       if (authUser) {
         const dashboardUser: DashboardUser = {
-          id: authUser.id,
+          id: authUser.id,  
           name: authUser.username || authUser.email?.split("@")[0] || "User",
           email: authUser.email || "",
           avatar: "", // No avatar in API yet, will be added later

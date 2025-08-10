@@ -11,19 +11,27 @@ import GradientBox from './GradientBox';
  * Handles profile information editing including avatar upload
  */
 const ProfileDetailsCard: React.FC = () => {
-  const { profile, updateProfile, updateAvatar } = useSettingsStore();
+  const { profile, updateProfile, uploadAvatar, updateAvatar } = useSettingsStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const handleInputChange = (field: keyof typeof profile, value: string) => {
     updateProfile({ [field]: value });
   };
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
     if (file && file.type.startsWith('image/')) {
-      // In real implementation, you would upload to cloud storage
-      const imageUrl = URL.createObjectURL(file);
-      updateAvatar(imageUrl);
+      setUploading(true);
+      try {
+        await uploadAvatar(file);
+        console.log("✅ [PROFILE] Avatar uploaded successfully");
+      } catch (error) {
+        console.error('❌ [PROFILE] Failed to upload avatar:', error);
+        // Error is already handled in the store
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -122,10 +130,20 @@ const ProfileDetailsCard: React.FC = () => {
                       <Camera className="w-12 h-12 lg:w-16 lg:h-16 text-gray-400" />
                     </div>
                   )}
+                  
+                  {/* Upload progress overlay */}
+                  {uploading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                        <span className="text-white text-xs">Uploading...</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Remove button */}
-                {profile.avatar && (
+                {profile.avatar && !uploading && (
                   <button
                     onClick={() => updateAvatar('')}
                     className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center transition-colors"
@@ -140,32 +158,40 @@ const ProfileDetailsCard: React.FC = () => {
             <div className="lg:col-span-2">
               <div
                 className={`
-                  border-2 border-dashed rounded-lg p-8 lg:p-12 text-center transition-colors cursor-pointer min-h-[200px] flex flex-col justify-center
-                  ${dragActive 
-                    ? 'border-blue-500 bg-blue-500/10' 
-                    : 'border-gray-600 hover:border-gray-500'
+                  border-2 border-dashed rounded-lg p-8 lg:p-12 text-center transition-colors min-h-[200px] flex flex-col justify-center
+                  ${uploading 
+                    ? 'border-gray-600 bg-gray-800/30 cursor-not-allowed opacity-60' 
+                    : dragActive 
+                      ? 'border-blue-500 bg-blue-500/10 cursor-pointer' 
+                      : 'border-gray-600 hover:border-gray-500 cursor-pointer'
                   }
                 `}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onClick={() => fileInputRef.current?.click()}
+                onDrop={uploading ? undefined : handleDrop}
+                onDragOver={uploading ? undefined : handleDragOver}
+                onDragLeave={uploading ? undefined : handleDragLeave}
+                onClick={uploading ? undefined : () => fileInputRef.current?.click()}
               >
-                <Upload className="w-12 h-12 lg:w-16 lg:h-16 text-gray-400 mx-auto mb-6" />
+                <Upload className={`w-12 h-12 lg:w-16 lg:h-16 mx-auto mb-6 ${uploading ? 'text-gray-500' : 'text-gray-400'}`} />
                 <div className="space-y-3">
                   <p 
-                    className="text-white font-medium"
+                    className={`font-medium ${uploading ? 'text-gray-500' : 'text-white'}`}
                     style={{
                       fontFamily: 'Inter',
                       fontSize: '18px',
                       fontWeight: 500,
                     }}
                   >
-                    Drop your image here, or{' '}
-                    <span className="text-blue-400 underline cursor-pointer">click to browse</span>
+                    {uploading ? (
+                      'Uploading...'
+                    ) : (
+                      <>
+                        Drop your image here, or{' '}
+                        <span className="text-blue-400 underline cursor-pointer">click to browse</span>
+                      </>
+                    )}
                   </p>
                   <p 
-                    className="text-gray-400"
+                    className={uploading ? 'text-gray-500' : 'text-gray-400'}
                     style={{
                       fontFamily: 'Inter',
                       fontSize: '14px',
@@ -182,6 +208,7 @@ const ProfileDetailsCard: React.FC = () => {
                 type="file"
                 accept="image/*"
                 onChange={handleFileInputChange}
+                disabled={uploading}
                 className="hidden"
               />
             </div>
@@ -190,57 +217,30 @@ const ProfileDetailsCard: React.FC = () => {
 
         {/* Form Fields */}
         <div className="space-y-8 lg:space-y-10">
-          {/* Name Fields */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            <div>
-              <label 
-                className="block text-white mb-3 font-medium"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                }}
-              >
-                First Name
-              </label>
-              <input
-                type="text"
-                value={profile.firstName}
-                onChange={(e) => handleInputChange('firstName', e.target.value)}
-                className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="Enter your first name"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                }}
-              />
-            </div>
-            
-            <div>
-              <label 
-                className="block text-white mb-3 font-medium"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                }}
-              >
-                Last Name
-              </label>
-              <input
-                type="text"
-                value={profile.lastName}
-                onChange={(e) => handleInputChange('lastName', e.target.value)}
-                className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="Enter your last name"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                }}
-              />
-            </div>
+          {/* Username Field */}
+          <div>
+            <label 
+              className="block text-white mb-3 font-medium"
+              style={{
+                fontFamily: 'Inter',
+                fontSize: '16px',
+                fontWeight: 500,
+              }}
+            >
+              Username
+            </label>
+            <input
+              type="text"
+              value={profile.displayName}
+              onChange={(e) => handleInputChange('displayName', e.target.value)}
+              className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
+              placeholder="Enter your username"
+              style={{
+                fontFamily: 'Inter',
+                fontSize: '16px',
+                fontWeight: 400,
+              }}
+            />
           </div>
 
           {/* Email and Display Name */}
@@ -287,59 +287,6 @@ const ProfileDetailsCard: React.FC = () => {
                 onChange={(e) => handleInputChange('displayName', e.target.value)}
                 className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
                 placeholder="How should we display your name?"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Location and Phone */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            <div>
-              <label 
-                className="block text-white mb-3 font-medium"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                }}
-              >
-                Location
-              </label>
-              <input
-                type="text"
-                value={profile.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="City, Country"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 400,
-                }}
-              />
-            </div>
-
-            <div>
-              <label 
-                className="block text-white mb-3 font-medium"
-                style={{
-                  fontFamily: 'Inter',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                }}
-              >
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                value={profile.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="w-full px-4 py-4 bg-gray-800/50 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="+1 (555) 123-4567"
                 style={{
                   fontFamily: 'Inter',
                   fontSize: '16px',
