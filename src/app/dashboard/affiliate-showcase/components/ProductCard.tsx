@@ -8,6 +8,8 @@ import { useAffiliateShowcaseStore } from "../store/useAffiliateShowcaseStore";
 import { useToastStore } from "../store/useToastStore";
 import { AFFILIATE_COLORS } from "../constants";
 import Image from "next/image";
+import { useJoinAffiliate } from "@/features/affiliate/hooks";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
 
 interface ProductCardProps {
   product: AffiliateProduct;
@@ -18,46 +20,47 @@ interface ProductCardProps {
  * Individual product card with promotion functionality
  */
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { promoteProduct } = useAffiliateShowcaseStore();
+  useAffiliateShowcaseStore();
   const { addToast } = useToastStore();
   const [isPromoting, setIsPromoting] = useState(false);
   const [isPromoted, setIsPromoted] = useState(false);
+  const { data: user } = useCurrentUser();
+  const joinMutation = useJoinAffiliate(product.id);
 
   const handlePromote = async () => {
     setIsPromoting(true);
 
     try {
-      const success = await promoteProduct(product.id);
-      if (success) {
-        setIsPromoted(true);
-
-        // Show success toast
-        addToast({
-          type: "success",
-          title: "Affiliate Link Created!",
-          message: `Commission: 30% • Ready to promote "${product.title}"`,
-          duration: 4000,
-        });
-
-        // Auto-hide success state after 2 seconds
-        setTimeout(() => {
-          setIsPromoted(false);
-        }, 2000);
-      } else {
-        // Error is handled by the store, but we can show a generic error toast
+      if (!user?.walletAddress) {
         addToast({
           type: "error",
-          title: "Failed to Create Link",
-          message: "Please try again or contact support if the issue persists.",
+          title: "Wallet Required",
+          message:
+            "Connect your wallet in Settings to join affiliate programs.",
         });
+        return;
       }
-    } catch (error) {
-      console.error("Error promoting product:", error);
+
+      const res = await joinMutation.mutateAsync();
+
+      setIsPromoted(true);
       addToast({
-        type: "error",
-        title: "Unexpected Error",
-        message: "Something went wrong. Please try again.",
+        type: "success",
+        title: res.message.includes("rejoined")
+          ? "Rejoined Affiliate Program"
+          : "Joined Affiliate Program",
+        message: `Commission: ${product.commission}% • Ready to promote "${product.title}"`,
+        duration: 4000,
       });
+
+      setTimeout(() => setIsPromoted(false), 2000);
+    } catch (error: unknown) {
+      const err = error as { message?: string };
+      const msg =
+        typeof err?.message === "string"
+          ? err.message
+          : "Failed to join affiliate program";
+      addToast({ type: "error", title: "Join Failed", message: msg });
     } finally {
       setIsPromoting(false);
     }
@@ -210,7 +213,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* CTA Button */}
           <button
             onClick={handlePromote}
-            disabled={isPromoting || isPromoted}
+            disabled={isPromoting || isPromoted || joinMutation.isPending}
             className="w-full mt-4 py-3 rounded-lg font-medium text-white transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             style={{
               background: isPromoted
@@ -222,14 +225,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             }}
           >
             <div className="flex items-center justify-center gap-2">
-              {isPromoting && <Loader2 size={16} className="animate-spin" />}
+              {(isPromoting || joinMutation.isPending) && (
+                <Loader2 size={16} className="animate-spin" />
+              )}
               {isPromoted && <CheckCircle size={16} />}
               <span>
-                {isPromoting
-                  ? "Creating Link..."
+                {isPromoting || joinMutation.isPending
+                  ? "Joining..."
                   : isPromoted
-                  ? "Link Created!"
-                  : "Promote this product"}
+                  ? "Joined!"
+                  : "Join affiliate program"}
               </span>
             </div>
           </button>
