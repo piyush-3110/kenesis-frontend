@@ -103,7 +103,7 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
 
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openConnectModal, openAccountModal, mounted }) => {
+      {({ account, chain, openConnectModal, openAccountModal, openChainModal, mounted }) => {
         const connected = mounted && !!account;
         const authed = isAuthenticated;
         const accountLabel = account?.displayName;
@@ -163,7 +163,15 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
               </span>
               {/* Chain badge when connected */}
               {connected && chain?.name && (
-                <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-black/30 border border-white/10">
+                <span
+                  role="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openChainModal?.();
+                  }}
+                  title="Switch network"
+                  className="ml-1 text-xs px-2 py-0.5 rounded-full bg-black/30 border border-white/10 hover:bg-black/40"
+                >
                   {chain.name}
                 </span>
               )}

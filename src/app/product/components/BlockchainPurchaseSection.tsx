@@ -66,6 +66,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   const [purchaseStep, setPurchaseStep] = useState<
     "idle" | "generating-nft" | "ready-for-purchase" | "purchasing"
   >("idle");
+  const [isSwitchingNetwork, setIsSwitchingNetwork] = useState(false);
 
   // Authentication and wallet state
   const { isAuthenticated } = useAuth();
@@ -224,6 +225,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     // If the selected token requires a different chain, switch automatically first
     if (chainSwitchInfo.needsSwitch && chainSwitchInfo.requiredChainId) {
       try {
+        setIsSwitchingNetwork(true);
         addToast({ type: "info", message: `Switching to ${chainSwitchInfo.requiredChainName}...` });
         await switchChain({ chainId: chainSwitchInfo.requiredChainId });
         // Small delay to allow provider state to settle
@@ -232,6 +234,8 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
         const msg = err instanceof Error ? err.message : "Failed to switch network";
         addToast({ type: "error", message: msg });
         return;
+      } finally {
+        setIsSwitchingNetwork(false);
       }
     }
 
@@ -363,15 +367,26 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
               tokenValidation.valid && (
                 <button
                   onClick={handleStartPurchase}
-                  className="w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-3"
+                  disabled={isSwitchingNetwork}
+                  className="w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-3"
                   style={{
-                    background:
-                      "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",
+                    background: isSwitchingNetwork
+                      ? "#374151"
+                      : "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",
                     color: "white",
                   }}
                 >
-                  <ShoppingCart size={20} />
-                  Purchase Course with {selectedToken.split("-")[0]}
+                  {isSwitchingNetwork ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin" />
+                      <span>Switching network...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={20} />
+                      <span>Purchase Course with {selectedToken.split("-")[0]}</span>
+                    </>
+                  )}
                 </button>
               )}
 
