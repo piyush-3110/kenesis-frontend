@@ -17,6 +17,8 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
   const { signMessageAsync } = useSignMessage();
   const { setTokens, isAuthenticated } = useAuth();
   const { addToast } = useUIStore();
+  const siweRunningRef = React.useRef(false);
+  const autoRanRef = React.useRef(false);
 
   const prepare = useMutation({
     mutationFn: async (addr?: string) => {
@@ -61,7 +63,11 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
   };
 
   const runSiweFlow = async () => {
+    if (siweRunningRef.current || prepare.isPending || verify.isPending) return;
+    siweRunningRef.current = true;
     try {
+      // Clear the pending flag early to avoid duplicate auto-runs
+      if (typeof window !== "undefined") localStorage.removeItem(PENDING_SIWE_KEY);
       const { challengeId, message } = await prepare.mutateAsync(address);
       const signature = await signMessageAsync({ message });
       await verify.mutateAsync({ challengeId, signature, message });
@@ -74,8 +80,8 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
       addToast({ type: "error", message: getErrorMessage(err) });
       throw err;
     } finally {
-      if (typeof window !== "undefined")
-        localStorage.removeItem(PENDING_SIWE_KEY);
+  if (typeof window !== "undefined") localStorage.removeItem(PENDING_SIWE_KEY);
+  siweRunningRef.current = false;
     }
   };
 
@@ -92,14 +98,22 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
   };
 
   React.useEffect(() => {
-    // If user connected from modal and we intended to auth, run SIWE
+    // Auto-run SIWE once after a fresh wallet connection if we intended to auth
     const pending =
       typeof window !== "undefined" && localStorage.getItem(PENDING_SIWE_KEY);
-    if (pending && isConnected && address) {
+    if (
+      pending &&
+      isConnected &&
+      address &&
+      !isAuthenticated &&
+      !siweRunningRef.current &&
+      !autoRanRef.current
+    ) {
+      autoRanRef.current = true;
       runSiweFlow().catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected, address]);
+  }, [isConnected, address, isAuthenticated]);
 
   return (
     <ConnectButton.Custom>
@@ -137,8 +151,7 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
                 return;
               }
               if (!authed) {
-                if (typeof window !== "undefined")
-                  localStorage.setItem(PENDING_SIWE_KEY, "1");
+                // Do not set PENDING_SIWE_KEY here to avoid effect-based duplicate; run directly
                 await runSiweFlow();
                 return;
               }
