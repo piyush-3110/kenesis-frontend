@@ -110,7 +110,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-6 border-b border-gray-800/50">
         <div className="flex items-center justify-between">
           {/* Logo/Brand */}
-          <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push("/")}
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
             <div
               className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center"
               style={{
@@ -122,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {!isCollapsed && (
               <h1
-                className="text-white font-medium"
+                className="text-white font-medium hover:text-blue-400 transition-colors"
                 style={{
                   fontFamily: "CircularXX, Inter, sans-serif",
                   fontSize: "20px",
@@ -133,7 +136,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 Kinesis
               </h1>
             )}
-          </div>
+          </button>
 
           {/* Mobile close button */}
           {isMobileOpen && (
@@ -151,7 +154,14 @@ const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 overflow-y-auto py-6 px-4">
         {/* Main navigation items */}
         <nav className="space-y-2">
-          {DASHBOARD_MENU_ITEMS.map((item) => (
+          {DASHBOARD_MENU_ITEMS.filter(item => {
+            // If item requires a role, check if user has that role
+            if (item.requiresRole) {
+              return authUser?.role === item.requiresRole;
+            }
+            // If no role required, show to all users
+            return true;
+          }).map((item) => (
             <NavigationItem
               key={item.id}
               item={item}
