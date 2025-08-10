@@ -1,5 +1,3 @@
-import { Product } from './Product';
-
 export interface Review {
   id: string;
   userId: string;
@@ -35,14 +33,14 @@ export interface DocumentAttachment {
   id: string;
   title: string;
   url: string;
-  type: 'pdf' | 'doc' | 'docx' | 'ppt' | 'pptx' | 'txt' | 'other';
+  type: "pdf" | "doc" | "docx" | "ppt" | "pptx" | "txt" | "other";
   size?: string;
 }
 
 export interface CourseContent {
   id: string;
   title: string;
-  type: 'video' | 'document';
+  type: "video" | "document";
   duration?: number; // for videos in seconds
   videoUrl?: string;
   documentUrl?: string;
@@ -50,10 +48,56 @@ export interface CourseContent {
   attachments?: DocumentAttachment[]; // Documents attached to the content
 }
 
-export interface ExtendedProduct extends Product {
+export interface CourseChapter {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  moduleCount: number;
+  modules?: CourseModule[];
+}
+
+export interface CourseModule {
+  id: string;
+  title: string;
+  type: "video" | "document" | "quiz" | "assignment";
+  duration: number; // in seconds (backend format)
+  order: number;
+  isPreview: boolean;
+}
+
+export interface CourseMetadata {
+  requirements: string[];
+  learningOutcomes: string[];
+  targetAudience: string[];
+  level: string;
+  tags: string[];
+}
+
+// Composite type used across product UI
+export interface ExtendedProduct {
+  id: string;
+  title: string;
+  author: string;
+  price: number;
+  currency: string;
+  rating: number;
+  // Total number of reviews; mirrors reviewSummary.totalReviews in many places
+  reviewCount: number;
+  image?: string;
+  thumbnail?: string;
+  description?: string;
+  createdAt: string;
+  // Marketplace/product fields
+  category?: string;
+  type: "video" | "document";
+  isPurchased?: boolean;
+  purchaseDate?: string;
+  // Enriched fields
   reviews: Review[];
   reviewSummary: ReviewSummary;
+  purchasedBy: string[];
   courseAccess: CourseAccess;
   content?: CourseContent[];
-  purchasedBy: string[]; // Array of user IDs who purchased this course
+  topics?: string[];
 }

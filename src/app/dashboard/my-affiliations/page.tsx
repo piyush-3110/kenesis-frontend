@@ -1,29 +1,18 @@
-'use client';
+"use client";
 
-import DashboardLayout from '../components/DashboardLayout';
-import { useMyAffiliationsStore } from './store/useMyAffiliationsStore';
-import AffiliationsTable from './components/AffiliationsTable';
-import { RefreshCw } from 'lucide-react';
+import DashboardLayout from "../components/DashboardLayout";
+import { useMyAffiliationsStore } from "./store/useMyAffiliationsStore";
+import AffiliationsTable from "./components/AffiliationsTable";
+import { RefreshCw } from "lucide-react";
+import { useEffect } from "react";
 
 const MyAffiliationsPage: React.FC = () => {
-  const {
-    affiliations,
-    loading,
-    loadAffiliations,
-    updateStatus,
-  } = useMyAffiliationsStore();
+  const { affiliations, loading, loadAffiliations } = useMyAffiliationsStore();
 
   // Load initial data
   useEffect(() => {
     loadAffiliations();
   }, [loadAffiliations]);
-
-  const handleStatusUpdate = async (id: string, status: 'active' | 'inactive') => {
-    const success = await updateStatus(id, status);
-    if (success) {
-      // Optionally show success message
-    }
-  };
 
   return (
     <DashboardLayout
@@ -53,13 +42,15 @@ const MyAffiliationsPage: React.FC = () => {
         {/* Table Container with margins */}
         <div className="mx-4 md:mx-6 lg:mx-8">
           {loading ? (
-            <div 
+            <div
               className="p-12 text-center rounded-lg"
               style={{
-                border: '1.06px solid',
-                borderImageSource: 'linear-gradient(180deg, #0680FF 0%, #010519 88.45%)',
+                border: "1.06px solid",
+                borderImageSource:
+                  "linear-gradient(180deg, #0680FF 0%, #010519 88.45%)",
                 borderImageSlice: 1,
-                background: 'linear-gradient(152.97deg, #000000 18.75%, rgba(0, 0, 0, 0) 100%)'
+                background:
+                  "linear-gradient(152.97deg, #000000 18.75%, rgba(0, 0, 0, 0) 100%)",
               }}
             >
               <div className="inline-flex items-center gap-3 text-gray-400">
@@ -68,10 +59,7 @@ const MyAffiliationsPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <AffiliationsTable
-              affiliations={affiliations}
-              onStatusUpdate={handleStatusUpdate}
-            />
+            <AffiliationsTable affiliations={affiliations} />
           )}
         </div>
       </div>

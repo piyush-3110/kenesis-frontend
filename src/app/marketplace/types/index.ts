@@ -1,15 +1,15 @@
 // Re-export existing types for consistency
-export type { 
-  Product, 
-  Category, 
-  PriceRange, 
+export type {
+  Category,
+  PriceRange,
   SortOptionItem,
   MarketplaceFilters,
-  PaginatedResponse
-} from '@/types/Product';
+  PaginatedResponse,
+  CourseForMarketplacePage as Product,
+} from "@/types/Product";
 
 // Use the existing PaginatedResponse from lib/marketplaceApi
-export type { PaginatedResponse as ApiPaginatedResponse } from '@/lib/marketplaceApiReal';
+export type { PaginatedResponse as ApiPaginatedResponse } from "@/lib/marketplaceApiReal";
 
 export interface ApiResponse<T> {
   success: boolean;

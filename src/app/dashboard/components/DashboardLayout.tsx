@@ -6,8 +6,6 @@ import TopBar from "./TopBar";
 import { DASHBOARD_COLORS } from "../constants";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
-import { useDashboardStore } from "../store/useDashboardStore";
-import { useUserProfile } from "@/store/useAuthStore";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -29,30 +27,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [isSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const { user, connectWallet, disconnectWallet } = useDashboardStore();
-
-  // Fetch user profile on dashboard layout mount
-  const { fetchUserProfile } = useUserProfile();
-  React.useEffect(() => {
-    fetchUserProfile();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const handleMobileSidebarToggle = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
   };
 
   const handleMobileSidebarClose = () => {
     setIsMobileSidebarOpen(false);
-  };
-
-  const handleConnectWallet = () => {
-    if (user?.isConnected) {
-      disconnectWallet();
-    } else {
-      // Simulate wallet connection with a mock address
-      const mockWalletAddress = "0x742d35cc6628c532";
-      connectWallet(mockWalletAddress);
-    }
   };
 
   const handleNotificationClick = () => {
@@ -109,13 +89,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               </svg>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
             </button>
-
-            <button
-              onClick={handleConnectWallet}
-              className="text-xs px-2 py-1 rounded bg-blue-600/20 border border-blue-500/50 text-white"
-            >
-              {user?.isConnected ? "●" : "○"}
-            </button>
           </div>
         </div>
 
@@ -136,4 +109,3 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 };
 
 export default DashboardLayout;
-

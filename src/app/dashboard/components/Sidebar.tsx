@@ -1,19 +1,21 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
-import { SidebarProps } from '../types';
-import { useDashboardStore } from '../store/useDashboardStore';
-import { useAuthStore, useAuthActions, useUserProfile } from '@/store/useAuthStore';
-import { 
-  DASHBOARD_MENU_ITEMS, 
-  DASHBOARD_BOTTOM_ITEMS, 
-  DASHBOARD_COLORS 
-} from '../constants';
-import NavigationItem from './NavigationItem';
-import UserProfile from './UserProfile';
-import { cn } from '@/lib/utils';
+import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { SidebarProps } from "../types";
+import { useDashboardStore } from "../store/useDashboardStore";
+import { useLogout } from "@/features/auth/hooks";
+
+import {
+  DASHBOARD_MENU_ITEMS,
+  DASHBOARD_BOTTOM_ITEMS,
+  DASHBOARD_COLORS,
+} from "../constants";
+import NavigationItem from "./NavigationItem";
+import UserProfile from "./UserProfile";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
 
 /**
  * Sidebar Component
@@ -27,7 +29,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   onItemClick,
 }) => {
   const router = useRouter();
-  const { logout } = useAuthActions();
+  const logout = useLogout();
   const {
     selectedMenuItem,
     setSelectedMenuItem,
@@ -36,40 +38,35 @@ const Sidebar: React.FC<SidebarProps> = ({
   } = useDashboardStore();
 
   // Get real user data from auth store
-  const authUser = useAuthStore((state) => state.user);
-  
-  // Create dashboard user object from auth user
-  const user = authUser ? {
-    id: authUser.id,
-    name: authUser.username || authUser.email?.split('@')[0] || 'User',
-    email: authUser.email || '',
-    avatar: '', // No avatar in API yet, will be added later
-    isConnected: authUser.isWalletConnected || false,
-    walletAddress: authUser.walletAddress || undefined,
-  } : null;
+  const { data: authUser } = useCurrentUser();
 
-  // Fetch user profile on mount
-  const { fetchUserProfile } = useUserProfile();
-  useEffect(() => {
-    fetchUserProfile();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Create dashboard user object from auth user
+  const user = authUser
+    ? {
+        id: authUser.id,
+        name: authUser.username || authUser.email?.split("@")[0] || "User",
+        email: authUser.email || "",
+        avatar: authUser.avatar, // No avatar in API yet, will be added later
+        walletAddress: authUser.walletAddress || undefined,
+      }
+    : null;
 
   // Initialize dashboard data on mount
   useEffect(() => {
     initializeDashboard();
-  }, [initializeDashboard]);  
+  }, [initializeDashboard]);
 
   const handleItemClick = (itemId: string) => {
     setSelectedMenuItem(itemId);
     onItemClick?.(itemId);
-    
+
     // Close mobile sidebar when item is clicked
     if (isMobileOpen) {
       onMobileClose?.();
     }
 
     // Handle special cases
-    if (itemId === 'logout') {
+    if (itemId === "logout") {
       // Handle logout logic
       handleLogout();
       return;
@@ -80,22 +77,22 @@ const Sidebar: React.FC<SidebarProps> = ({
     try {
       // Disconnect wallet first
       disconnectWallet();
-      
+
       // Call the proper logout action with toast notifications and redirects
-      await logout();
-      
+      await logout.mutate();
+
       // The logout action will handle the redirect automatically
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       // Fallback redirect in case of unexpected errors
-      router.push('/');
+      router.push("/");
     }
   };
 
   const handleViewProfile = () => {
     // Navigate to profile page
-    router.push('/dashboard/profile');
-    
+    router.push("/dashboard/profile");
+
     // Close mobile sidebar if open
     if (isMobileOpen) {
       onMobileClose?.();
@@ -103,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const sidebarContent = (
-    <div 
+    <div
       className="h-full flex flex-col"
       style={{
         background: DASHBOARD_COLORS.PRIMARY_BG,
@@ -114,23 +111,23 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center justify-between">
           {/* Logo/Brand */}
           <div className="flex items-center gap-3">
-            <div 
+            <div
               className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center"
               style={{
-                boxShadow: '0 0 20px rgba(6, 128, 255, 0.3)',
+                boxShadow: "0 0 20px rgba(6, 128, 255, 0.3)",
               }}
             >
               <span className="text-white font-bold text-lg">K</span>
             </div>
-            
+
             {!isCollapsed && (
               <h1
                 className="text-white font-medium"
                 style={{
-                  fontFamily: 'CircularXX, Inter, sans-serif',
-                  fontSize: '20px',
+                  fontFamily: "CircularXX, Inter, sans-serif",
+                  fontSize: "20px",
                   fontWeight: 500,
-                  lineHeight: '100%',
+                  lineHeight: "100%",
                 }}
               >
                 Kinesis
@@ -165,10 +162,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Divider */}
-        <div 
+        <div
           className="my-6 h-px"
           style={{
-            background: 'linear-gradient(90deg, transparent 0%, #0680FF 50%, transparent 100%)',
+            background:
+              "linear-gradient(90deg, transparent 0%, #0680FF 50%, transparent 100%)",
           }}
         />
 
@@ -187,10 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* User Profile */}
       {user && !isCollapsed && (
-        <UserProfile
-          user={user}
-          onViewProfile={handleViewProfile}
-        />
+        <UserProfile user={user} onViewProfile={handleViewProfile} />
       )}
 
       {/* Collapsed user indicator */}
@@ -210,7 +205,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile overlay */}
       {isMobileOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={onMobileClose}
         />
@@ -219,23 +214,23 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 h-full z-50 transition-all duration-300',
-          'border-r',
+          "fixed left-0 top-0 h-full z-50 transition-all duration-300",
+          "border-r",
           // Desktop styles
-          'lg:relative lg:translate-x-0',
+          "lg:relative lg:translate-x-0",
           // Mobile styles
-          'lg:block',
-          isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+          "lg:block",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           // Width - use proper responsive classes
-          isCollapsed 
-            ? 'w-16 lg:w-20' // Collapsed width
-            : 'w-64 lg:w-72 xl:w-80', // Full width with responsive scaling
+          isCollapsed
+            ? "w-16 lg:w-20" // Collapsed width
+            : "w-64 lg:w-72 xl:w-80", // Full width with responsive scaling
           className
         )}
         style={{
           background: DASHBOARD_COLORS.PRIMARY_BG,
-          borderRight: '1px solid transparent',
-          borderImage: 'linear-gradient(180deg, #0680FF 0%, #010519 88.45%) 1',
+          borderRight: "1px solid transparent",
+          borderImage: "linear-gradient(180deg, #0680FF 0%, #010519 88.45%) 1",
         }}
       >
         {sidebarContent}

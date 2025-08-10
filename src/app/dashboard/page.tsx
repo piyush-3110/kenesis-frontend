@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import React, { useEffect } from 'react';
-import DashboardLayout from './components/DashboardLayout';
-import KPICard from './components/KPICard';
-import SalesAnalytics from './components/SalesAnalytics';
-import ReturnsChart from './components/ReturnsChart';
-import Transactions from './components/Transactions';
-import { useDashboardStore } from './store/useDashboardStore';
+import React, { useEffect } from "react";
+import { RequireAuth } from "@/features/auth/RequireAuth";
+import DashboardLayout from "./components/DashboardLayout";
+import KPICard from "./components/KPICard";
+import SalesAnalytics from "./components/SalesAnalytics";
+import ReturnsChart from "./components/ReturnsChart";
+import Transactions from "./components/Transactions";
+import { useDashboardStore } from "./store/useDashboardStore";
 
 /**
  * Dashboard Page
@@ -21,48 +22,52 @@ const DashboardPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <DashboardLayout>
-        <div className="p-4 sm:p-6 flex items-center justify-center min-h-96">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading dashboard...</p>
+      <RequireAuth>
+        <DashboardLayout>
+          <div className="p-4 sm:p-6 flex items-center justify-center min-h-96">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-400">Loading dashboard...</p>
+            </div>
           </div>
-        </div>
-      </DashboardLayout>
+        </DashboardLayout>
+      </RequireAuth>
     );
   }
 
   return (
-    <DashboardLayout
-      title="Dashboard Overview"
-      subtitle="Monitor your business performance and analytics"
-    >
-      <div className="p-4 sm:p-6 space-y-6">
-        {/* KPI Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-          {metrics.map((metric) => (
-            <KPICard
-              key={metric.id}
-              title={metric.title}
-              value={metric.value}
-              change={metric.change}
-              trend={metric.trend}
-            />
-          ))}
-        </div>
+    <RequireAuth>
+      <DashboardLayout
+        title="Dashboard Overview"
+        subtitle="Monitor your business performance and analytics"
+      >
+        <div className="p-4 sm:p-6 space-y-6">
+          {/* KPI Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+            {metrics.map((metric) => (
+              <KPICard
+                key={metric.id}
+                title={metric.title}
+                value={metric.value}
+                change={metric.change}
+                trend={metric.trend}
+              />
+            ))}
+          </div>
 
-        {/* Charts Row: Sales Analytics and Returns side by side */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
-          <SalesAnalytics />
-          <ReturnsChart />
-        </div>
+          {/* Charts Row: Sales Analytics and Returns side by side */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+            <SalesAnalytics />
+            <ReturnsChart />
+          </div>
 
-        {/* Transactions: Full width below charts */}
-        <div className="w-full">
-          <Transactions />
+          {/* Transactions: Full width below charts */}
+          <div className="w-full">
+            <Transactions />
+          </div>
         </div>
-      </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </RequireAuth>
   );
 };
 

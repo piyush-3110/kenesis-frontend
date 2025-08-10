@@ -6,7 +6,6 @@ import { useMarketplaceQuery } from "@/app/marketplace/hooks/useMarketplaceQuery
 import Sidebar from "@/app/marketplace/components/Sidebar";
 import SearchFilterBar from "@/app/marketplace/components/SearchFilterBar";
 import ProductGrid from "@/app/marketplace/components/ProductGrid";
-import Navbar from "@/components/Landing/Navbar";
 import { SORT_OPTIONS } from "@/app/marketplace/constants";
 
 const MarketplacePage: React.FC = () => {
@@ -31,7 +30,6 @@ const MarketplacePage: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A071A]">
-        <Navbar />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="text-red-400 text-4xl mb-4">⚠️</div>
@@ -53,8 +51,6 @@ const MarketplacePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#0A071A] mt-8">
-      <Navbar />
-
       {/* Mobile Filter Button */}
       <div className="lg:hidden fixed bottom-6 right-6 z-30">
         <button

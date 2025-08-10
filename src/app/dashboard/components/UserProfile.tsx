@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { UserProfileProps } from '../types';
-import { cn } from '@/lib/utils';
-import { ChevronRight, User } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import { UserProfileProps } from "../types";
+import { cn } from "@/lib/utils";
+import { ChevronRight, User } from "lucide-react";
 
 /**
  * UserProfile Component
@@ -20,7 +20,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
   };
 
   return (
-    <div className={cn('p-4 border-t border-gray-800', className)}>
+    <div className={cn("p-4 border-t border-gray-800", className)}>
       {/* User Info */}
       <div className="flex items-center gap-3 mb-3">
         {/* Avatar */}
@@ -38,7 +38,7 @@ const UserProfile: React.FC<UserProfileProps> = ({
               <User className="w-5 h-5 text-white" />
             </div>
           )}
-          
+
           {/* Online indicator */}
           <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-900" />
         </div>
@@ -48,35 +48,37 @@ const UserProfile: React.FC<UserProfileProps> = ({
           <p
             className="text-white font-medium truncate"
             style={{
-              fontFamily: 'Inter, sans-serif',
-              fontSize: '16.4px',
+              fontFamily: "Inter, sans-serif",
+              fontSize: "16.4px",
               fontWeight: 500,
-              lineHeight: '140%',
+              lineHeight: "140%",
             }}
           >
             {user.name}
           </p>
-          
+
           {/* Wallet status */}
           <div className="flex items-center gap-2">
             <div
               className={cn(
-                'w-2 h-2 rounded-full',
-                user.isConnected ? 'bg-green-500' : 'bg-gray-500'
+                "w-2 h-2 rounded-full",
+                user.walletAddress ? "bg-green-500" : "bg-gray-500"
               )}
             />
             <span
               className="text-gray-400 text-sm truncate"
               style={{
-                fontFamily: 'Rubik, monospace',
-                fontSize: '12px',
+                fontFamily: "Rubik, monospace",
+                fontSize: "12px",
                 fontWeight: 400,
               }}
             >
-              {user.isConnected && user.walletAddress
-                ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
-                : 'Wallet disconnected'
-              }
+              {user.walletAddress
+                ? `${user.walletAddress.slice(
+                    0,
+                    6
+                  )}...${user.walletAddress.slice(-4)}`
+                : "Wallet not linked"}
             </span>
           </div>
         </div>
@@ -86,25 +88,25 @@ const UserProfile: React.FC<UserProfileProps> = ({
       <button
         onClick={handleViewProfile}
         className={cn(
-          'w-full flex items-center justify-between p-2 rounded-lg',
-          'bg-gradient-to-r from-gray-800/50 to-transparent',
-          'border border-gray-700/50',
-          'hover:from-blue-600/20 hover:border-blue-500/50',
-          'transition-all duration-200',
-          'group'
+          "w-full flex items-center justify-between p-2 rounded-lg",
+          "bg-gradient-to-r from-gray-800/50 to-transparent",
+          "border border-gray-700/50",
+          "hover:from-blue-600/20 hover:border-blue-500/50",
+          "transition-all duration-200",
+          "group"
         )}
       >
         <span
           className="text-gray-300 group-hover:text-white transition-colors duration-200"
           style={{
-            fontFamily: 'Inter, sans-serif',
-            fontSize: '14px',
+            fontFamily: "Inter, sans-serif",
+            fontSize: "14px",
             fontWeight: 400,
           }}
         >
           View Profile
         </span>
-        
+
         <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors duration-200" />
       </button>
     </div>

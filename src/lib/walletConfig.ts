@@ -57,6 +57,17 @@ export const walletConfig = getDefaultConfig({
   ssr: true,
 });
 
+// Developer warning for missing WalletConnect Project ID
+if (
+  typeof window !== "undefined" &&
+  (!process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID ||
+    process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID === "fallback-project-id")
+) {
+  console.warn(
+    "[WalletConfig] NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID is missing or using fallback. This can cause connection/signature issues in some wallets."
+  );
+}
+
 // Helper function to get current chain ID for API calls
 export const getCurrentChainId = (): number => {
   if (typeof window === "undefined") {

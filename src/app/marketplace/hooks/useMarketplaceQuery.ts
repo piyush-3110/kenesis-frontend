@@ -1,6 +1,6 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { MarketplaceFilters, Product, Category } from "@/app/marketplace/types";
+// import { MarketplaceFilters, Product, Category } from "@/app/marketplace/types";
 import {
   fetchProducts,
   fetchCategories,
@@ -38,7 +38,7 @@ export function useMarketplaceQuery() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    isError,
+    // isError,
     error,
     refetch,
   } = useInfiniteQuery({
