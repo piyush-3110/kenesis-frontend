@@ -42,3 +42,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Batch and script files
+*.sh
+batch_*.sh
+*_batch_*
+BATCH_*
+COURSE_MANAGEMENT_README.md

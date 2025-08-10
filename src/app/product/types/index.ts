@@ -1,5 +1,11 @@
 // Re-export existing types
-export type { ExtendedProduct, Review, CourseContent, DocumentAttachment, ReviewSummary, CourseAccess } from '@/types/Review';
+export type {
+  Review,
+  CourseContent,
+  DocumentAttachment,
+  ReviewSummary,
+  CourseAccess,
+} from "@/types/Review";
 
 // Product page specific types
 export interface ProductPageState {

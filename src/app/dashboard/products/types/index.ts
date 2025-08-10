@@ -1,28 +1,48 @@
 /**
  * Product Creation Types
- * Type definitions for the multi-step product creation flow
+ * Type definitions following backend API specifications exactly
  */
 
 export interface Course {
   id?: string;
   title: string;
-  type: string;
-  shortDescription: string;
   description: string;
+  shortDescription: string;
+  type: CourseType;
   level: CourseLevel;
   language: string;
+  price: number;
+  tokenToPayWith: PaymentToken[];
+  accessDuration: number; // in seconds, -1 for unlimited
+  affiliatePercentage: number; // e.g., 1000 = 10%
+  availableQuantity: number; // -1 for unlimited
   thumbnail?: File | string;
   previewVideo?: File | string;
-  price: string;
-  tokensToPayWith: string[];
+  metadata?: CourseMetadata;
   chapters: Chapter[];
   status: CourseStatus;
   createdAt?: string;
   updatedAt?: string;
 }
 
+export interface CourseMetadata {
+  requirements?: string[];
+  learningOutcomes?: string[];
+  targetAudience?: string[];
+}
+
+export interface PaymentToken {
+  symbol: string;
+  name: string;
+  address: string;
+  chainId: number;
+  chainName: string;
+  decimals: number;
+}
+
 export interface Chapter {
-  id: string;
+  id: string; // Local ID for UI state management
+  backendId?: string; // Backend-generated ID from API
   title: string;
   description: string;
   order: number;
@@ -31,38 +51,45 @@ export interface Chapter {
 }
 
 export interface Module {
-  id: string;
+  id: string; // Local ID for UI state management
+  backendId?: string; // Backend-generated ID from API
+  chapterId: string;
   title: string;
-  description: string;
+  description?: string;
   type: ModuleType;
   order: number;
-  duration: number; // in minutes
+  duration?: number; // in minutes
   isPreview: boolean;
   mainFile?: File | string;
   attachments: File[] | string[];
-  chapterId?: string;
 }
 
-export type CourseLevel = 'Beginner' | 'Intermediate' | 'Advanced';
+export type CourseType = 'video' | 'document';
 
-export type CourseStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'published';
+export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
 
-export type ModuleType = 'video' | 'pdf' | 'quiz' | 'assignment' | 'text' | 'audio';
+export type CourseStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'published';
+
+export type ModuleType = 'video' | 'document';
 
 export type CreateCourseStep = 'course' | 'chapters' | 'modules' | 'review';
 
 // Form data interfaces
 export interface CourseFormData {
   title: string;
-  type: string;
+  type: CourseType;
   shortDescription: string;
   description: string;
   level: CourseLevel;
   language: string;
   thumbnail?: File;
   previewVideo?: File;
-  price: string;
-  tokensToPayWith: string[];
+  price: number;
+  tokenToPayWith: PaymentToken[];
+  accessDuration: number;
+  affiliatePercentage: number;
+  availableQuantity: number;
+  metadata?: CourseMetadata;
 }
 
 export interface ChapterFormData {

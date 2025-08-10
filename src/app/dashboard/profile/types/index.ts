@@ -1,17 +1,18 @@
 export interface InstructorProfile {
   id: string;
-  name: string;
-  title: string;
-  avatar: string;
-  bio: string;
-  location: string;
-  joinedDate: string;
-  verified: boolean;
-  social: {
+  username?: string;
+  avatar?: string;
+  bio?: string;
+  createdAt: string;
+  emailVerified: boolean;
+  email?: string;
+  walletAddress?: string;
+  socialMedia: {
     website?: string;
     twitter?: string;
     linkedin?: string;
-    youtube?: string;
+    facebook?: string;
+    instagram?: string;
   };
 }
 
@@ -35,7 +36,7 @@ export interface Course {
   reviewCount: number;
   studentCount: number;
   duration: string;
-  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  level: "Beginner" | "Intermediate" | "Advanced";
   category: string;
   tags: string[];
   isPublished: boolean;

@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { NavigationItemProps } from '../types';
-import { DASHBOARD_COLORS } from '../constants';
 import { cn } from '@/lib/utils';
 
 /**

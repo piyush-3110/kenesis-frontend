@@ -80,6 +80,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           {/* Product Image - Clickable */}
           <Link href={`/dashboard/affiliate-showcase/product/${product.id}`}>
             <div className="relative mb-4 cursor-pointer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={product.thumbnail}
                 alt={product.title}

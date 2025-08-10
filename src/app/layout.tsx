@@ -1,21 +1,24 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Inter, Poppins } from 'next/font/google';
-import ConditionalLayout from "@/components/ConditionalLayout";
-import NextTopLoader from 'nextjs-toploader';
+import "@rainbow-me/rainbowkit/styles.css";
+import { Inter, Poppins } from "next/font/google";
+import EnhancedConditionalLayout from "@/components/EnhancedConditionalLayout";
+import NextTopLoader from "nextjs-toploader";
 import ToastContainer from "@/components/ui/ToastContainer";
-import { AuthInitializer } from "@/components/auth/AuthInitializer";
-import { RouteGuard } from "@/components/auth/RouteGuard";
+import { QueryProvider } from "@/lib/query/QueryProvider";
+import { AuthProvider } from "@/features/auth/AuthProvider";
+import { WalletProvider } from "@/features/wallet/WalletProvider";
+import { WalletGuard } from "@/features/wallet/WalletGuard";
 
 const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
+  subsets: ["latin"],
+  variable: "--font-inter",
 });
 const poppins = Poppins({
-  subsets: ['latin'],
-  variable: '--font-poppins',
-  weight: ['400', '600'],
+  subsets: ["latin"],
+  variable: "--font-poppins",
+  weight: ["400", "600"],
 });
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,13 +56,14 @@ export default function RootLayout({
           speed={200}
           shadow="0 0 10px #0680FF,0 0 5px #0680FF"
         />
-        <AuthInitializer>
-          <RouteGuard>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </RouteGuard>
-        </AuthInitializer>
+        <QueryProvider>
+          <WalletProvider>
+            <AuthProvider>
+              <WalletGuard />
+              <EnhancedConditionalLayout>{children}</EnhancedConditionalLayout>
+            </AuthProvider>
+          </WalletProvider>
+        </QueryProvider>
         <ToastContainer />
       </body>
     </html>

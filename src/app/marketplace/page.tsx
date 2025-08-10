@@ -1,20 +1,19 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Filter } from 'lucide-react';
-import { useMarketplace } from '@/app/marketplace/hooks/useMarketplace';
-import Sidebar from '@/app/marketplace/components/Sidebar';
-import SearchFilterBar from '@/app/marketplace/components/SearchFilterBar';
-import ProductGrid from '@/app/marketplace/components/ProductGrid';
-import Navbar from '@/components/Landing/Navbar';
+import { useState } from "react";
+import { Filter } from "lucide-react";
+import { useMarketplaceQuery } from "@/app/marketplace/hooks/useMarketplaceQuery";
+import Sidebar from "@/app/marketplace/components/Sidebar";
+import SearchFilterBar from "@/app/marketplace/components/SearchFilterBar";
+import ProductGrid from "@/app/marketplace/components/ProductGrid";
+import { SORT_OPTIONS } from "@/app/marketplace/constants";
 
 const MarketplacePage: React.FC = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  
+
   const {
     products,
     categories,
-    sortOptions,
     loading,
     loadingMore,
     error,
@@ -22,39 +21,21 @@ const MarketplacePage: React.FC = () => {
     totalCount,
     hasNextPage,
     lastProductElementCallback,
-    updateFilters,
-  } = useMarketplace();
-
-  const handleCategoryChange = (categoryId?: string) => {
-    updateFilters({ category: categoryId || 'all' });
-  };
-
-  const handlePriceRangeChange = (priceRange: { min: number; max: number; currency: string }) => {
-    updateFilters({ 
-      priceRange: { 
-        min: priceRange.min, 
-        max: priceRange.max,
-        currency: priceRange.currency
-      } 
-    });
-  };
-
-  const handleSearchChange = (searchQuery: string) => {
-    updateFilters({ searchQuery });
-  };
-
-  const handleSortChange = (sortBy: string) => {
-    updateFilters({ sortBy: sortBy as 'popularity' | 'price-low' | 'price-high' | 'newest' });
-  };
+    handleCategoryChange,
+    handlePriceRangeChange,
+    handleSearchChange,
+    handleSortChange,
+  } = useMarketplaceQuery();
 
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A071A]">
-        <Navbar />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="text-red-400 text-4xl mb-4">⚠️</div>
-            <h2 className="text-white text-xl font-semibold mb-2">Something went wrong</h2>
+            <h2 className="text-white text-xl font-semibold mb-2">
+              Something went wrong
+            </h2>
             <p className="text-gray-400 mb-4">{error}</p>
             <button
               onClick={() => window.location.reload()}
@@ -69,9 +50,7 @@ const MarketplacePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A071A]">
-      <Navbar />
-      
+    <div className="min-h-screen bg-[#0A071A] mt-8">
       {/* Mobile Filter Button */}
       <div className="lg:hidden fixed bottom-6 right-6 z-30">
         <button
@@ -84,29 +63,37 @@ const MarketplacePage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="pt-16 lg:pt-20"> {/* Account for fixed navbar */}
+      <div className="pt-16 lg:pt-20">
+        {" "}
+        {/* Account for fixed navbar */}
         {/* Search and Filter Bar */}
         <SearchFilterBar
           searchQuery={filters.searchQuery}
           sortBy={filters.sortBy}
           selectedCategory={filters.category}
           resultCount={totalCount}
-          sortOptions={sortOptions.map(option => ({ value: option.value, label: option.label }))}
+          sortOptions={SORT_OPTIONS.map((option) => ({
+            value: option.value,
+            label: option.label,
+          }))}
           onSearchChange={handleSearchChange}
           onSortChange={handleSortChange}
         />
-
         {/* Content Area */}
         <div className="flex flex-col lg:flex-row min-h-screen">
           {/* Sidebar */}
           <Sidebar
             categories={categories}
             selectedCategory={filters.category}
-            priceRange={filters.priceRange ? {
-              min: filters.priceRange.min,
-              max: filters.priceRange.max,
-              currency: 'USD'
-            } : undefined}
+            priceRange={
+              filters.priceRange
+                ? {
+                    min: filters.priceRange.min,
+                    max: filters.priceRange.max,
+                    currency: "USD",
+                  }
+                : undefined
+            }
             onCategoryChange={handleCategoryChange}
             onPriceRangeChange={handlePriceRangeChange}
             isMobileOpen={isMobileSidebarOpen}
@@ -115,8 +102,8 @@ const MarketplacePage: React.FC = () => {
 
           {/* Product Grid */}
           <div className="flex-1 w-full overflow-hidden">
-            <ProductGrid 
-              products={products} 
+            <ProductGrid
+              products={products}
               loading={loading}
               loadingMore={loadingMore}
               hasNextPage={hasNextPage}

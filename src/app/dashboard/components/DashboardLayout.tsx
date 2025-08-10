@@ -1,12 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import TopBar from './TopBar';
-import { DASHBOARD_COLORS } from '../constants';
-import { cn } from '@/lib/utils';
-import { Menu } from 'lucide-react';
-import { useDashboardStore } from '../store/useDashboardStore';
+import React, { useState } from "react";
+import Sidebar from "./Sidebar";
+import TopBar from "./TopBar";
+import { DASHBOARD_COLORS } from "../constants";
+import { cn } from "@/lib/utils";
+import { Menu } from "lucide-react";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -22,13 +21,11 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
   className,
-  title = 'Dashboard',
-  subtitle = 'Monitor your business performance and analytics',
+  title = "Dashboard",
+  subtitle = "Monitor your business performance and analytics",
 }) => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  
-  const { user, connectWallet, disconnectWallet } = useDashboardStore();
 
   const handleMobileSidebarToggle = () => {
     setIsMobileSidebarOpen(!isMobileSidebarOpen);
@@ -38,24 +35,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     setIsMobileSidebarOpen(false);
   };
 
-  const handleConnectWallet = () => {
-    if (user?.isConnected) {
-      disconnectWallet();
-    } else {
-      // Simulate wallet connection with a mock address
-      const mockWalletAddress = '0x742d35cc6628c532';
-      connectWallet(mockWalletAddress);
-    }
-  };
-
   const handleNotificationClick = () => {
-    console.log('Notification clicked');
+    console.log("Notification clicked");
     // You can implement notification logic here
   };
 
   return (
-    <div 
-      className={cn('min-h-screen flex', className)}
+    <div
+      className={cn("min-h-screen flex", className)}
       style={{
         background: DASHBOARD_COLORS.PRIMARY_BG,
       }}
@@ -66,7 +53,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         isMobileOpen={isMobileSidebarOpen}
         onMobileClose={handleMobileSidebarClose}
         onItemClick={(itemId) => {
-          console.log('Navigation item clicked:', itemId);
+          console.log("Navigation item clicked:", itemId);
         }}
       />
 
@@ -80,24 +67,27 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           >
             <Menu className="w-5 h-5 text-gray-400" />
           </button>
-          
+
           {/* Mobile TopBar actions */}
           <div className="flex items-center gap-2">
             <button
               onClick={handleNotificationClick}
               className="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 relative"
             >
-              <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5-5V9a6 6 0 1 0-12 0v3l-5 5h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
+              <svg
+                className="w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 17h5l-5-5V9a6 6 0 1 0-12 0v3l-5 5h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9"
+                />
               </svg>
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
-            </button>
-            
-            <button
-              onClick={handleConnectWallet}
-              className="text-xs px-2 py-1 rounded bg-blue-600/20 border border-blue-500/50 text-white"
-            >
-              {user?.isConnected ? '●' : '○'}
             </button>
           </div>
         </div>
@@ -107,17 +97,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           <TopBar
             title={title}
             subtitle={subtitle}
-            onConnectWallet={handleConnectWallet}
             onNotificationClick={handleNotificationClick}
-            walletAddress={user?.walletAddress}
-            isWalletConnected={user?.isConnected}
           />
         </div>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-auto">{children}</main>
       </div>
     </div>
   );

@@ -1,39 +1,39 @@
 // Global stores
-export * from './useAuthStore';
-export * from './useUIStore';
-export * from './useNavigationStore';
+export * from "./useUIStore";
+export * from "./useNavigationStore";
 
 // Page-specific stores
-export * from '../app/marketplace/store/useMarketplaceStore';
-export * from '../app/product/store/useProductStore';
+export * from "../app/marketplace/store/useMarketplaceStore";
+export * from "../app/product/store/useProductStore";
 
 // Store utilities and types
 export interface StoreState {
-  auth: ReturnType<typeof import('./useAuthStore').useAuthStore>;
-  ui: ReturnType<typeof import('./useUIStore').useUIStore>;
-  navigation: ReturnType<typeof import('./useNavigationStore').useNavigationStore>;
+  ui: ReturnType<typeof import("./useUIStore").useUIStore>;
+  navigation: ReturnType<
+    typeof import("./useNavigationStore").useNavigationStore
+  >;
 }
 
 // Reset all stores utility
 export const resetAllStores = () => {
   // Import stores dynamically to avoid circular dependencies
-  import('./useAuthStore').then(({ useAuthStore }) => {
-    useAuthStore.getState().logout();
-  });
-  
-  import('./useUIStore').then(({ useUIStore }) => {
+  // Auth store removed in favor of AuthProvider + TokenManager
+
+  import("./useUIStore").then(({ useUIStore }) => {
     useUIStore.getState().clearToasts();
   });
-  
-  import('./useNavigationStore').then(({ useNavigationStore }) => {
+
+  import("./useNavigationStore").then(({ useNavigationStore }) => {
     useNavigationStore.getState().clearSearch();
   });
-  
-  import('../app/marketplace/store/useMarketplaceStore').then(({ useMarketplaceStore }) => {
-    useMarketplaceStore.getState().reset();
-  });
-  
-  import('../app/product/store/useProductStore').then(({ useProductStore }) => {
+
+  import("../app/marketplace/store/useMarketplaceStore").then(
+    ({ useMarketplaceStore }) => {
+      useMarketplaceStore.getState().reset();
+    }
+  );
+
+  import("../app/product/store/useProductStore").then(({ useProductStore }) => {
     useProductStore.getState().reset();
   });
 };

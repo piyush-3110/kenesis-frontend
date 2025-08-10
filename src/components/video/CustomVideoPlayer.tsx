@@ -118,7 +118,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         clearInterval(progressUpdateRef.current);
       }
     };
-  }, [playbackSpeed, onProgress]); // Removed isPlaying dependency
+  }, [playbackSpeed, onProgress]); // eslint-disable-line react-hooks/exhaustive-deps // Removed isPlaying dependency
 
   // Cleanup progress interval when component unmounts
   useEffect(() => {
@@ -127,7 +127,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         clearInterval(progressUpdateRef.current);
       }
     };
-  }, []);
+  }, []);  
 
   // Hide controls timer
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,7 +179,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         setShowControls(false);
       }
     }, 3000);
-  }, [isPlaying]);
+  }, [isPlaying]);  
 
   // Play/Pause toggle
   const togglePlayPause = useCallback(() => {
@@ -190,7 +190,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     } else {
       videoRef.current.play();
     }
-  }, [isPlaying]);
+  }, [isPlaying]);  
 
   // Seek functionality with immediate UI update
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -219,14 +219,14 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
     const newTime = Math.min(videoRef.current.currentTime + 10, duration);
     videoRef.current.currentTime = newTime;
     setCurrentTime(newTime); // Immediate UI update
-  }, [duration]);
+  }, [duration]);  
 
   const skipBackward = useCallback(() => {
     if (!videoRef.current) return;
     const newTime = Math.max(videoRef.current.currentTime - 10, 0);
     videoRef.current.currentTime = newTime;
     setCurrentTime(newTime); // Immediate UI update
-  }, []);
+  }, []);  
 
   // Volume control - horizontal slider
   const handleVolumeChange = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -253,7 +253,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
       videoRef.current.volume = 0;
       setIsMuted(true);
     }
-  }, [isMuted, volume]);
+  }, [isMuted, volume]);  
 
   // Fullscreen toggle
   const toggleFullscreen = useCallback(() => {
@@ -268,7 +268,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
         document.exitFullscreen();
       }
     }
-  }, [isFullscreen]);
+  }, [isFullscreen]);  
 
   // Change playback speed with smooth progress updates
   const changePlaybackSpeed = (speed: number) => {
@@ -302,7 +302,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
     // Reset playback speed
     video.playbackRate = playbackSpeed;
-  }, [src, playbackSpeed]);
+  }, [src, playbackSpeed]);  
 
   // Video event handlers
   useEffect(() => {
@@ -360,7 +360,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('error', handleError);
     };
-  }, [onProgress, onEnded]);
+  }, [onProgress, onEnded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fullscreen change listener
   useEffect(() => {
@@ -370,12 +370,27 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  }, []);  
 
-  // Keyboard controls
+  // Keyboard controls - only active when video is in fullscreen
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (!videoRef.current) return;
+      
+      // Only handle keyboard shortcuts when video is in fullscreen mode
+      // This prevents interference with typing in forms and other inputs
+      if (!isFullscreen) return;
+      
+      // Additional safeguard: Don't handle shortcuts if user is typing in an input
+      const target = e.target as HTMLElement;
+      if (target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.contentEditable === 'true' ||
+        target.isContentEditable
+      )) {
+        return;
+      }
 
       switch (e.code) {
         case 'Space':
@@ -419,7 +434,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [togglePlayPause, skipBackward, skipForward, toggleMute, toggleFullscreen]);
+  }, [togglePlayPause, skipBackward, skipForward, toggleMute, toggleFullscreen, isFullscreen]);  
 
   // Mouse move handler for showing controls
   const handleMouseMove = () => {
@@ -719,6 +734,7 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
               <button
                 onClick={toggleFullscreen}
                 className="text-white hover:text-blue-400 transition-colors"
+                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen (enables keyboard shortcuts)"}
               >
                 {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
               </button>
@@ -731,6 +747,9 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({
       <div className="absolute top-4 right-4 opacity-0 hover:opacity-100 transition-opacity">
         <div className="bg-black/80 p-3 rounded text-xs text-gray-300">
           <div className="font-semibold mb-2">Keyboard Shortcuts:</div>
+          <div className="text-orange-400 mb-2 text-[10px]">
+            {isFullscreen ? "✓ Active in fullscreen" : "⚠ Only active in fullscreen mode"}
+          </div>
           <div>Space: Play/Pause</div>
           <div>← →: Skip 10s</div>
           <div>↑ ↓: Volume</div>

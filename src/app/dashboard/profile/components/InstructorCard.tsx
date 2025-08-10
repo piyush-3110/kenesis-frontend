@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { MapPin, Calendar, Globe, Twitter, Linkedin, Youtube } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import GradientBox from './GradientBox';
-import AvatarWithBorder from './AvatarWithBorder';
-import { InstructorProfile } from '../types';
+import React from "react";
+import { Calendar, Globe, Twitter, Linkedin, Youtube } from "lucide-react";
+import { cn } from "@/lib/utils";
+import GradientBox from "./GradientBox";
+import AvatarWithBorder from "./AvatarWithBorder";
+import { InstructorProfile } from "../types";
 
 interface InstructorCardProps {
   profile: InstructorProfile;
@@ -18,25 +18,25 @@ interface InstructorCardProps {
  */
 const InstructorCard: React.FC<InstructorCardProps> = ({
   profile,
-  className
+  className,
 }) => {
   const formatJoinDate = (dateString: string): string => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long' 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
     });
   };
 
   const getSocialIcon = (platform: string) => {
     switch (platform) {
-      case 'website':
+      case "website":
         return <Globe size={16} />;
-      case 'twitter':
+      case "twitter":
         return <Twitter size={16} />;
-      case 'linkedin':
+      case "linkedin":
         return <Linkedin size={16} />;
-      case 'youtube':
+      case "youtube":
         return <Youtube size={16} />;
       default:
         return <Globe size={16} />;
@@ -54,30 +54,28 @@ const InstructorCard: React.FC<InstructorCardProps> = ({
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-6">
           {/* Avatar */}
           <AvatarWithBorder
-            src={profile.avatar}
-            alt={profile.name}
+            src={profile.avatar || "/images/landing/avatar2.png"}
+            alt={
+              profile.username ||
+              profile.email ||
+              profile.walletAddress ||
+              "User"
+            }
             size="xl"
-            verified={profile.verified}
+            verified={profile.emailVerified}
           />
-          
+
           {/* Basic Info */}
           <div className="flex-1">
             <h2 className="text-white text-2xl md:text-3xl font-bold mb-2">
-              {profile.name}
+              {profile.username}
             </h2>
-            <p className="text-blue-400 text-lg font-medium mb-3">
-              {profile.title}
-            </p>
-            
+
             {/* Meta info */}
             <div className="flex flex-col sm:flex-row gap-4 text-sm text-gray-400">
               <div className="flex items-center gap-2">
-                <MapPin size={16} />
-                <span>{profile.location}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Calendar size={16} />
-                <span>Joined {formatJoinDate(profile.joinedDate)}</span>
+                <span>Joined {formatJoinDate(profile.createdAt)}</span>
               </div>
             </div>
           </div>
@@ -87,18 +85,18 @@ const InstructorCard: React.FC<InstructorCardProps> = ({
         <div className="mb-6">
           <h3 className="text-white text-lg font-semibold mb-3">About</h3>
           <p className="text-gray-300 leading-relaxed">
-            {profile.bio}
+            {profile.bio || "No bio available"}
           </p>
         </div>
 
         {/* Social Links */}
-        {Object.keys(profile.social).length > 0 && (
+        {Object.keys(profile.socialMedia).length > 0 && (
           <div>
             <h3 className="text-white text-lg font-semibold mb-3">Connect</h3>
             <div className="flex flex-wrap gap-3">
-              {Object.entries(profile.social).map(([platform, url]) => {
+              {Object.entries(profile.socialMedia).map(([platform, url]) => {
                 if (!url) return null;
-                
+
                 return (
                   <a
                     key={platform}

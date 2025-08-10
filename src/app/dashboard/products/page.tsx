@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import DashboardLayout from '../components/DashboardLayout';
-import ProductCreationWizard from './components/ProductCreationWizard';
+import React from "react";
+import { RequireAuth } from "@/features/auth/RequireAuth";
+import DashboardLayout from "../components/DashboardLayout";
+import ProductCreationWizard from "./components/ProductCreationWizard";
 
 /**
  * Products Page
@@ -10,14 +11,16 @@ import ProductCreationWizard from './components/ProductCreationWizard';
  */
 const ProductsPage: React.FC = () => {
   return (
-    <DashboardLayout
-      title="Create New Course"
-      subtitle="Build and publish your educational content"
-    >
-      <div className="p-4 sm:p-6">
-        <ProductCreationWizard />
-      </div>
-    </DashboardLayout>
+    <RequireAuth>
+      <DashboardLayout
+        title="Create New Course"
+        subtitle="Build and publish your educational content"
+      >
+        <div className="p-4 sm:p-6">
+          <ProductCreationWizard />
+        </div>
+      </DashboardLayout>
+    </RequireAuth>
   );
 };
 
