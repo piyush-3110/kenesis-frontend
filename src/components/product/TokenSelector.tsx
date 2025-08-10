@@ -48,6 +48,32 @@ const getTokenColors = (symbol: string) => {
   return colors[symbol.toUpperCase()] || "from-blue-500 to-purple-600";
 };
 
+// TokenIcon: tries to load /images/tokens/{symbol}.svg and falls back to a gradient badge
+const TokenIcon: React.FC<{ symbol: string; className?: string }> = ({ symbol, className = "" }) => {
+  const [failed, setFailed] = useState(false);
+  const src = `/images/tokens/${symbol.toLowerCase()}.svg`;
+  if (!failed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={`${symbol} icon`}
+        className={`w-8 h-8 rounded-full object-contain bg-black/20 ${className}`}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+  return (
+    <div
+      className={`w-8 h-8 rounded-full bg-gradient-to-r ${getTokenColors(
+        symbol
+      )} flex items-center justify-center text-white text-sm font-bold ${className}`}
+    >
+      {symbol.substring(0, 2)}
+    </div>
+  );
+};
+
 const TokenSelector: React.FC<TokenSelectorProps> = ({
   tokens,
   selectedToken,
@@ -106,13 +132,7 @@ const TokenSelector: React.FC<TokenSelectorProps> = ({
         </label>
         <div className="p-3 rounded-lg border bg-gray-900/50 border-gray-600/50">
           <div className="flex items-center gap-3">
-            <div
-              className={`w-8 h-8 rounded-full bg-gradient-to-r ${getTokenColors(
-                singleToken.symbol
-              )} flex items-center justify-center text-white text-sm font-bold`}
-            >
-              {singleToken.symbol.substring(0, 2)}
-            </div>
+            <TokenIcon symbol={singleToken.symbol} />
             <div className="text-left">
               <div className="text-white font-medium">{singleToken.symbol}</div>
               <div className="text-gray-400 text-xs">
@@ -156,13 +176,7 @@ const TokenSelector: React.FC<TokenSelectorProps> = ({
         <div className="flex items-center gap-3">
           {selectedParsed ? (
             <>
-              <div
-                className={`w-8 h-8 rounded-full bg-gradient-to-r ${getTokenColors(
-                  selectedParsed.symbol
-                )} flex items-center justify-center text-white text-sm font-bold`}
-              >
-                {selectedParsed.symbol.substring(0, 2)}
-              </div>
+              <TokenIcon symbol={selectedParsed.symbol} />
               <div className="text-left">
                 <div className="text-white font-medium">
                   {selectedParsed.symbol}
@@ -210,13 +224,7 @@ const TokenSelector: React.FC<TokenSelectorProps> = ({
                   }
                 `}
               >
-                <div
-                  className={`w-8 h-8 rounded-full bg-gradient-to-r ${getTokenColors(
-                    token.symbol
-                  )} flex items-center justify-center text-white text-sm font-bold`}
-                >
-                  {token.symbol.substring(0, 2)}
-                </div>
+                <TokenIcon symbol={token.symbol} />
 
                 <div className="flex-1">
                   <div className="font-medium">{token.symbol}</div>

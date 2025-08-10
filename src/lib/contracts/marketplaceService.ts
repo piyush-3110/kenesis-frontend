@@ -12,6 +12,7 @@ import {
   useSwitchChain,
 } from "wagmi";
 import { parseEther, formatUnits } from "viem";
+import { useMemo } from "react";
 import {
   KENESIS_MARKETPLACE_ABI,
   ERC20_ABI,
@@ -167,6 +168,34 @@ export const usePurchaseQuote = (tokenString: string, priceInUSD: number) => {
       paymentAmountQuery.refetch();
       marketplaceFeeQuery.refetch();
     },
+  };
+};
+
+/**
+ * Hook to estimate gas for purchase on current network (rough hint for user)
+ */
+export const useGasEstimate = (tokenString: string) => {
+  const { address: marketplaceAddress } = useMarketplaceContract();
+  const { address: userAddress } = useAccount();
+  const tokenAddress = getContractTokenAddress(tokenString);
+  // const tokenConfig = getTokenConfig(tokenString);
+
+  // We can't estimate precisely without full simulate; provide minimal availability and symbol
+  const canEstimate = !!marketplaceAddress && !!userAddress && !!tokenAddress;
+
+  // We piggyback on viem via wagmi readContract's client is not directly exposed here;
+  // in this context, we provide a placeholder computed description only.
+  // Real estimation would require a public client; keeping API simple for UI hint.
+  const gasSymbol = useMemo(() => {
+    const { chainId } = parseTokenString(tokenString);
+    const cfg = getChainConfig(chainId);
+    return cfg?.nativeSymbol || "ETH";
+  }, [tokenString]);
+
+  return {
+    canEstimate,
+    // just return the symbol so UI can show "Network fee in <symbol> applies"; extend when public client is wired.
+    gasSymbol,
   };
 };
 

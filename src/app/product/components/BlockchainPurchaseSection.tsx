@@ -57,9 +57,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useUIStore();
-  const [selectedToken, setSelectedToken] = useState<string | null>(
-    tokenToPayWith.length > 0 ? tokenToPayWith[0] : null
-  );
+  const [selectedToken, setSelectedToken] = useState<string | null>(null);
   const [nftResult, setNftResult] = useState<PurchaseWithNFTResult | null>(
     null
   );
@@ -107,12 +105,24 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     return referralFromUrl as `0x${string}`;
   }, [referralFromUrl, connectedWalletAddress]);
 
-  // Update selected token when available tokens change
+  // Load last-used token from localStorage, fallback to first available
   useEffect(() => {
-    if (tokenToPayWith.length > 0 && !selectedToken) {
-      setSelectedToken(tokenToPayWith[0]);
-    }
-  }, [tokenToPayWith, selectedToken]);
+    if (tokenToPayWith.length === 0) return;
+    const key = `kenesis:lastToken:${course?.id || "global"}`;
+    const saved = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+    const validSaved = saved && tokenToPayWith.includes(saved) ? saved : null;
+    setSelectedToken(validSaved || tokenToPayWith[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [course?.id, tokenToPayWith.join(",")]);
+
+  // Persist selection when it changes
+  useEffect(() => {
+    if (!selectedToken) return;
+    const key = `kenesis:lastToken:${course?.id || "global"}`;
+    try {
+      if (typeof window !== "undefined") localStorage.setItem(key, selectedToken);
+    } catch {}
+  }, [selectedToken, course?.id]);
 
   // Detect if a chain switch is required for the currently selected token
   // Always call hook to respect Rules of Hooks; pass empty string when none selected
