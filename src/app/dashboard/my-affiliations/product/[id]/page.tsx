@@ -1,83 +1,89 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
 import { ExtendedProduct } from "@/types/Review";
-import { getAffiliatedProductByProductId } from "../../api/affiliationsApi";
-import { AffiliatedProduct } from "../../types";
+import {
+  getMyAffiliations,
+  getMyAffiliateCourseDetail,
+} from "../../api/affiliationsApi";
+import { MyAffiliateCourse, MyAffiliateCourseDetail } from "../../types";
 import ProductDetailView from "@/shared/components/ProductDetailView";
-import { CheckCircle, ExternalLink, Copy } from "lucide-react";
+import { CheckCircle } from "lucide-react";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
 
 const MyAffiliationProductDetailPage: React.FC = () => {
   const params = useParams();
   const [product, setProduct] = useState<ExtendedProduct | null>(null);
-  const [affiliatedProduct, setAffiliatedProduct] =
-    useState<AffiliatedProduct | null>(null);
+  const [course, setCourse] = useState<MyAffiliateCourse | null>(null);
+  const [detail, setDetail] = useState<MyAffiliateCourseDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [copying, setCopying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { data: user } = useCurrentUser();
 
   useEffect(() => {
     const loadProduct = async () => {
       try {
         if (params.id) {
-          // Find the affiliated product by productId
-          const affiliatedProd = await getAffiliatedProductByProductId(
-            params.id as string
-          );
+          const raw = String(params.id);
+          const isObjectId = /^[a-fA-F0-9]{24}$/.test(raw);
+          let targetCourseId: string | null = isObjectId ? raw : null;
 
-          if (affiliatedProd) {
-            setAffiliatedProduct(affiliatedProd);
+          if (!targetCourseId) {
+            const list = await getMyAffiliations();
+            const match =
+              list.find((a) => a.courseSlug === raw || a.courseId === raw) ||
+              null;
+            setCourse(match || null);
+            targetCourseId = match?.courseId || null;
+          }
 
-            // Convert AffiliatedProduct to ExtendedProduct for the detail view
+          if (targetCourseId) {
+            const d = await getMyAffiliateCourseDetail(targetCourseId, {
+              includeStats: true,
+            });
+            setDetail(d);
+            const c = d.course;
             const extendedProduct: ExtendedProduct = {
-              id: affiliatedProd.productId,
-              title: affiliatedProd.title,
-              description:
-                affiliatedProd.description ||
-                `Learn ${affiliatedProd.title} with ${affiliatedProd.author}`,
-              author: affiliatedProd.author,
-              price: affiliatedProd.price,
+              id: c.id,
+              title: c.title,
+              description: `Affiliate program for ${c.title}`,
+              author: d.seller?.username || "",
+              price: c.price,
               currency: "USD",
-              rating: affiliatedProd.rating,
-              reviewCount: affiliatedProd.reviewCount,
-              image: affiliatedProd.thumbnail,
-              category: affiliatedProd.category,
-              type: affiliatedProd.type,
-              createdAt: affiliatedProd.createdAt,
-              topics: affiliatedProd.topics || [
-                `Master ${affiliatedProd.category} fundamentals`,
-                `Advanced ${affiliatedProd.title
-                  .split(" ")[0]
-                  .toLowerCase()} techniques`,
-                "Industry best practices and trends",
-                "Hands-on projects and exercises",
-                "Professional certification preparation",
-              ],
-              purchasedBy: [], // Not relevant for affiliate view
+              rating: 0,
+              reviewCount: 0,
+              image: c.thumbnail,
+              thumbnail: c.thumbnail,
+              category: undefined,
+              type: c.type === "document" ? "document" : "video",
+              createdAt: d.joinedAt,
+              purchasedBy: [],
               reviews: [],
               reviewSummary: {
-                totalReviews: affiliatedProd.reviewCount,
-                averageRating: affiliatedProd.rating,
-                ratingDistribution: {
-                  5: Math.floor(affiliatedProd.reviewCount * 0.6),
-                  4: Math.floor(affiliatedProd.reviewCount * 0.2),
-                  3: Math.floor(affiliatedProd.reviewCount * 0.1),
-                  2: Math.floor(affiliatedProd.reviewCount * 0.05),
-                  1: Math.floor(affiliatedProd.reviewCount * 0.05),
-                },
+                averageRating: 0,
+                totalReviews: 0,
+                ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
               },
-              // For affiliate view, show as if it's not purchased to display topics
-              courseAccess: {
-                hasAccess: false,
-                progress: 0,
-                purchaseDate: undefined,
-              },
+              courseAccess: { hasAccess: false, progress: 0 },
+              topics: [],
             };
             setProduct(extendedProduct);
           }
         }
-      } catch (error) {
-        console.error("Failed to load product:", error);
+      } catch (err) {
+        console.error("Failed to load product:", err);
+        if (axios.isAxiosError(err)) {
+          const status = err.response?.status;
+          if (status === 404) setError("Affiliate course not found.");
+          else if (status === 401 || status === 403)
+            setError("You are not authorized to view this page.");
+          else setError("Failed to load affiliate course. Please try again.");
+        } else {
+          setError("Failed to load affiliate course. Please try again.");
+        }
       } finally {
         setLoading(false);
       }
@@ -86,32 +92,45 @@ const MyAffiliationProductDetailPage: React.FC = () => {
     loadProduct();
   }, [params.id]);
 
-  const handleCopyLink = async () => {
-    if (!affiliatedProduct || copying) return;
+  const referralLink = useMemo(() => {
+    const slug = detail?.course.slug || course?.courseSlug || "";
+    const base =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      (typeof window !== "undefined"
+        ? window.location.origin
+        : "https://kenesis.com");
+    const code = detail?.affiliateCode || user?.walletAddress || "";
+    const origin = String(base).replace(/\/$/, "");
+    const url = slug ? `${origin}/products/${slug}` : origin;
+    return code ? `${url}?ref=${encodeURIComponent(code)}` : url;
+  }, [
+    detail?.course.slug,
+    detail?.affiliateCode,
+    user?.walletAddress,
+    course?.courseSlug,
+  ]);
 
+  const handleCopyLink = async () => {
+    if (copying || !referralLink) return;
     setCopying(true);
     try {
-      await navigator.clipboard.writeText(affiliatedProduct.affiliateLink);
-      // You could add a toast notification here
-    } catch (error) {
-      console.error("Failed to copy link:", error);
+      await navigator.clipboard.writeText(referralLink);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
     } finally {
       setCopying(false);
     }
   };
 
   const handleOpenLink = () => {
-    if (affiliatedProduct) {
-      window.open(affiliatedProduct.affiliateLink, "_blank");
-    }
+    if (referralLink) window.open(referralLink, "_blank");
   };
 
   const getPrimaryAction = () => {
-    if (!affiliatedProduct) return undefined;
-
+    if (!detail && !course) return undefined;
     return {
-      label: "You already promote this product",
-      onClick: () => {}, // No action needed
+      label: "You’re in this affiliate program",
+      onClick: () => {},
       loading: false,
       disabled: true,
       icon: <CheckCircle size={20} />,
@@ -119,14 +138,19 @@ const MyAffiliationProductDetailPage: React.FC = () => {
     };
   };
 
-  // Secondary actions are rendered below directly; helper removed to avoid unused-variable error
-
   if (!product && !loading) {
-    return null; // Let ProductDetailView handle the not found state
+    return null;
   }
 
   return (
     <div>
+      {error && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
+          <div className="mt-4 rounded-md border border-red-800/40 bg-red-900/20 text-red-200 px-4 py-3">
+            {error}
+          </div>
+        </div>
+      )}
       <ProductDetailView
         product={product!}
         loading={loading}
@@ -134,74 +158,39 @@ const MyAffiliationProductDetailPage: React.FC = () => {
         backLink="/dashboard/my-affiliations"
         backLabel="Back to My Affiliations"
         primaryAction={getPrimaryAction()}
+        affiliateStats={{
+          commissionRate:
+            detail?.commissionPercent ?? course?.commissionPercent,
+          commissionAmount: detail
+            ? detail.course.price * (detail.commissionPercent / 100)
+            : undefined,
+          recentAffiliateEarnings: detail?.stats?.last30d.earnings,
+          recentAffiliateSales: detail?.stats?.last30d.conversions,
+          lifetimeEarnings:
+            detail?.stats?.lifetime.earnings ?? course?.earnings,
+          lifetimeSales: detail?.stats?.lifetime.conversions ?? course?.sales,
+        }}
+        affiliateMeta={{
+          shortDescription: product?.description,
+          level: detail?.course.level,
+          language: detail?.course.language,
+          type: detail?.course.type,
+          availableQuantity: detail?.course.availableQuantity,
+          soldCount: detail?.course.soldCount,
+          tokenToPayWith: detail?.course.tokenToPayWith,
+          publishedAt: detail?.course.publishedAt,
+          isAvailable: detail?.course.isAvailable,
+          status: detail?.status,
+          joinedAt: detail?.joinedAt,
+          lastSaleAt: detail?.stats?.lastSaleAt ?? null,
+        }}
+        affiliateActions={{
+          onCopyLink: handleCopyLink,
+          onOpenLink: handleOpenLink,
+          copying,
+          link: referralLink,
+        }}
       />
-
-      {/* Additional affiliate info */}
-      {affiliatedProduct && !loading && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 mt-8">
-          <div className="bg-gradient-to-br from-gray-900/80 to-gray-800/60 rounded-xl border border-gray-700/50 p-6">
-            <h3 className="text-white text-lg font-semibold mb-4">
-              Affiliate Details
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Commission Rate</p>
-                <p className="text-white font-semibold">
-                  {affiliatedProduct.commission}%
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Total Clicks</p>
-                <p className="text-white font-semibold">
-                  {affiliatedProduct.clicks.toLocaleString()}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Conversions</p>
-                <p className="text-white font-semibold">
-                  {affiliatedProduct.conversions}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-gray-400 text-sm mb-1">Earnings</p>
-                <p className="text-white font-semibold">
-                  ${affiliatedProduct.earnings.toFixed(2)}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleCopyLink}
-                disabled={copying}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-              >
-                <Copy size={16} />
-                {copying ? "Copying..." : "Copy Affiliate Link"}
-              </button>
-
-              <button
-                onClick={handleOpenLink}
-                className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-              >
-                <ExternalLink size={16} />
-                Open Affiliate Link
-              </button>
-            </div>
-
-            <div className="mt-4 p-3 bg-gray-800/50 rounded-lg">
-              <p className="text-gray-400 text-sm mb-1">Affiliate Link:</p>
-              <p className="text-gray-300 text-sm font-mono break-all">
-                {affiliatedProduct.affiliateLink}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
