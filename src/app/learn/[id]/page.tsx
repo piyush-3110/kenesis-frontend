@@ -31,6 +31,7 @@ import {
 import { useUIStore } from "@/store/useUIStore";
 import CustomVideoPlayer from "@/components/video/CustomVideoPlayer";
 import CourseReviewsSection from "@/components/CourseReviewsSection";
+import { DocumentViewer, type DocumentAttachment } from "@/components/document/DocumentViewer";
 
 interface Course {
   id: string;
@@ -103,6 +104,7 @@ const LearningPage: React.FC = () => {
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [moduleContent, setModuleContent] = useState<{
     videoUrl?: string;
+    documentUrl?: string;
     attachments?: Array<{
       id: string;
       originalName: string;
@@ -111,6 +113,7 @@ const LearningPage: React.FC = () => {
       type?: string;
     }>;
   } | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<DocumentAttachment | null>(null);
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1473,6 +1476,48 @@ const LearningPage: React.FC = () => {
                         </div>
                       )}
 
+                    {/* Document Viewer */}
+                    {selectedModule.type === "document" &&
+                      moduleContent?.documentUrl && (
+                        <div className="rounded-xl overflow-hidden shadow-2xl border border-gray-700/30">
+                          <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 p-4 border-b border-gray-700/30">
+                            <h3 className="text-white font-semibold flex items-center gap-2">
+                              <FileText size={20} className="text-blue-400" />
+                              {selectedModule.title}
+                            </h3>
+                          </div>
+                          <div className="bg-gray-900/50 p-4">
+                            <div className="flex gap-3">
+                              <button
+                                onClick={() => setSelectedDocument({
+                                  id: selectedModule.id,
+                                  title: selectedModule.title,
+                                  url: moduleContent.documentUrl!,
+                                  type: 'pdf', // Default to PDF, could be enhanced to detect type
+                                  size: undefined
+                                })}
+                                className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-colors font-medium"
+                              >
+                                <FileText size={20} />
+                                Open Document
+                              </button>
+                              <button
+                                onClick={() => {
+                                  // Mark module as completed when user finishes reading
+                                  console.log(`Marking document module ${selectedModule.id} as completed`);
+                                  // TODO: Implement markModuleCompleted function
+                                  // markModuleCompleted(selectedModule.id);
+                                }}
+                                className="px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-colors font-medium flex items-center gap-2"
+                              >
+                                <CheckCircle size={20} />
+                                Complete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                     {/* Module Description */}
                     {selectedModule.description && (
                       <div
@@ -1667,6 +1712,14 @@ const LearningPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Document Viewer Modal */}
+      {selectedDocument && (
+        <DocumentViewer
+          document={selectedDocument}
+          onClose={() => setSelectedDocument(null)}
+        />
+      )}
     </div>
   );
 };
