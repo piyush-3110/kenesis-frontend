@@ -12,7 +12,7 @@ export interface Course {
   level: CourseLevel;
   language: string;
   price: number;
-  tokenToPayWith: PaymentToken[];
+  tokenToPayWith: string[];
   accessDuration: number; // in seconds, -1 for unlimited
   affiliatePercentage: number; // e.g., 1000 = 10%
   availableQuantity: number; // -1 for unlimited
@@ -29,15 +29,6 @@ export interface CourseMetadata {
   requirements?: string[];
   learningOutcomes?: string[];
   targetAudience?: string[];
-}
-
-export interface PaymentToken {
-  symbol: string;
-  name: string;
-  address: string;
-  chainId: number;
-  chainName: string;
-  decimals: number;
 }
 
 export interface Chapter {
@@ -64,15 +55,21 @@ export interface Module {
   attachments: File[] | string[];
 }
 
-export type CourseType = 'video' | 'document';
+export type CourseType = "video" | "document";
 
-export type CourseLevel = 'beginner' | 'intermediate' | 'advanced';
+export type CourseLevel = "beginner" | "intermediate" | "advanced";
 
-export type CourseStatus = 'draft' | 'submitted' | 'under_review' | 'approved' | 'rejected' | 'published';
+export type CourseStatus =
+  | "draft"
+  | "submitted"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "published";
 
-export type ModuleType = 'video' | 'document';
+export type ModuleType = "video" | "document";
 
-export type CreateCourseStep = 'course' | 'chapters' | 'modules' | 'review';
+export type CreateCourseStep = "course" | "chapters" | "modules" | "review";
 
 // Form data interfaces
 export interface CourseFormData {
@@ -85,7 +82,7 @@ export interface CourseFormData {
   thumbnail?: File;
   previewVideo?: File;
   price: number;
-  tokenToPayWith: PaymentToken[];
+  tokenToPayWith: string[];
   accessDuration: number;
   affiliatePercentage: number;
   availableQuantity: number;
