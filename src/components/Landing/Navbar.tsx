@@ -17,6 +17,7 @@ import { useUIStore } from "@/store/useUIStore";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useLogout } from "@/features/auth/hooks";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 
 function Logo() {
   return (
@@ -136,7 +137,7 @@ function AuthSection() {
           </Link>
         </div>
         <Link
-          href="/auth"
+          href="/auth/login"
           className="flex items-center space-x-2 text-white font-semibold text-sm md:text-lg px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
           style={{
             background:
@@ -332,6 +333,7 @@ export default function Navbar() {
         <Logo />
         <div className="flex items-center space-x-8">
           <NavLinks onDashboard={handleDashboardClick} />
+          <SiweAuthButton />
           <AuthSection />
         </div>
       </div>
