@@ -21,6 +21,7 @@ import {
   useTokenApproval,
   usePurchaseCourse,
   usePurchaseValidation,
+  useGasEstimate,
   formatPaymentAmount,
   type ContractPurchaseParams,
 } from "@/lib/contracts/marketplaceService";
@@ -102,6 +103,7 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
     quote.quote?.tokenAmount || BigInt(0)
   );
   const purchase = usePurchaseCourse();
+  const gas = useGasEstimate(selectedToken);
 
   // Token and chain configs
   const tokenConfig = getTokenConfig(selectedToken);
@@ -365,6 +367,11 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                         Affiliate Commission:
                       </span>
                       <span className="text-white">{affiliatePercentage}%</span>
+                    </div>
+                  )}
+                  {gas.canEstimate && (
+                    <div className="pt-2 text-xs text-gray-400">
+                      Network fee applies and will be paid in {gas.gasSymbol}.
                     </div>
                   )}
                 </div>

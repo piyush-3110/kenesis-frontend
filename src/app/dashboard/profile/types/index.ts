@@ -1,3 +1,5 @@
+import type { User } from "@/types/auth";
+
 export interface InstructorProfile {
   id: string;
   username?: string;
@@ -22,7 +24,7 @@ export interface InstructorStats {
   totalEarnings: number;
   averageRating: number;
   totalReviews: number;
-  completionRate: number;
+  completionRate: number | null;
 }
 
 export interface Course {
@@ -53,7 +55,7 @@ export interface ProfileStore {
   error: string | null;
 
   // Actions
-  loadProfile: () => Promise<void>;
+  loadProfile: (user?: User) => Promise<void>; // Accept optional user parameter
   loadStats: () => Promise<void>;
   loadCourses: () => Promise<void>;
   updateProfile: (profile: Partial<InstructorProfile>) => Promise<boolean>;

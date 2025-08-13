@@ -27,6 +27,7 @@ import { useCurrentUser } from "@/features/auth/useCurrentUser";
  */
 const ProfilePage: React.FC = () => {
   const {
+    profile,
     stats,
     courses,
     loading,
@@ -37,21 +38,25 @@ const ProfilePage: React.FC = () => {
     resetError,
   } = useProfileStore();
 
-  const { data: profile } = useCurrentUser();
+  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
-  // Load initial data
+  // Load initial data - pass user data to avoid duplicate API calls
   useEffect(() => {
-    loadProfile();
+    if (currentUser) {
+      loadProfile(currentUser); // Pass user data to store
+    } else if (!isUserLoading) {
+      loadProfile(); // Fallback if no user data
+    }
     loadStats();
     loadCourses();
-  }, [loadProfile, loadStats, loadCourses]);
+  }, [currentUser, isUserLoading, loadProfile, loadStats, loadCourses]);
 
   // Reset error when component unmounts
   useEffect(() => {
     return () => resetError();
   }, [resetError]);
 
-  if (loading && !profile) {
+  if ((loading || isUserLoading) && !currentUser) {
     return (
       <DashboardLayout
         title="Profile"
@@ -126,10 +131,6 @@ const ProfilePage: React.FC = () => {
                 value={stats.totalStudents}
                 subtitle="Students enrolled across all courses"
                 icon={<Users size={24} />}
-                trend={{
-                  direction: "up",
-                  value: "+12.5%",
-                }}
               />
 
               <StatCard
@@ -137,10 +138,6 @@ const ProfilePage: React.FC = () => {
                 value={stats.totalCourses}
                 subtitle="Published and draft courses"
                 icon={<BookOpen size={24} />}
-                trend={{
-                  direction: "up",
-                  value: "+2 courses",
-                }}
               />
 
               <StatCard
@@ -148,10 +145,6 @@ const ProfilePage: React.FC = () => {
                 value={`$${stats.totalEarnings.toLocaleString()}`}
                 subtitle="Revenue from course sales"
                 icon={<DollarSign size={24} />}
-                trend={{
-                  direction: "up",
-                  value: "+18.2%",
-                }}
               />
 
               <StatCard
@@ -159,10 +152,6 @@ const ProfilePage: React.FC = () => {
                 value={stats.averageRating.toFixed(1)}
                 subtitle={`Based on ${stats.totalReviews.toLocaleString()} reviews`}
                 icon={<Star size={24} />}
-                trend={{
-                  direction: "up",
-                  value: "+0.2 points",
-                }}
               />
 
               <StatCard
@@ -170,21 +159,17 @@ const ProfilePage: React.FC = () => {
                 value={stats.totalReviews}
                 subtitle="Total feedback received"
                 icon={<MessageCircle size={24} />}
-                trend={{
-                  direction: "up",
-                  value: "+45 reviews",
-                }}
               />
 
               <StatCard
                 title="Completion Rate"
-                value={`${stats.completionRate}%`}
+                value={
+                  stats.completionRate == null
+                    ? "N/A"
+                    : `${stats.completionRate}%`
+                }
                 subtitle="Students who complete courses"
                 icon={<TrendingUp size={24} />}
-                trend={{
-                  direction: "up",
-                  value: "+3.1%",
-                }}
               />
             </div>
           </section>

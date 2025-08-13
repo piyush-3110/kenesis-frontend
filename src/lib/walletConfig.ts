@@ -8,34 +8,16 @@ import {
   bsc,
   // Testnets
   sepolia,
-  polygonAmoy,
-  optimismSepolia,
-  arbitrumSepolia,
-  baseSepolia,
   bscTestnet,
-  // Local
-  //   hardhat,
 } from "wagmi/chains";
 
 // Get environment
 const isDevelopment = process.env.NODE_ENV === "development";
-const isStaging = process.env.NEXT_PUBLIC_APP_ENV === "staging";
 
 // Chain configuration based on environment
 const getChains = () => {
   if (isDevelopment) {
-    return [sepolia] as const; // Local development with hardhat + sepolia for testing
-  }
-
-  if (isStaging) {
-    return [
-      sepolia, // Ethereum testnet
-      polygonAmoy, // Polygon testnet
-      optimismSepolia, // Optimism testnet
-      arbitrumSepolia, // Arbitrum testnet
-      baseSepolia, // Base testnet
-      bscTestnet, // BSC testnet
-    ] as const;
+    return [sepolia, bscTestnet] as const; // Local development with hardhat + sepolia for testing
   }
 
   // Production
@@ -73,7 +55,6 @@ export const getCurrentChainId = (): number => {
   if (typeof window === "undefined") {
     // SSR fallback - return default based on environment
     if (isDevelopment) return 11155111; // Sepolia for development
-    if (isStaging) return 11155111; // Sepolia for staging
     return 1; // Mainnet for production
   }
 
@@ -89,7 +70,6 @@ export const getCurrentChainId = (): number => {
 
   // Default chain IDs based on environment
   if (isDevelopment) return 11155111; // Sepolia for development (matches getChains config)
-  if (isStaging) return 11155111; // Sepolia for staging
   return 1; // Mainnet for production
 };
 
@@ -136,9 +116,7 @@ export const getSupportedChainId = (chainId: number): SupportedChainId => {
   if (isSupportedChainId(chainId)) {
     return chainId;
   }
-
   // Return default based on environment
   if (isDevelopment) return 11155111; // Sepolia
-  if (isStaging) return 11155111; // Sepolia
   return 1; // Mainnet
 };

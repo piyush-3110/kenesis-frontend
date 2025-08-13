@@ -1,67 +1,100 @@
 "use client";
 
 import { create } from "zustand";
-import { InstructorProfile, InstructorStats, ProfileStore } from "../types";
+import type { User } from "@/types/auth";
+import type {
+  ProfileStore,
+  InstructorProfile,
+  InstructorStats,
+  Course,
+} from "../types";
+import { UserApi } from "@/lib/api/userApi";
 
-const mockStats: InstructorStats = {
-  totalStudents: 12847,
-  totalCourses: 15,
-  totalEarnings: 89420.5,
-  averageRating: 4.8,
-  totalReviews: 2341,
-  completionRate: 87.5,
-};
+// Note: stats will be fetched from backend via UserApi.getDashboardOverview
 
+const mockCourses: Course[] = [
+  {
+    id: "1",
+    title: "Advanced React Patterns",
+    description: "Master advanced React patterns and best practices",
+    thumbnail: "/images/course-1.jpg",
+    price: 99.99,
+    originalPrice: 149.99,
+    rating: 4.8,
+    reviewCount: 234,
+    studentCount: 1247,
+    duration: "8h 30m",
+    level: "Advanced",
+    category: "Web Development",
+    tags: ["React", "JavaScript", "Frontend"],
+    isPublished: true,
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-01-20T15:30:00Z",
+  },
+  {
+    id: "2",
+    title: "Node.js Backend Development",
+    description: "Build scalable backend applications with Node.js",
+    thumbnail: "/images/course-2.jpg",
+    price: 79.99,
+    rating: 4.7,
+    reviewCount: 156,
+    studentCount: 892,
+    duration: "6h 45m",
+    level: "Intermediate",
+    category: "Backend Development",
+    tags: ["Node.js", "Express", "API"],
+    isPublished: true,
+    createdAt: "2024-01-10T09:00:00Z",
+    updatedAt: "2024-01-18T14:20:00Z",
+  },
+];
+
+/**
+ * Profile Store
+ * Manages instructor profile data, stats, and courses
+ */
 export const useProfileStore = create<ProfileStore>((set, get) => ({
-  // Initial state
+  // State
   profile: null,
   stats: null,
   courses: [],
   loading: false,
   error: null,
 
-  // Load profile data
-  loadProfile: async () => {
-    set({ loading: true, error: null });
-
+  // Actions
+  loadProfile: async (user?: User) => {
     try {
-      // Get real user data from auth store
-      const { useAuthStore } = await import("@/store/useAuthStore");
-      const authUser = useAuthStore.getState().user;
+      set({ loading: true, error: null });
 
-      if (authUser) {
-        // Map auth user to instructor profile
+      if (user) {
+        // Map User to InstructorProfile
         const profile: InstructorProfile = {
-          id: authUser.id,
-          username:
-            authUser.username || authUser.email?.split("@")[0] || "User",
-          avatar: "", // No avatar in API yet
-          bio:
-            authUser.bio ||
-            "Welcome to my profile! I'm excited to share my knowledge and help you learn.",
-          createdAt: authUser.createdAt || new Date().toISOString(),
-          emailVerified: authUser.emailVerified || false,
+          id: user.id,
+          username: user.username,
+          avatar: undefined, // Not available in User type
+          bio: user.bio,
+          createdAt: user.createdAt,
+          emailVerified: user.emailVerified || false,
+          email: user.email,
+          walletAddress: user.walletAddress || undefined,
           socialMedia: {
-            website: "",
-            twitter: "",
-            linkedin: "",
-            instagram: "",
-            facebook: "",
+            website: undefined,
+            twitter: undefined,
+            linkedin: undefined,
+            facebook: undefined,
+            instagram: undefined,
           },
         };
 
-        set({
-          profile,
-          loading: false,
-        });
-      } else {
-        // No user data
-        set({
-          profile: null,
-          loading: false,
-        });
+        set({ profile, loading: false });
+        return;
       }
+
+      // If no user provided, set error
+      throw new Error("No user data provided to load profile");
     } catch (error) {
+      console.error("Failed to load profile:", error);
       set({
         error:
           error instanceof Error ? error.message : "Failed to load profile",
@@ -70,19 +103,30 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }
   },
 
-  // Load stats data
   loadStats: async () => {
-    set({ loading: true, error: null });
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      set({ loading: true, error: null });
+      // Fetch dashboard overview from backend
+      const res = await UserApi.getDashboardOverview();
+      if (!res.data.success || !res.data.data) {
+        throw new Error(
+          res.data.message || "Failed to fetch dashboard overview"
+        );
+      }
 
-      set({
-        stats: mockStats,
-        loading: false,
-      });
+      const api = res.data;
+      const stats: InstructorStats = {
+        totalStudents: api.data.totalStudents ?? 0,
+        totalCourses: api.data.totalCourses ?? 0,
+        totalEarnings: api.data.totalEarnings ?? 0,
+        averageRating: api.data.averageRating ?? 0,
+        totalReviews: api.data.totalReviews ?? 0,
+        completionRate: api.data.completionRate ?? null,
+      };
+
+      set({ stats, loading: false });
     } catch (error) {
+      console.error("Failed to load stats:", error);
       set({
         error: error instanceof Error ? error.message : "Failed to load stats",
         loading: false,
@@ -90,19 +134,16 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }
   },
 
-  // Load courses data
   loadCourses: async () => {
-    set({ loading: true, error: null });
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      set({ loading: true, error: null });
 
-      set({
-        courses: [],
-        loading: false,
-      });
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      set({ courses: mockCourses, loading: false });
     } catch (error) {
+      console.error("Failed to load courses:", error);
       set({
         error:
           error instanceof Error ? error.message : "Failed to load courses",
@@ -111,25 +152,25 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }
   },
 
-  // Update profile
-  updateProfile: async (profileUpdate: Partial<InstructorProfile>) => {
-    const { profile } = get();
-    if (!profile) return false;
-
-    set({ loading: true, error: null });
-
+  updateProfile: async (profileData: Partial<InstructorProfile>) => {
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      set({ loading: true, error: null });
 
-      const updatedProfile = { ...profile, ...profileUpdate };
-      set({
-        profile: updatedProfile,
-        loading: false,
-      });
+      const currentProfile = get().profile;
+      if (!currentProfile) {
+        throw new Error("No profile loaded");
+      }
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Update profile
+      const updatedProfile = { ...currentProfile, ...profileData };
+      set({ profile: updatedProfile, loading: false });
 
       return true;
     } catch (error) {
+      console.error("Failed to update profile:", error);
       set({
         error:
           error instanceof Error ? error.message : "Failed to update profile",
@@ -139,6 +180,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     }
   },
 
-  // Reset error state
-  resetError: () => set({ error: null }),
+  resetError: () => {
+    set({ error: null });
+  },
 }));

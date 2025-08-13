@@ -1,5 +1,11 @@
 import { create } from "zustand";
-import { updateUserProfile, updateUserProfileWithFile, updateSocialMediaLinks, UpdateProfileRequest, UpdateProfileWithFileRequest, UpdateSocialMediaRequest } from "../api/settingsApi";
+import {
+  updateUserProfile,
+  updateUserProfileWithFile,
+  updateSocialMediaLinks,
+  UpdateProfileRequest,
+  UpdateSocialMediaRequest,
+} from "../api/settingsApi";
 
 export interface SocialLinks {
   facebook: string;
@@ -96,17 +102,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
     try {
       const result = await updateUserProfileWithFile({ avatar: file });
-      
+
       // Update the avatar URL in the store
       set((state) => ({
-        profile: { 
-          ...state.profile, 
+        profile: {
+          ...state.profile,
           avatar: result.user.avatar || "",
         },
         hasUnsavedChanges: true, // Keep save button available for other potential changes
       }));
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to upload avatar";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to upload avatar";
       setError(errorMessage);
       console.error("Avatar upload error:", error);
       throw error;
@@ -147,7 +154,6 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         isLoading: false,
         hasUnsavedChanges: false,
       });
-      
     } catch (error) {
       setError("Failed to load settings");
       console.error("Settings load error:", error);
@@ -156,20 +162,18 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   },
 
   saveSettings: async () => {
-    const {
-      setSaving,
-      setError,
-      profile,
-      socialLinks,
-    } = get();
+    const { setSaving, setError, profile, socialLinks } = get();
 
     setSaving(true);
     setError(null);
 
     try {
       // Check if we're updating social media links only or also profile data
-      const hasProfileUpdates = profile.displayName.trim() || profile.bio.trim();
-      const hasSocialUpdates = Object.values(socialLinks).some(link => link.trim());
+      const hasProfileUpdates =
+        profile.displayName.trim() || profile.bio.trim();
+      const hasSocialUpdates = Object.values(socialLinks).some((link) =>
+        link.trim()
+      );
 
       let result;
 
@@ -187,7 +191,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
           },
         };
 
-        console.log("🔄 [SETTINGS] Updating profile and social media with JSON API:", updateData);
+        console.log(
+          "🔄 [SETTINGS] Updating profile and social media with JSON API:",
+          updateData
+        );
         result = await updateUserProfile(updateData);
       } else if (hasSocialUpdates) {
         // Update only social media links using dedicated API
@@ -201,7 +208,10 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
           },
         };
 
-        console.log("🔗 [SETTINGS] Updating social media links only:", socialData);
+        console.log(
+          "🔗 [SETTINGS] Updating social media links only:",
+          socialData
+        );
         result = await updateSocialMediaLinks(socialData);
       } else if (hasProfileUpdates) {
         // Update only profile data
@@ -218,7 +228,7 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         setSaving(false);
         return Promise.resolve();
       }
-      
+
       console.log("✅ [SETTINGS] Profile updated successfully:", result);
 
       // Update the local state with the response data
@@ -243,7 +253,8 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
 
       return Promise.resolve();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to save settings";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to save settings";
       console.error("❌ [SETTINGS] Settings save error:", error);
       setError(errorMessage);
       setSaving(false);

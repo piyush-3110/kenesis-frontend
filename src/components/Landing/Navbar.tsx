@@ -17,6 +17,7 @@ import { useUIStore } from "@/store/useUIStore";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useLogout } from "@/features/auth/hooks";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 
 function Logo() {
   return (
@@ -390,6 +391,7 @@ export default function Navbar() {
         <Logo />
         <div className="flex items-center space-x-8">
           <NavLinks onDashboard={handleDashboardClick} />
+          <SiweAuthButton />
           <AuthSection />
         </div>
       </div>

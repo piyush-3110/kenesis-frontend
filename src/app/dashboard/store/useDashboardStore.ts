@@ -5,6 +5,8 @@ import {
   DashboardMetric,
   Transaction,
 } from "../types";
+import { DashboardApi, UserDashboardAnalytics } from "@/lib/api/dashboardApi";
+import type { User } from "@/types/auth"; // Single source of truth for User
 
 interface DashboardActions {
   // Navigation actions
@@ -20,6 +22,7 @@ interface DashboardActions {
   // Data actions
   setMetrics: (metrics: DashboardMetric[]) => void;
   setTransactions: (transactions: Transaction[]) => void;
+  setAnalytics: (analytics: UserDashboardAnalytics | null) => void;
   addTransaction: (transaction: Transaction) => void;
 
   // UI state actions
@@ -27,7 +30,7 @@ interface DashboardActions {
   setError: (error: string | null) => void;
 
   // Combined actions
-  initializeDashboard: () => Promise<void>;
+  initializeDashboard: (authUser?: User | null) => Promise<void>;
   refreshData: () => Promise<void>;
   reset: () => void;
 }
@@ -41,6 +44,7 @@ const initialState: DashboardState = {
   user: null,
   metrics: [],
   transactions: [],
+  analytics: null,
   isLoading: false,
   error: null,
 };
@@ -99,6 +103,10 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
     set({ transactions });
   },
 
+  setAnalytics: (analytics: UserDashboardAnalytics | null) => {
+    set({ analytics });
+  },
+
   addTransaction: (transaction: Transaction) => {
     const currentTransactions = get().transactions;
     set({
@@ -116,21 +124,17 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   },
 
   // Combined actions
-  initializeDashboard: async () => {
-    const { setLoading, setError, setUser, setMetrics, setTransactions } =
+  initializeDashboard: async (authUser?: User | null) => {
+    const { setLoading, setError, setUser, setMetrics, setTransactions, setAnalytics } =
       get();
 
     try {
       setLoading(true);
       setError(null);
 
-      // Get real user data from auth store instead of mock data
-      const { useAuthStore } = await import("@/store/useAuthStore");
-      const authUser = useAuthStore.getState().user;
-
       if (authUser) {
         const dashboardUser: DashboardUser = {
-          id: authUser.id,  
+          id: authUser.id,
           name: authUser.username || authUser.email?.split("@")[0] || "User",
           email: authUser.email || "",
           avatar: "", // No avatar in API yet, will be added later
@@ -139,83 +143,59 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
         setUser(dashboardUser);
       }
 
-      // Mock metrics
-      const mockMetrics: DashboardMetric[] = [
+      // Fetch analytics from backend
+      const analyticsRes = await DashboardApi.getAnalytics();
+      if (!analyticsRes.success || !analyticsRes.data) {
+        throw new Error(analyticsRes.message || "Failed to fetch analytics");
+      }
+
+      const analytics: UserDashboardAnalytics = analyticsRes.data;
+      
+      // Store the full analytics data
+      setAnalytics(analytics);
+
+      // Map today's metrics
+      const metrics: DashboardMetric[] = [
         {
           id: "revenue",
           title: "Today's Revenue",
-          value: "$15,000,000",
-          change: {
-            percentage: 12.5,
-            direction: "up",
-            period: "from yesterday",
-          },
-          trend: [100, 120, 110, 140, 130, 160, 150],
+          value: `$${analytics.today.revenue.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`,
+          trend: analytics.salesAnalytics.daily.slice(-7).map((p) => p.revenue),
         },
         {
           id: "orders",
           title: "Today's Orders",
-          value: "1,234",
-          change: {
-            percentage: 8.2,
-            direction: "up",
-            period: "from yesterday",
-          },
-          trend: [80, 90, 85, 100, 95, 110, 105],
+          value: analytics.today.orders,
+          trend: analytics.salesAnalytics.daily.slice(-7).map((p) => p.orders),
         },
         {
           id: "visitors",
           title: "Today's Visitors",
-          value: "45,678",
-          change: {
-            percentage: 3.1,
-            direction: "down",
-            period: "from yesterday",
-          },
-          trend: [200, 190, 195, 180, 185, 175, 170],
+          value:
+            analytics.today.visitors == null ? "N/A" : analytics.today.visitors,
+
+          trend: [],
         },
       ];
 
-      // Mock transactions
-      const mockTransactions: Transaction[] = [
-        {
-          id: "1",
-          userWallet: "0x742d35cc6628c532",
-          from: "0x742d35cc6628c532",
-          to: "0x8ba1f109551bd432",
-          amount: 2500,
-          currency: "USDT",
-          timestamp: new Date(),
-          status: "completed",
-          type: "transfer",
-        },
-        {
-          id: "2",
-          userWallet: "0x123abc456def789",
-          from: "0x123abc456def789",
-          to: "0x987fed654cba321",
-          amount: 1000,
-          currency: "USDT",
-          timestamp: new Date(Date.now() - 3600000),
-          status: "completed",
-          type: "deposit",
-        },
-        {
-          id: "3",
-          userWallet: "0x456def789abc123",
-          from: "0x456def789abc123",
-          to: "0x321cba654fed987",
-          amount: 800,
-          currency: "USDT",
-          timestamp: new Date(Date.now() - 7200000),
-          status: "pending",
-          type: "withdrawal",
-        },
-      ];
+      // Map backend transactions (purchases) into existing Transaction shape
+      const transactions: Transaction[] = analytics.transactions.map((t) => ({
+        id: t.id,
+        from: t.buyer?.id || "buyer",
+        to: t.course?.id || "course",
+        amount: t.price,
+        currency: t.token.split(":")[0] || "USD",
+        timestamp: new Date(t.purchasedAt),
+        status: "completed",
+        type: "transfer",
+        userWallet: t.buyer?.username || t.buyer?.id || "user",
+      }));
 
-      // Don't set mockUser anymore since we're using real user data above
-      setMetrics(mockMetrics);
-      setTransactions(mockTransactions);
+      setMetrics(metrics);
+      setTransactions(transactions);
     } catch (error) {
       const errorMessage =
         error instanceof Error
@@ -229,17 +209,24 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   },
 
   refreshData: async () => {
-    const { setLoading, setError } = get();
+    const { setLoading, setError, initializeDashboard, user } = get();
 
     try {
       setLoading(true);
       setError(null);
 
-      // Simulate data refresh
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      // In a real app, you would refetch data here
-      console.log("Dashboard data refreshed");
+      if (user) {
+        const refreshUser: User = {
+          id: user.id,
+          username: user.name,
+          email: user.email,
+          createdAt: new Date().toISOString(),
+          walletAddress: user.walletAddress,
+        };
+        await initializeDashboard(refreshUser);
+      } else {
+        await initializeDashboard(undefined);
+      }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to refresh data";
