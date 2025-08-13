@@ -5,41 +5,41 @@ import Link from 'next/link';
 const skillsData = [
   {
     icon: '/images/landing/icon0.png',
-    title: 'Web Development',
-    subtitle: 'Learn modern web technologies'
+    title: 'Find the best contents',
+    subtitle: 'We make a varied selection so you can find what you are looking for.'
   },
   {
     icon: '/images/landing/icon1.png',
-    title: 'Mobile Apps',
-    subtitle: 'Build native and cross-platform apps'
+    title: 'Pay with Crypto, Rule the Game',
+    subtitle: 'Fast, secure, borderless transactions your way.'
   },
   {
     icon: '/images/landing/icon2.png',
-    title: 'Data Science',
-    subtitle: 'Analyze data and build ML models'
+    title: 'You are protected',
+    subtitle: 'Not what you expected? Your crypto stays safe — easy refund.'
   },
   {
     icon: '/images/landing/icon3.png',
-    title: 'UI/UX Design',
-    subtitle: 'Create beautiful user experiences'
+    title: 'Refund 72 Hours',
+    subtitle: 'Changed your mind? Get your crypto back, hassle-free.'
   }
 ];
 
 const sellCardsData = [
   {
     icon: '/images/landing/icon11.png',
-    title: 'Easy Setup',
-    subtitle: 'Quick and simple product setup'
+    title: 'Choose the best format for the your product',
+    subtitle: 'Share your content in courses online, e-books, podcasts, communities and much more!'
   },
   {
     icon: '/images/landing/icon12.png',
-    title: 'Global Reach',
-    subtitle: 'Sell to customers worldwide'
+    title: 'Reach your audience',
+    subtitle: 'Count on thousands of people promoting your product in exchange for commissions!'
   },
   {
     icon: '/images/landing/icon13.png',
-    title: 'Secure Payments',
-    subtitle: 'Safe and encrypted transactions'
+    title: 'Increase your sales',
+    subtitle: 'Access reports, track your numbers and improve your strategies to sell more and more!'
   }
 ];
 
@@ -103,13 +103,13 @@ const Skills = () => {
               {/* Text Content */}
               <div className="text-center">
                 <h3 
-                  className="text-white font-inter font-bold text-[20px] leading-[18px] mb-2"
+                  className="text-white font-inter font-bold text-[18px] leading-[18px] mb-2"
                   style={{ fontWeight: 700 }}
                 >
                   {skill.title}
                 </h3>
                 <p 
-                  className="text-white font-inter font-normal text-[15px] leading-[15px]"
+                  className="text-white font-inter font-normal text-[13px] leading-[15px]"
                   style={{ fontWeight: 400 }}
                 >
                   {skill.subtitle}
@@ -122,7 +122,7 @@ const Skills = () => {
 
       {/* All Products Button */}
       <Link 
-        href="/all-products"
+        href="/marketplace"
         className="inline-block bg-white hover:bg-gray-100 text-black font-poppins font-semibold text-lg px-8 py-4 rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
       >
         All Products {"->"}
@@ -179,13 +179,13 @@ const Skills = () => {
                 {/* Text Content - Left Aligned */}
                 <div className="text-left">
                   <h3 
-                    className="text-white font-inter font-bold text-[20px] leading-[18px] mb-2"
+                    className="text-white font-inter font-bold text-[18px] leading-[18px] mb-2"
                     style={{ fontWeight: 700 }}
                   >
                     {card.title}
                   </h3>
                   <p 
-                    className="text-white font-inter font-normal text-[15px] leading-[15px]"
+                    className="text-white font-inter font-normal text-[13px] leading-[15px]"
                     style={{ fontWeight: 400 }}
                   >
                     {card.subtitle}
