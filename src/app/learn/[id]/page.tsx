@@ -158,10 +158,9 @@ const LearningPage: React.FC = () => {
           await new Promise((resolve) => setTimeout(resolve, 200));
         }
 
-        const modulesResponse = await CourseAPI.getModulesForChapter(
-          chapter.id,
-          courseId
-        );
+        const modulesResponse = await CourseAPI.getModules(courseId, {
+          chapterId: chapter.id,
+        });
 
         console.log(
           `📚 [MODULES] Modules response for chapter ${chapter.id}:`,
@@ -277,41 +276,68 @@ const LearningPage: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      console.log("🔐 [LEARN] ============= STARTING ACCESS CHECK =============");
+      console.log(
+        "🔐 [LEARN] ============= STARTING ACCESS CHECK ============="
+      );
       console.log("🔐 [LEARN] Course ID:", courseId);
       console.log("🔐 [LEARN] Timestamp:", new Date().toISOString());
       console.log("🔐 [LEARN] User Agent:", navigator.userAgent);
-      
+
       // Get current user info for debugging
-      const currentUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-      console.log("🔐 [LEARN] Current user data:", currentUser ? JSON.parse(currentUser) : 'No user data found');
-      
+      const currentUser =
+        localStorage.getItem("user") || sessionStorage.getItem("user");
+      console.log(
+        "🔐 [LEARN] Current user data:",
+        currentUser ? JSON.parse(currentUser) : "No user data found"
+      );
+
       // Get current token for debugging
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
       console.log("🔐 [LEARN] Token present:", !!token);
       console.log("🔐 [LEARN] Token length:", token ? token.length : 0);
-      console.log("🔐 [LEARN] Token preview:", token ? `${token.substring(0, 20)}...` : 'No token');
+      console.log(
+        "🔐 [LEARN] Token preview:",
+        token ? `${token.substring(0, 20)}...` : "No token"
+      );
 
       // Check if user has access to this course
       console.log("🔐 [LEARN] Making access check API call...");
-      console.log("🔐 [LEARN] API endpoint: /api/courses/purchases/access/" + courseId);
-      
+      console.log(
+        "🔐 [LEARN] API endpoint: /api/courses/purchases/access/" + courseId
+      );
+
       const accessResponse = await CourseAPI.checkCourseAccess(courseId);
 
-      console.log("🔐 [LEARN] ============= ACCESS CHECK RESPONSE =============");
+      console.log(
+        "🔐 [LEARN] ============= ACCESS CHECK RESPONSE ============="
+      );
       console.log("🔐 [LEARN] Full response object:", accessResponse);
       console.log("🔐 [LEARN] Response type:", typeof accessResponse);
-      console.log("🔐 [LEARN] Response keys:", Object.keys(accessResponse || {}));
-      console.log("🔐 [LEARN] Access response success:", accessResponse?.success);
-      console.log("🔐 [LEARN] Access response message:", accessResponse?.message);
+      console.log(
+        "🔐 [LEARN] Response keys:",
+        Object.keys(accessResponse || {})
+      );
+      console.log(
+        "🔐 [LEARN] Access response success:",
+        accessResponse?.success
+      );
+      console.log(
+        "🔐 [LEARN] Access response message:",
+        accessResponse?.message
+      );
       console.log("🔐 [LEARN] Access response data:", accessResponse?.data);
-      console.log("🔐 [LEARN] Raw JSON:", JSON.stringify(accessResponse, null, 2));
-      
+      console.log(
+        "🔐 [LEARN] Raw JSON:",
+        JSON.stringify(accessResponse, null, 2)
+      );
+
       // Handle nested response structure - the API returns data.data.hasAccess
       const responseData = accessResponse?.data?.data || accessResponse?.data;
       const hasAccessValue = responseData?.hasAccess;
-      const isSuccess = accessResponse?.data?.success || accessResponse?.success;
-      
+      const isSuccess =
+        accessResponse?.data?.success || accessResponse?.success;
+
       console.log("🔐 [LEARN] ============= PARSED ACCESS DATA =============");
       console.log("🔐 [LEARN] Response data extracted:", responseData);
       console.log("🔐 [LEARN] Is success:", isSuccess);
@@ -324,23 +350,40 @@ const LearningPage: React.FC = () => {
         setHasAccess(true);
 
         // Load course data with chapters and modules
-        console.log("📚 [LEARN] ============= LOADING COURSE DATA =============");
+        console.log(
+          "📚 [LEARN] ============= LOADING COURSE DATA ============="
+        );
         console.log("📚 [LEARN] Making course API call...");
         console.log("📚 [LEARN] API endpoint: /api/courses/" + courseId);
-        
+
         const courseResponse = await CourseAPI.getCourse(courseId);
 
         console.log("📚 [LEARN] ============= COURSE RESPONSE =============");
         console.log("📚 [LEARN] Full course response:", courseResponse);
         console.log("📚 [LEARN] Course response type:", typeof courseResponse);
-        console.log("📚 [LEARN] Course response keys:", Object.keys(courseResponse || {}));
-        console.log("📚 [LEARN] Course response success:", courseResponse?.success);
-        console.log("📚 [LEARN] Course response message:", courseResponse?.message);
+        console.log(
+          "📚 [LEARN] Course response keys:",
+          Object.keys(courseResponse || {})
+        );
+        console.log(
+          "📚 [LEARN] Course response success:",
+          courseResponse?.success
+        );
+        console.log(
+          "📚 [LEARN] Course response message:",
+          courseResponse?.message
+        );
         console.log("📚 [LEARN] Course response data:", courseResponse?.data);
-        console.log("📚 [LEARN] Raw course JSON:", JSON.stringify(courseResponse, null, 2));
+        console.log(
+          "📚 [LEARN] Raw course JSON:",
+          JSON.stringify(courseResponse, null, 2)
+        );
 
         if (courseResponse.success) {
-          const courseData = courseResponse.data?.data?.course || courseResponse.data?.course || courseResponse.data;
+          const courseData =
+            courseResponse.data?.data?.course ||
+            courseResponse.data?.course ||
+            courseResponse.data;
           console.log(
             "📚 [LEARN] Course data extracted:",
             JSON.stringify(courseData, null, 2)
@@ -426,42 +469,64 @@ const LearningPage: React.FC = () => {
             );
           }
         } else {
-          console.error("❌ [LEARN] Failed to load course:", courseResponse.message);
+          console.error(
+            "❌ [LEARN] Failed to load course:",
+            courseResponse.message
+          );
           throw new Error(courseResponse.message || "Failed to load course");
         }
       } else {
         console.log("🚫 [LEARN] ============= ACCESS DENIED =============");
         console.log("🚫 [LEARN] Access denied details:");
         console.log("🚫 [LEARN] Response success:", isSuccess);
-        console.log("🚫 [LEARN] Response message:", accessResponse?.data?.message || accessResponse?.message);
+        console.log(
+          "🚫 [LEARN] Response message:",
+          accessResponse?.data?.message || accessResponse?.message
+        );
         console.log("🚫 [LEARN] Response data:", responseData);
         console.log("🚫 [LEARN] Has access value:", hasAccessValue);
-        console.log("🚫 [LEARN] Full response:", JSON.stringify(accessResponse, null, 2));
-        
+        console.log(
+          "🚫 [LEARN] Full response:",
+          JSON.stringify(accessResponse, null, 2)
+        );
+
         // Check if it's an authentication issue
-        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const token =
+          localStorage.getItem("token") || sessionStorage.getItem("token");
         if (!token) {
           console.log("🚫 [LEARN] No authentication token found!");
           setError("Authentication required. Please log in again.");
         } else if (hasAccessValue === false) {
-          console.log("🚫 [LEARN] User authenticated but course not purchased or access denied");
-          setError("You do not have access to this course. Please purchase it first.");
+          console.log(
+            "🚫 [LEARN] User authenticated but course not purchased or access denied"
+          );
+          setError(
+            "You do not have access to this course. Please purchase it first."
+          );
         } else if (!isSuccess) {
           console.log("🚫 [LEARN] API call failed");
-          setError(accessResponse?.data?.message || accessResponse?.message || "Failed to check course access.");
+          setError(
+            accessResponse?.data?.message ||
+              accessResponse?.message ||
+              "Failed to check course access."
+          );
         } else {
           console.log("🚫 [LEARN] Unknown access issue. Possible reasons:");
           console.log("🚫 [LEARN] 1. Course not purchased");
           console.log("🚫 [LEARN] 2. Token expired");
           console.log("🚫 [LEARN] 3. Server authentication issue");
           console.log("🚫 [LEARN] 4. API endpoint changed");
-          setError("Unable to verify course access. Please try again or contact support.");
+          setError(
+            "Unable to verify course access. Please try again or contact support."
+          );
         }
-        
+
         setHasAccess(false);
       }
     } catch (err: any) {
-      console.error("❌ [LEARN] ============= EXCEPTION OCCURRED =============");
+      console.error(
+        "❌ [LEARN] ============= EXCEPTION OCCURRED ============="
+      );
       console.error("❌ [LEARN] Exception in checkAccessAndLoadCourse:", err);
       console.error("❌ [LEARN] Error type:", typeof err);
       console.error("❌ [LEARN] Error constructor:", err?.constructor?.name);
@@ -470,16 +535,23 @@ const LearningPage: React.FC = () => {
       console.error("❌ [LEARN] Error response:", err?.response);
       console.error("❌ [LEARN] Error response data:", err?.response?.data);
       console.error("❌ [LEARN] Error response status:", err?.response?.status);
-      console.error("❌ [LEARN] Error response headers:", err?.response?.headers);
-      console.error("❌ [LEARN] Full error object:", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
-      
+      console.error(
+        "❌ [LEARN] Error response headers:",
+        err?.response?.headers
+      );
+      console.error(
+        "❌ [LEARN] Full error object:",
+        JSON.stringify(err, Object.getOwnPropertyNames(err), 2)
+      );
+
       let errorMessage = "Failed to load course content";
-      
+
       if (err?.response?.status === 401) {
         errorMessage = "Authentication failed. Please log in again.";
         console.error("❌ [LEARN] 401 Unauthorized - Token may be expired");
       } else if (err?.response?.status === 403) {
-        errorMessage = "Access forbidden. You may not have purchased this course.";
+        errorMessage =
+          "Access forbidden. You may not have purchased this course.";
         console.error("❌ [LEARN] 403 Forbidden - Access denied");
       } else if (err?.response?.status === 404) {
         errorMessage = "Course not found.";
@@ -490,7 +562,7 @@ const LearningPage: React.FC = () => {
       } else if (err?.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
 
       addToast({
@@ -499,7 +571,9 @@ const LearningPage: React.FC = () => {
       });
     } finally {
       setLoading(false);
-      console.log("🔐 [LEARN] ============= ACCESS CHECK COMPLETED =============");
+      console.log(
+        "🔐 [LEARN] ============= ACCESS CHECK COMPLETED ============="
+      );
       console.log("🔐 [LEARN] Final state - Loading:", false);
       console.log("🔐 [LEARN] Final state - Has Access:", hasAccess);
       console.log("🔐 [LEARN] Final state - Error:", error);
@@ -526,14 +600,17 @@ const LearningPage: React.FC = () => {
       // Find the chapter that contains this module
       let chapterId = selectedModule.chapterId;
       if (!chapterId && course) {
-        const chapter = course.chapters.find(ch => 
-          ch.modules.some(m => m.id === selectedModule.id)
+        const chapter = course.chapters.find((ch) =>
+          ch.modules.some((m) => m.id === selectedModule.id)
         );
         chapterId = chapter?.id;
       }
 
       if (!chapterId) {
-        console.error("❌ [MODULE] Could not find chapter ID for module:", selectedModule.id);
+        console.error(
+          "❌ [MODULE] Could not find chapter ID for module:",
+          selectedModule.id
+        );
         throw new Error("Could not find chapter for this module");
       }
 
@@ -560,6 +637,7 @@ const LearningPage: React.FC = () => {
         // Transform the response to match our interface
         const transformedContent = {
           videoUrl: response.data?.videoUrl,
+          documentUrl: response.data?.documentUrl,
           attachments: response.data?.attachments?.map(
             (att: {
               name: string;
