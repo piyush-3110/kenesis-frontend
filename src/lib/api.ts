@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * API Layer for Kenesis Platform
  * Handles all authentication and API calls with proper security and error handling
@@ -581,41 +582,62 @@ class ApiClient {
         `🚀 Making FormData POST request to: ${this.baseURL}${endpoint}`
       );
 
-      // Build headers (don't set Content-Type for FormData - browser will set it with boundary)
-      const headers: Record<string, string> = {};
-
-      // Add Authorization header if access token is available
-      const accessToken = TokenManager.getAccessToken();
-      if (accessToken) {
-        headers["Authorization"] = `Bearer ${accessToken}`;
-        console.log("🔑 Added Authorization header");
-      } else {
-        console.log(
-          "🔓 No access token found, proceeding without Authorization header"
-        );
-      }
-
-      console.log(`📡 Final headers:`, headers);
+      // Don't set Content-Type for FormData - axios handles the boundary.
       console.log("📤 FormData contents:", Array.from(formData.entries()));
 
-      const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: "POST",
-        headers,
-        body: formData,
-      });
-
-      console.log(`📥 Response status: ${response.status}`);
-      console.log(
-        "📋 Response headers:",
-        Object.fromEntries(response.headers.entries())
+      const res = await http.post(`${this.baseURL}${endpoint}`, formData);
+      // If backend uses ApiEnvelope shape, normalize it. Otherwise, pass through.
+      const data = res.data;
+      if (typeof data?.success === "boolean") {
+        return data as ApiResponse<T>;
+      }
+      // Fallback: assume success with data
+      return { success: true, data } as ApiResponse<T>;
+    } catch (err: any) {
+      // Prefer backend-provided error message
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      
+      console.error(
+        `❌ POST FormData ${endpoint} failed:`,
+        status,
+        data || err
       );
 
-      return this.handleResponse<T>(response);
-    } catch (error) {
-      console.error(`Network Error on ${endpoint}:`, error);
-      return {
-        success: false,
-        message: "Network error. Please check your connection and try again.",
+      // More specific error handling based on status code and response
+      let message: string;
+      
+      if (status === 0 || !status) {
+        message = "Network error. Please check your connection and try again.";
+      } else if (status === 401) {
+        message = data?.message || "Authentication required. Please log in again.";
+      } else if (status === 403) {
+        message = data?.message || "Access denied. You don't have permission to perform this action.";
+      } else if (status === 404) {
+        message = data?.message || "Resource not found.";
+      } else if (status === 409) {
+        message = data?.message || "Conflict. This resource already exists.";
+      } else if (status === 422 || status === 400) {
+        // Validation errors - prefer field-specific messages
+        if (data?.errors && Array.isArray(data.errors)) {
+          message = data.errors.map((e: any) => `${e.field}: ${e.message}`).join(", ");
+        } else {
+          message = data?.message || "Validation error. Please check your input.";
+        }
+      } else if (status === 429) {
+        message = data?.message || "Too many requests. Please wait and try again.";
+      } else if (status >= 500) {
+        message = data?.message || "Server error. Please try again later.";
+      } else {
+        message = data?.message || `Request failed (${status}).`;
+      }
+
+      const errors = data?.errors;
+      return { 
+        success: false, 
+        message, 
+        errors, 
+        retryAfter: data?.retryAfter 
       };
     }
   }
@@ -1150,31 +1172,42 @@ export const CourseAPI = {
     console.log("📚 [API] Request params:", JSON.stringify(params, null, 2));
     console.log("📚 [API] API endpoint: /api/courses/my-courses");
 
-    const response = (await apiClient.getWithQuery(
-      "/api/courses/my-courses",
-      params
-    )) as ApiResponse<MyCoursesResponse>;
+    try {
+      const response = await http.get("/api/courses/my-courses", {
+        params,
+      });
 
-    console.log(
-      "📚 [API] getMyCourses response received:",
-      JSON.stringify(response, null, 2)
-    );
-
-    if (response.success) {
-      console.log("✅ [API] My courses fetched successfully");
       console.log(
-        "✅ [API] Courses data:",
-        JSON.stringify(response.data, null, 2)
-      );
-    } else {
-      console.error("❌ [API] Failed to fetch my courses:", response.message);
-      console.error(
-        "❌ [API] Full error response:",
+        "📚 [API] getMyCourses response received:",
         JSON.stringify(response, null, 2)
       );
-    }
 
-    return response;
+      // Handle the response properly - it should be ApiResponse<MyCoursesResponse>
+      const apiResponse = response.data as ApiResponse<MyCoursesResponse>;
+
+      if (apiResponse.success) {
+        console.log("✅ [API] My courses fetched successfully");
+        console.log(
+          "✅ [API] Courses data:",
+          JSON.stringify(apiResponse.data, null, 2)
+        );
+      } else {
+        console.error("❌ [API] Failed to fetch my courses:", apiResponse.message);
+        console.error(
+          "❌ [API] Full error response:",
+          JSON.stringify(apiResponse, null, 2)
+        );
+      }
+
+      return apiResponse;
+    } catch (error: any) {
+      console.error("❌ [API] Network error in getMyCourses:", error);
+      return {
+        success: false,
+        message: error?.response?.data?.message || "Network error. Please check your connection and try again.",
+        errors: error?.response?.data?.errors,
+      };
+    }
   },
 
   /**
@@ -1193,21 +1226,21 @@ export const CourseAPI = {
       JSON.stringify(response, null, 2)
     );
 
-    if (response.success) {
+    if (response.data.success) {
       console.log("✅ [API] Course fetched successfully");
       console.log(
         "✅ [API] Course data:",
         JSON.stringify(response.data, null, 2)
       );
     } else {
-      console.error("❌ [API] Failed to fetch course:", response.message);
+      console.error("❌ [API] Failed to fetch course:", response.data.message);
       console.error(
         "❌ [API] Full error response:",
         JSON.stringify(response, null, 2)
       );
     }
 
-    return response;
+    return response.data;
   },
 
   /**
@@ -1451,24 +1484,24 @@ export const CourseAPI = {
       JSON.stringify(response, null, 2)
     );
 
-    if (response.success) {
+    if (response.data.success) {
       console.log("✅ [API] Module content fetched successfully");
       console.log(
         "✅ [API] Module content data:",
-        JSON.stringify(response.data, null, 2)
+        JSON.stringify(response.data.data, null, 2)
       );
     } else {
       console.error(
         "❌ [API] Failed to fetch module content:",
-        response.message
+        response.data.message
       );
       console.error(
         "❌ [API] Full error response:",
-        JSON.stringify(response, null, 2)
+        JSON.stringify(response.data, null, 2)
       );
     }
 
-    return response as any;
+    return response.data;
   },
 
   /**
@@ -1591,39 +1624,24 @@ export const CourseAPI = {
       JSON.stringify(response, null, 2)
     );
 
-    if (response.success) {
+    if (response.data.success) {
       console.log("✅ [API] Course access checked successfully");
       console.log(
         "✅ [API] Access data:",
-        JSON.stringify(response.data, null, 2)
+        JSON.stringify(response.data.data, null, 2)
       );
     } else {
       console.error(
         "❌ [API] Failed to check course access:",
-        response.message
+        response.data.message
       );
       console.error(
         "❌ [API] Full error response:",
-        JSON.stringify(response, null, 2)
+        JSON.stringify(response.data, null, 2)
       );
     }
 
-    return response;
-  },
-};
-
-/**
- * User API
- * All user-related API calls
- */
-export const UserAPI = {
-  /**
-   * Get current user profile
-   * GET /api/users/profile
-   * Requires Authorization header
-   */
-  getProfile: async (): Promise<ApiResponse<{ user: ApiUser }>> => {
-    return http.get<{ user: ApiUser }>("/api/users/profile");
+    return response.data;
   },
 };
 
@@ -1701,7 +1719,26 @@ export const createCourseFormData = (
   formData.append("level", courseData.level);
   formData.append("language", courseData.language);
   formData.append("price", courseData.price.toString());
-  formData.append("tokenToPayWith", courseData.tokenToPayWith);
+  // tokenToPayWith can be provided as a JSON string (legacy) or as an array of strings
+  try {
+    const parsed = JSON.parse(courseData.tokenToPayWith);
+    if (Array.isArray(parsed)) {
+      parsed.forEach((t) => formData.append("tokenToPayWith", String(t)));
+    } else {
+      // Fallback to raw string if not an array
+      formData.append("tokenToPayWith", courseData.tokenToPayWith);
+    }
+  } catch {
+    // If it's not JSON, assume already a single token string or comma-separated
+    // Prefer splitting by comma into multiple entries if applicable
+    const maybeMany = courseData.tokenToPayWith.includes(",")
+      ? courseData.tokenToPayWith
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [courseData.tokenToPayWith];
+    maybeMany.forEach((t) => formData.append("tokenToPayWith", t));
+  }
   formData.append("accessDuration", courseData.accessDuration.toString());
   formData.append(
     "affiliatePercentage",
@@ -1749,7 +1786,7 @@ export const createModuleFormData = (
     formData.append("mainFile", moduleData.mainFile);
   }
   if (moduleData.attachments) {
-    moduleData.attachments.forEach((attachment, index) => {
+    moduleData.attachments.forEach((attachment) => {
       formData.append("attachments", attachment);
     });
   }
