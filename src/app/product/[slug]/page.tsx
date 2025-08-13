@@ -15,7 +15,7 @@ import {
   ProductPageError,
   CourseChapters,
   CourseDetails,
-  useProductActions,
+  // useProductActions,
 } from "../components";
 
 const ProductDetailPage: React.FC = () => {
@@ -35,7 +35,7 @@ const ProductDetailPage: React.FC = () => {
   } = useCourseAccess(product?.id || null, !!product?.id);
 
   // Custom hooks for business logic
-  const productActions = useProductActions(refetch);
+  // const productActions = useProductActions(refetch);
 
   // Loading state - show loading if either course or access is loading
   if (loading || (product?.id && accessLoading)) {
@@ -167,10 +167,8 @@ const ProductDetailPage: React.FC = () => {
             },
           }}
           userCanReview={userCanReview}
-          onSubmitReview={(rating, comment) =>
-            productActions.handleSubmitReview(product.id, rating, comment)
-          }
-          onLikeReview={productActions.handleLikeReview}
+          onSubmitReview={() => null}
+          onLikeReview={() => null}
         />
       </div>
     </div>

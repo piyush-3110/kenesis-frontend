@@ -11,7 +11,7 @@ export { default as CourseChapters } from "./CourseChapters";
 export { default as CourseDetails } from "./CourseDetails";
 
 // Hooks
-export { useProductActions } from "../hooks/useProductActions";
+// export { useProductActions } from "../hooks/useProductActions";
 
 // Types
-export type { UseProductActionsReturn } from "../hooks/useProductActions";
+// export type { UseProductActionsReturn } from "../hooks/useProductActions";
