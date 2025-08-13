@@ -49,7 +49,10 @@ const getTokenColors = (symbol: string) => {
 };
 
 // TokenIcon: tries to load /images/tokens/{symbol}.svg and falls back to a gradient badge
-const TokenIcon: React.FC<{ symbol: string; className?: string }> = ({ symbol, className = "" }) => {
+const TokenIcon: React.FC<{ symbol: string; className?: string }> = ({
+  symbol,
+  className = "",
+}) => {
   const [failed, setFailed] = useState(false);
   const src = `/images/tokens/${symbol.toLowerCase()}.svg`;
   if (!failed) {
