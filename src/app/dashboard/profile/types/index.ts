@@ -24,7 +24,7 @@ export interface InstructorStats {
   totalEarnings: number;
   averageRating: number;
   totalReviews: number;
-  completionRate: number;
+  completionRate: number | null;
 }
 
 export interface Course {
