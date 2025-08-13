@@ -525,14 +525,18 @@ function BlockchainPurchaseSectionContent({
       <div className="space-y-3">{renderPurchaseButton()}</div>
     </div>
   );
-};
+}
 
-const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = (props) => {
+const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = (
+  props
+) => {
   return (
     <Suspense
       fallback={
         <div className={`space-y-4 ${props.className}`}>
-          <div className="text-white text-4xl font-bold">${props.price.toFixed(2)}</div>
+          <div className="text-white text-4xl font-bold">
+            ${props.price.toFixed(2)}
+          </div>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-600/30">
             <Award size={20} />
             <span className="font-medium">NFT Certificate Included</span>
