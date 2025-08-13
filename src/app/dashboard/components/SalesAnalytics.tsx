@@ -232,34 +232,23 @@ const SalesChart: React.FC<{
  * Sales analytics card with time period tabs and interactive line chart
  */
 const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({ className }) => {
-  const [activeTab, setActiveTab] = useState<"Daily" | "Weekly" | "Monthly" | "Yearly">("Monthly");
+  const [activeTab, setActiveTab] = useState<"daily" | "weekly" | "monthly" | "yearly">("daily");
   const [showRevenue, setShowRevenue] = useState(true);
-  const { metrics, isLoading } = useDashboardStore();
+  const { analytics, isLoading } = useDashboardStore();
 
-  const tabs: Array<{ key: "Daily" | "Weekly" | "Monthly" | "Yearly"; label: string }> = [
-    { key: "Daily", label: "Daily" },
-    { key: "Weekly", label: "Weekly" },
-    { key: "Monthly", label: "Monthly" },
-    { key: "Yearly", label: "Yearly" },
+  const tabs: Array<{ key: "daily" | "weekly" | "monthly" | "yearly"; label: string }> = [
+    { key: "daily", label: "Daily" },
+    { key: "weekly", label: "Weekly" },
+    { key: "monthly", label: "Monthly" },
+    { key: "yearly", label: "Yearly" },
   ];
 
-  // For now, use the trend data from metrics until we add full analytics to store
+  // Get data based on active tab from analytics
   const salesData = useMemo(() => {
-    const revenueMetric = metrics.find((m) => m.id === "revenue");
-    const ordersMetric = metrics.find((m) => m.id === "orders");
+    if (!analytics?.salesAnalytics) return [];
     
-    if (revenueMetric?.trend && ordersMetric?.trend) {
-      // Create synthetic data points from trend data
-      return revenueMetric.trend.map((revenue, index) => ({
-        label: `Day ${index + 1}`,
-        revenue,
-        orders: ordersMetric.trend?.[index] || 0,
-      }));
-    }
-    
-    // Fallback to empty array
-    return [] as TimeSeriesPoint[];
-  }, [metrics]);
+    return analytics.salesAnalytics[activeTab] || [];
+  }, [analytics, activeTab]);
 
   const totalRevenue = useMemo(() => {
     return salesData.reduce((sum: number, point: TimeSeriesPoint) => sum + point.revenue, 0);

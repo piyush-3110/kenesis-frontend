@@ -5,7 +5,6 @@ import { RequireAuth } from "@/features/auth/RequireAuth";
 import DashboardLayout from "./components/DashboardLayout";
 import KPICard from "./components/KPICard";
 import SalesAnalytics from "./components/SalesAnalytics";
-import ReturnsChart from "./components/ReturnsChart";
 import Transactions from "./components/Transactions";
 import { useDashboardStore } from "./store/useDashboardStore";
 
@@ -55,13 +54,12 @@ const DashboardPage: React.FC = () => {
             ))}
           </div>
 
-          {/* Charts Row: Sales Analytics and Returns side by side */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+          {/* Charts Row: Sales Analytics full width */}
+          <div className="w-full">
             <SalesAnalytics />
-            <ReturnsChart />
           </div>
 
-          {/* Transactions: Full width below charts */}
+          {/* Transactions: Full width below analytics */}
           <div className="w-full">
             <Transactions />
           </div>

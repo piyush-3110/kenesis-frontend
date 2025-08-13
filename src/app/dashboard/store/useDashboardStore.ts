@@ -22,6 +22,7 @@ interface DashboardActions {
   // Data actions
   setMetrics: (metrics: DashboardMetric[]) => void;
   setTransactions: (transactions: Transaction[]) => void;
+  setAnalytics: (analytics: UserDashboardAnalytics | null) => void;
   addTransaction: (transaction: Transaction) => void;
 
   // UI state actions
@@ -43,6 +44,7 @@ const initialState: DashboardState = {
   user: null,
   metrics: [],
   transactions: [],
+  analytics: null,
   isLoading: false,
   error: null,
 };
@@ -101,6 +103,10 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
     set({ transactions });
   },
 
+  setAnalytics: (analytics: UserDashboardAnalytics | null) => {
+    set({ analytics });
+  },
+
   addTransaction: (transaction: Transaction) => {
     const currentTransactions = get().transactions;
     set({
@@ -119,7 +125,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
 
   // Combined actions
   initializeDashboard: async (authUser?: User | null) => {
-    const { setLoading, setError, setUser, setMetrics, setTransactions } =
+    const { setLoading, setError, setUser, setMetrics, setTransactions, setAnalytics } =
       get();
 
     try {
@@ -144,6 +150,9 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
       }
 
       const analytics: UserDashboardAnalytics = analyticsRes.data;
+      
+      // Store the full analytics data
+      setAnalytics(analytics);
 
       // Map today's metrics
       const metrics: DashboardMetric[] = [

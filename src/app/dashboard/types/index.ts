@@ -3,6 +3,8 @@
  * Defines all TypeScript interfaces and types for the dashboard
  */
 
+import { UserDashboardAnalytics } from "@/lib/api/dashboardApi";
+
 export interface DashboardMenuItem {
   id: string;
   label: string;
@@ -59,6 +61,7 @@ export interface DashboardState {
   user: DashboardUser | null;
   metrics: DashboardMetric[];
   transactions: Transaction[];
+  analytics: UserDashboardAnalytics | null; // Add analytics data
   isLoading: boolean;
   error: string | null;
 }
