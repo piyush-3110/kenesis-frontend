@@ -45,7 +45,7 @@ export const usePurchaseFlow = (
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      router.push("/auth");
+      router.push("/auth/login");
       return;
     }
 

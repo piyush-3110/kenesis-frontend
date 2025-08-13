@@ -45,7 +45,7 @@ const ProductPageError: React.FC<ProductPageErrorProps> = ({
             </Link>
             {isAuthError ? (
               <Link
-                href="/auth"
+                href="/auth/login"
                 className="text-green-400 hover:text-green-300 transition-colors"
               >
                 Log In

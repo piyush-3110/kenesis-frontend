@@ -9,6 +9,7 @@ export interface DashboardMenuItem {
   icon?: React.ComponentType<{ className?: string }>;
   href: string;
   isActive?: boolean;
+  requiresRole?: string;
   badge?: {
     count: number;
     variant?: "primary" | "secondary" | "danger";

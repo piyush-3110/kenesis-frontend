@@ -39,8 +39,15 @@ function NavLinks({
 }: {
   onDashboard: (e: React.MouseEvent) => void;
 }) {
+  const [isClient, setIsClient] = useState(false);
   const { isAuthenticated } = useAuth();
   const { data: user } = useCurrentUser();
+
+  // Only run on client to avoid hydration mismatches
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <div className="hidden md:flex items-center space-x-8">
       <Link
@@ -53,7 +60,7 @@ function NavLinks({
         />
         <span className="font-medium text-xl">Marketplace</span>
       </Link>
-      {isAuthenticated && user && (
+      {isClient && isAuthenticated && user && (
         <button
           onClick={onDashboard}
           className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
@@ -74,10 +81,16 @@ function AuthSection() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const { addToast } = useUIStore();
   const { isAuthenticated } = useAuth();
   const logout = useLogout();
   const { data: user } = useCurrentUser();
+
+  // Only run on client to avoid hydration mismatches
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -99,7 +112,7 @@ function AuthSection() {
         type: "error",
         message: "Please log in to access the dashboard",
       });
-      router.push("/auth");
+      router.push("/auth/login");
       return;
     }
     if (user?.email && !user.emailVerified) {
@@ -124,6 +137,15 @@ function AuthSection() {
       setIsLoggingOut(false);
     }
   };
+
+  // Show loading state during SSR to prevent hydration mismatch
+  if (!isClient) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 bg-gray-700 rounded-full animate-pulse"></div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

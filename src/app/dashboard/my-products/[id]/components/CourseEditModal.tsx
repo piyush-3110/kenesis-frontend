@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { X, Save, AlertCircle, Plus, Trash2, Loader2 } from 'lucide-react';
 import { CourseAPI } from '@/lib/api';
 import { DASHBOARD_COLORS } from '../../../constants';
 import { useUIStore } from '@/store/useUIStore';
+import { useLoading } from '@/hooks/useLoading';
 
 interface CourseEditModalProps {
   isOpen: boolean;
@@ -73,6 +74,17 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
   onCourseUpdated 
 }) => {
   const { addToast } = useUIStore();
+  const {
+    loading,
+    status,
+    startLoading,
+    stopLoading,
+    setError: setLoadingError,
+    updateStatus,
+  } = useLoading({
+    successMessage: "Course updated successfully!",
+    minDuration: 1000,
+  });
   
   const [formData, setFormData] = useState({
     title: '',
@@ -86,7 +98,6 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
     price: 0
   });
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -263,10 +274,12 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
       return;
     }
 
-    setLoading(true);
+    startLoading("Validating course data...");
     setError(null);
 
     try {
+      updateStatus("Preparing course update...");
+      
       // Prepare the update request following API specification
       const updateRequest: UpdateCourseRequest = {
         title: formData.title.trim(),
@@ -286,6 +299,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
         updateRequest.price = Number(formData.price);
       }
 
+      updateStatus("Saving course changes...");
       console.log('🚀 Sending course update request:', updateRequest);
       console.log('📍 Endpoint: PUT /api/courses/' + courseId);
 
@@ -296,34 +310,22 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
       if (response.success) {
         console.log('✅ Course updated successfully');
         
-        addToast({
-          type: 'success',
-          message: 'Course updated successfully!'
-        });
+        stopLoading(true);
 
         // Notify parent to refresh data
         onCourseUpdated();
         onClose();
       } else {
         console.error('❌ Course update failed:', response.message);
-        setError(response.message || 'Failed to update course');
-        
-        addToast({
-          type: 'error',
-          message: response.message || 'Failed to update course'
-        });
+        const errorMessage = response.message || 'Failed to update course';
+        setError(errorMessage);
+        stopLoading(false, errorMessage);
       }
     } catch (error: any) {
       console.error('💥 Course update error:', error);
       const errorMessage = error?.message || 'An unexpected error occurred';
       setError(errorMessage);
-      
-      addToast({
-        type: 'error',
-        message: errorMessage
-      });
-    } finally {
-      setLoading(false);
+      stopLoading(false, errorMessage);
     }
   };
 
@@ -702,8 +704,8 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
             >
               {loading ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Saving...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm">{status || "Saving..."}</span>
                 </>
               ) : (
                 <>

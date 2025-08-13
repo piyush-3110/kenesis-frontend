@@ -1,13 +1,5 @@
 import { create } from "zustand";
-
-export interface NotificationSettings {
-  emailReports: boolean;
-  pushNotifications: boolean;
-  soundEnabled: boolean;
-  vibrationEnabled: boolean;
-  marketingEmails: boolean;
-  securityAlerts: boolean;
-}
+import { updateUserProfile, updateUserProfileWithFile, updateSocialMediaLinks, UpdateProfileRequest, UpdateProfileWithFileRequest, UpdateSocialMediaRequest } from "../api/settingsApi";
 
 export interface SocialLinks {
   facebook: string;
@@ -18,31 +10,15 @@ export interface SocialLinks {
 }
 
 export interface ProfileSettings {
-  firstName: string;
-  lastName: string;
   displayName: string;
   email: string;
   bio: string;
   avatar: string;
-  coverImage: string;
-  location: string;
-  phone: string;
-  timezone: string;
-}
-
-export interface PrivacySettings {
-  profileVisibility: "public" | "private" | "friends";
-  showEmail: boolean;
-  showPhone: boolean;
-  allowMessages: boolean;
-  allowCourseRecommendations: boolean;
 }
 
 interface SettingsState {
   profile: ProfileSettings;
-  notifications: NotificationSettings;
   socialLinks: SocialLinks;
-  privacy: PrivacySettings;
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
@@ -53,17 +29,11 @@ interface SettingsActions {
   // Profile actions
   updateProfile: (updates: Partial<ProfileSettings>) => void;
   updateAvatar: (avatarUrl: string) => void;
-
-  // Notification actions
-  updateNotifications: (updates: Partial<NotificationSettings>) => void;
-  toggleNotification: (key: keyof NotificationSettings) => void;
+  uploadAvatar: (file: File) => Promise<void>;
 
   // Social links actions
   updateSocialLinks: (updates: Partial<SocialLinks>) => void;
   updateSocialLink: (platform: keyof SocialLinks, url: string) => void;
-
-  // Privacy actions
-  updatePrivacy: (updates: Partial<PrivacySettings>) => void;
 
   // API actions
   loadSettings: () => Promise<void>;
@@ -81,39 +51,14 @@ type SettingsStore = SettingsState & SettingsActions;
 
 // Default/empty profile settings
 const defaultProfileSettings: ProfileSettings = {
-  firstName: "",
-  lastName: "",
   displayName: "",
   email: "",
   bio: "",
   avatar: "",
-  coverImage: "",
-  location: "",
-  phone: "",
-  timezone: "UTC",
-};
-
-// Mock data for development - will be replaced with real API data
-const mockNotificationSettings: NotificationSettings = {
-  emailReports: true,
-  pushNotifications: true,
-  soundEnabled: true,
-  vibrationEnabled: false,
-  marketingEmails: false,
-  securityAlerts: true,
-};
-
-const mockPrivacySettings: PrivacySettings = {
-  profileVisibility: "public",
-  showEmail: false,
-  showPhone: false,
-  allowMessages: true,
-  allowCourseRecommendations: true,
 };
 
 const initialState: SettingsState = {
   profile: defaultProfileSettings,
-  notifications: mockNotificationSettings,
   socialLinks: {
     facebook: "",
     twitter: "",
@@ -121,7 +66,6 @@ const initialState: SettingsState = {
     linkedin: "",
     website: "",
   },
-  privacy: mockPrivacySettings,
   isLoading: false,
   isSaving: false,
   error: null,
@@ -146,22 +90,27 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     }));
   },
 
-  // Notification actions
-  updateNotifications: (updates: Partial<NotificationSettings>) => {
-    set((state) => ({
-      notifications: { ...state.notifications, ...updates },
-      hasUnsavedChanges: true,
-    }));
-  },
+  uploadAvatar: async (file: File) => {
+    const { setError } = get();
+    setError(null);
 
-  toggleNotification: (key: keyof NotificationSettings) => {
-    set((state) => ({
-      notifications: {
-        ...state.notifications,
-        [key]: !state.notifications[key],
-      },
-      hasUnsavedChanges: true,
-    }));
+    try {
+      const result = await updateUserProfileWithFile({ avatar: file });
+      
+      // Update the avatar URL in the store
+      set((state) => ({
+        profile: { 
+          ...state.profile, 
+          avatar: result.user.avatar || "",
+        },
+        hasUnsavedChanges: true, // Keep save button available for other potential changes
+      }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload avatar";
+      setError(errorMessage);
+      console.error("Avatar upload error:", error);
+      throw error;
+    }
   },
 
   // Social links actions
@@ -182,14 +131,6 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     }));
   },
 
-  // Privacy actions
-  updatePrivacy: (updates: Partial<PrivacySettings>) => {
-    set((state) => ({
-      privacy: { ...state.privacy, ...updates },
-      hasUnsavedChanges: true,
-    }));
-  },
-
   // API actions
   loadSettings: async () => {
     const { setLoading, setError } = get();
@@ -198,37 +139,15 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     setError(null);
 
     try {
-      // Get real user data from auth store
-      const { useAuthStore } = await import("@/store/useAuthStore");
-      const authUser = useAuthStore.getState().user;
+      // Simulate API delay
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
-      if (authUser) {
-        // Map auth user to profile settings
-        const profileSettings: ProfileSettings = {
-          firstName: "", // API doesn't have firstName/lastName split yet
-          lastName: "",
-          displayName: authUser.username || "",
-          email: authUser.email || "",
-          bio: authUser.bio || "",
-          avatar: "", // No avatar in API yet
-          coverImage: "",
-          location: "",
-          phone: "",
-          timezone: "UTC",
-        };
-
-        set({
-          profile: profileSettings,
-          isLoading: false,
-          hasUnsavedChanges: false,
-        });
-      } else {
-        // No user data, keep defaults
-        set({
-          isLoading: false,
-          hasUnsavedChanges: false,
-        });
-      }
+      // Use default settings - user data will be populated by the component
+      set({
+        isLoading: false,
+        hasUnsavedChanges: false,
+      });
+      
     } catch (error) {
       setError("Failed to load settings");
       console.error("Settings load error:", error);
@@ -241,35 +160,92 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
       setSaving,
       setError,
       profile,
-      notifications,
       socialLinks,
-      privacy,
     } = get();
 
     setSaving(true);
     setError(null);
 
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      // Check if we're updating social media links only or also profile data
+      const hasProfileUpdates = profile.displayName.trim() || profile.bio.trim();
+      const hasSocialUpdates = Object.values(socialLinks).some(link => link.trim());
 
-      // In real implementation, you would send data to API here
-      console.log("Saving settings:", {
-        profile,
-        notifications,
-        socialLinks,
-        privacy,
-      });
+      let result;
 
-      set({
+      if (hasProfileUpdates && hasSocialUpdates) {
+        // Update both profile and social media using JSON API
+        const updateData: UpdateProfileRequest = {
+          username: profile.displayName,
+          bio: profile.bio,
+          socialMedia: {
+            twitter: socialLinks.twitter,
+            linkedin: socialLinks.linkedin,
+            facebook: socialLinks.facebook,
+            instagram: socialLinks.instagram,
+            website: socialLinks.website,
+          },
+        };
+
+        console.log("🔄 [SETTINGS] Updating profile and social media with JSON API:", updateData);
+        result = await updateUserProfile(updateData);
+      } else if (hasSocialUpdates) {
+        // Update only social media links using dedicated API
+        const socialData: UpdateSocialMediaRequest = {
+          socialMedia: {
+            twitter: socialLinks.twitter,
+            linkedin: socialLinks.linkedin,
+            facebook: socialLinks.facebook,
+            instagram: socialLinks.instagram,
+            website: socialLinks.website,
+          },
+        };
+
+        console.log("🔗 [SETTINGS] Updating social media links only:", socialData);
+        result = await updateSocialMediaLinks(socialData);
+      } else if (hasProfileUpdates) {
+        // Update only profile data
+        const profileData: UpdateProfileRequest = {
+          username: profile.displayName,
+          bio: profile.bio,
+        };
+
+        console.log("👤 [SETTINGS] Updating profile data only:", profileData);
+        result = await updateUserProfile(profileData);
+      } else {
+        // No updates to save
+        console.log("ℹ️ [SETTINGS] No changes to save");
+        setSaving(false);
+        return Promise.resolve();
+      }
+      
+      console.log("✅ [SETTINGS] Profile updated successfully:", result);
+
+      // Update the local state with the response data
+      set((state) => ({
+        profile: {
+          ...state.profile,
+          displayName: result.user.username || "",
+          email: result.user.email || "",
+          bio: result.user.bio || "",
+          avatar: result.user.avatar || "",
+        },
+        socialLinks: {
+          twitter: result.user.socialMedia?.twitter || "",
+          linkedin: result.user.socialMedia?.linkedin || "",
+          facebook: result.user.socialMedia?.facebook || "",
+          instagram: result.user.socialMedia?.instagram || "",
+          website: result.user.socialMedia?.website || "",
+        },
         isSaving: false,
         hasUnsavedChanges: false,
-      });
+      }));
 
       return Promise.resolve();
     } catch (error) {
-      setError("Failed to save settings");
-      console.error("Settings save error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save settings";
+      console.error("❌ [SETTINGS] Settings save error:", error);
+      setError(errorMessage);
       setSaving(false);
       return Promise.reject(error);
     }
@@ -278,7 +254,6 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
   resetChanges: () => {
     set({
       profile: defaultProfileSettings,
-      notifications: mockNotificationSettings,
       socialLinks: {
         facebook: "",
         twitter: "",
@@ -286,7 +261,6 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
         linkedin: "",
         website: "",
       },
-      privacy: mockPrivacySettings,
       hasUnsavedChanges: false,
       error: null,
     });

@@ -105,20 +105,50 @@ export const getCourse = async (
 export const checkCourseAccess = async (
   courseId: string
 ): Promise<ApiResponse<CourseAccessResponse>> => {
-  const response = await apiClient.get<CourseAccessResponse>(
-    `/api/courses/purchases/access/${courseId}`
-  );
+  console.log("🔐 [COURSE-API] ============= CHECKING COURSE ACCESS =============");
+  console.log("🔐 [COURSE-API] Course ID:", courseId);
+  console.log("🔐 [COURSE-API] Endpoint:", `/api/courses/purchases/access/${courseId}`);
+  console.log("🔐 [COURSE-API] Timestamp:", new Date().toISOString());
+  
+  try {
+    const response = await apiClient.get<CourseAccessResponse>(
+      `/api/courses/purchases/access/${courseId}`
+    );
 
-  if (!response.success) {
-    throw new Error(response.message || "Failed to check course access");
+    console.log("🔐 [COURSE-API] ============= API CLIENT RESPONSE =============");
+    console.log("🔐 [COURSE-API] Response received:", response);
+    console.log("🔐 [COURSE-API] Response type:", typeof response);
+    console.log("🔐 [COURSE-API] Response keys:", Object.keys(response || {}));
+    console.log("🔐 [COURSE-API] Success:", response?.success);
+    console.log("🔐 [COURSE-API] Message:", response?.message);
+    console.log("🔐 [COURSE-API] Data:", response?.data);
+    console.log("🔐 [COURSE-API] Has Access:", response?.data?.hasAccess);
+    console.log("🔐 [COURSE-API] Raw JSON:", JSON.stringify(response, null, 2));
+
+    if (!response.success) {
+      console.error("🔐 [COURSE-API] API call failed:", response.message);
+      throw new Error(response.message || "Failed to check course access");
+    }
+
+    console.log("🔐 [COURSE-API] ============= RETURNING RESPONSE =============");
+    const returnValue = {
+      success: response.success,
+      message: response.message,
+      data: response.data!, // response.data is already CourseAccessResponse
+    };
+    console.log("🔐 [COURSE-API] Return value:", returnValue);
+    console.log("🔐 [COURSE-API] Return value JSON:", JSON.stringify(returnValue, null, 2));
+
+    return returnValue;
+  } catch (error: any) {
+    console.error("🔐 [COURSE-API] ============= API ERROR =============");
+    console.error("🔐 [COURSE-API] Error occurred:", error);
+    console.error("🔐 [COURSE-API] Error type:", typeof error);
+    console.error("🔐 [COURSE-API] Error message:", error?.message);
+    console.error("🔐 [COURSE-API] Error response:", error?.response);
+    console.error("🔐 [COURSE-API] Error response data:", error?.response?.data);
+    console.error("🔐 [COURSE-API] Error response status:", error?.response?.status);
+    console.error("🔐 [COURSE-API] Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    throw error;
   }
-
-  console.log("Course access response:", response);
-
-  // Return the response data directly since the API client already unwraps it
-  return {
-    success: response.success,
-    message: response.message,
-    data: response.data!, // response.data is already CourseAccessResponse
-  };
 };

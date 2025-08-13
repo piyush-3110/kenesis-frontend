@@ -317,7 +317,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
       case "login":
         return (
           <button
-            onClick={() => router.push("/auth")}
+            onClick={() => router.push("/auth/login")}
             className="w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-3"
             style={{
               background:

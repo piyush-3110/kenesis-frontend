@@ -61,14 +61,72 @@ const SocialLinksCard: React.FC = () => {
     platform: keyof typeof socialLinks,
     value: string
   ) => {
-    updateSocialLink(platform, value);
+    console.log(`🔗 [SOCIAL] Updating ${platform}:`, value);
+    // Convert input to full URL format that the backend expects
+    const fullUrl = getFullUrl(
+      socialPlatforms.find((p) => p.key === platform)!,
+      value
+    );
+    console.log(`🔗 [SOCIAL] Converted to full URL:`, fullUrl);
+    updateSocialLink(platform, fullUrl);
   };
 
   const getFullUrl = (platform: (typeof socialPlatforms)[0], value: string) => {
+    if (!value || value.trim() === "") return "";
+
     if (platform.key === "website") {
       return value.startsWith("http") ? value : `https://${value}`;
     }
+
+    // For social media platforms, if user enters just username, convert to full URL
+    if (value.startsWith("http")) {
+      return value; // Already a full URL
+    }
+
     return `https://${platform.prefix}${value}`;
+  };
+
+  const getDisplayValue = (
+    platform: (typeof socialPlatforms)[0],
+    fullUrl: string
+  ) => {
+    if (!fullUrl || fullUrl.trim() === "") return "";
+
+    if (platform.key === "website") {
+      return fullUrl.replace(/^https?:\/\//, "");
+    }
+
+    // Extract username from full URL for display
+    const prefix = `https://${platform.prefix}`;
+    if (fullUrl.startsWith(prefix)) {
+      return fullUrl.substring(prefix.length);
+    }
+
+    return fullUrl;
+  };
+
+  const validateUrl = (
+    platform: (typeof socialPlatforms)[0],
+    value: string
+  ) => {
+    if (!value.trim()) return true; // Empty is valid
+
+    try {
+      const fullUrl = getFullUrl(platform, value);
+
+      if (platform.key === "website") {
+        // Validate the full URL for website
+        const urlPattern = /^https?:\/\/[^\s/$.?#].[^\s]*$/i;
+        return urlPattern.test(fullUrl);
+      } else {
+        // For social media, validate the username part
+        const displayValue = getDisplayValue(platform, fullUrl);
+        const usernamePattern = /^[a-zA-Z0-9._-]+$/;
+        return usernamePattern.test(displayValue);
+      }
+    } catch {
+      return false;
+    }
   };
 
   return (
@@ -106,6 +164,7 @@ const SocialLinksCard: React.FC = () => {
             const IconComponent = platform.icon;
             const value = socialLinks[platform.key];
             const hasValue = value && value.trim() !== "";
+            const isValid = validateUrl(platform, value);
 
             return (
               <div key={platform.key}>
@@ -124,28 +183,40 @@ const SocialLinksCard: React.FC = () => {
                   {/* Input Group */}
                   <div className="flex-1 flex items-center">
                     {/* Icon */}
-                    <div className="flex items-center justify-center w-10 h-10 bg-gray-800/50 border border-gray-600 border-r-0 rounded-l-lg">
+                    <div
+                      className={`flex items-center justify-center w-10 h-10 bg-gray-800/50 border border-r-0 rounded-l-lg ${
+                        hasValue && !isValid
+                          ? "border-red-500"
+                          : "border-gray-600"
+                      }`}
+                    >
                       <IconComponent className="w-4 h-4 text-gray-400" />
                     </div>
 
                     {/* Prefix (if any) */}
                     {platform.prefix && (
-                      <div
-                        className="px-3 py-2 bg-gray-800/30 border-t border-b border-gray-600 text-gray-400 text-sm flex items-center"
-                        style={{
-                          fontFamily: "Inter",
-                          fontSize: "14.03px",
-                          fontWeight: 400,
-                        }}
-                      >
-                        {platform.prefix}
+                      <div className="px-3 py-2 bg-gray-800/30 border-t border-b border-gray-600 text-gray-400 text-sm flex items-center">
+                        <div
+                          className={`px-3 py-2 bg-gray-800/30 border-t border-b text-gray-400 text-sm flex items-center ${
+                            hasValue && !isValid
+                              ? "border-red-500"
+                              : "border-gray-600"
+                          }`}
+                          style={{
+                            fontFamily: "Inter",
+                            fontSize: "14.03px",
+                            fontWeight: 400,
+                          }}
+                        >
+                          {platform.prefix}
+                        </div>
                       </div>
                     )}
 
                     {/* Input */}
                     <input
                       type="text"
-                      value={value}
+                      value={getDisplayValue(platform, value)}
                       onChange={(e) =>
                         handleInputChange(platform.key, e.target.value)
                       }
@@ -157,6 +228,17 @@ const SocialLinksCard: React.FC = () => {
                             ? "rounded-r-lg border-l-0"
                             : "rounded-r-lg border-l-0"
                         }
+                        flex-1 px-3 py-2 bg-gray-800/50 border text-white focus:outline-none transition-colors
+                        ${
+                          platform.prefix
+                            ? "rounded-r-lg border-l-0"
+                            : "rounded-r-lg border-l-0"
+                        }
+                        ${
+                          hasValue && !isValid
+                            ? "border-red-500 focus:border-red-400"
+                            : "border-gray-600 focus:border-blue-500"
+                        }
                       `}
                       style={{
                         fontFamily: "Inter",
@@ -167,9 +249,9 @@ const SocialLinksCard: React.FC = () => {
                   </div>
 
                   {/* External Link Preview */}
-                  {hasValue && (
+                  {hasValue && isValid && (
                     <a
-                      href={getFullUrl(platform, value)}
+                      href={value} // Use the stored full URL directly
                       target="_blank"
                       rel="noopener noreferrer"
                       className="ml-3 p-2 text-gray-400 hover:text-blue-400 transition-colors"
@@ -179,6 +261,15 @@ const SocialLinksCard: React.FC = () => {
                     </a>
                   )}
                 </div>
+
+                {/* Validation Error */}
+                {hasValue && !isValid && (
+                  <p className="text-red-400 text-xs mt-1">
+                    {platform.key === "website"
+                      ? "Please enter a valid website URL (e.g., yoursite.com)"
+                      : "Please enter a valid username (letters, numbers, dots, hyphens, underscores only)"}
+                  </p>
+                )}
               </div>
             );
           })}

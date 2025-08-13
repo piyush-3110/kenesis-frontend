@@ -12,7 +12,8 @@ import {
   MessageSquare, 
   LogOut,
   BarChart3,
-  FolderOpen
+  FolderOpen,
+  CheckSquare
 } from 'lucide-react';
 import { DashboardMenuItem } from '../types';
 
@@ -146,6 +147,13 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     label: 'Hot Leads',
     icon: Flame,
     href: '/dashboard/hot-leads',
+  },
+  {
+    id: 'approvals',
+    label: 'Course Approvals',
+    icon: CheckSquare,
+    href: '/dashboard/approvals',
+    requiresRole: 'admin',
   },
 ];
 

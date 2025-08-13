@@ -14,9 +14,11 @@ import {
   AlertCircle,
   ShoppingBag,
   Book,
+  Loader2,
 } from "lucide-react";
 import { useUIStore } from "@/store/useUIStore";
 import Image from "next/image";
+import { useLoading } from "@/hooks/useLoading";
 
 interface Purchase {
   id: string;
@@ -77,6 +79,15 @@ type FilterType = "all" | "active" | "expired" | "listed";
 const PurchasedProductsPage: React.FC = () => {
   const router = useRouter();
   const { addToast } = useUIStore();
+  const {
+    loading: courseAccessLoading,
+    startLoading,
+    stopLoading,
+    setError: setCourseAccessError,
+  } = useLoading({
+    successMessage: "Redirecting to course...",
+    minDuration: 800,
+  });
 
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [listedCourses, setListedCourses] = useState<ListedCourse[]>([]);
@@ -239,7 +250,7 @@ const PurchasedProductsPage: React.FC = () => {
     }
   };
 
-  const handleCourseClick = (purchase: Purchase) => {
+  const handleCourseClick = async (purchase: Purchase) => {
     if (!purchase.hasAccess) {
       addToast({
         type: "warning",
@@ -248,7 +259,18 @@ const PurchasedProductsPage: React.FC = () => {
       return;
     }
 
-    router.push(`/learn/${purchase.courseId}`);
+    try {
+      startLoading("Accessing course...");
+      
+      // Simulate a brief delay for better UX (API call or access check could go here)
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      stopLoading(true);
+      router.push(`/learn/${purchase.courseId}`);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to access course";
+      setCourseAccessError(errorMsg);
+    }
   };
 
   const handleListedCourseClick = (course: ListedCourse) => {
@@ -481,6 +503,7 @@ const PurchasedProductsPage: React.FC = () => {
             formatDate={formatDate}
             getRemainingDaysText={getRemainingDaysText}
             getStatusColor={getStatusColor}
+            courseAccessLoading={courseAccessLoading}
           />
         )}
       </div>
@@ -632,11 +655,12 @@ const ListedCoursesContent: React.FC<{
 const PurchasedCoursesContent: React.FC<{
   purchases: Purchase[];
   filter: FilterType;
-  onCourseClick: (purchase: Purchase) => void;
+  onCourseClick: (purchase: Purchase) => Promise<void>;
   onBrowseMarketplace: () => void;
   formatDate: (date: string) => string;
   getRemainingDaysText: (days: number | null) => string;
   getStatusColor: (isActive: boolean, days: number | null) => string;
+  courseAccessLoading: boolean;
 }> = ({
   purchases,
   filter,
@@ -645,6 +669,7 @@ const PurchasedCoursesContent: React.FC<{
   formatDate,
   getRemainingDaysText,
   getStatusColor,
+  courseAccessLoading,
 }) => {
   if (purchases.length === 0) {
     return (
@@ -765,14 +790,21 @@ const PurchasedCoursesContent: React.FC<{
                     e.stopPropagation();
                     onCourseClick(purchase);
                   }}
-                  disabled={!purchase.hasAccess}
-                  className={`w-full py-3 rounded-lg font-medium transition-all duration-200 ${
-                    purchase.hasAccess
+                  disabled={!purchase.hasAccess || courseAccessLoading}
+                  className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
+                    purchase.hasAccess && !courseAccessLoading
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
                       : "bg-gray-600 text-gray-400 cursor-not-allowed"
                   }`}
                 >
-                  {purchase.hasAccess ? "Continue Learning" : "Access Expired"}
+                  {courseAccessLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Accessing...</span>
+                    </>
+                  ) : (
+                    <span>{purchase.hasAccess ? "Continue Learning" : "Access Expired"}</span>
+                  )}
                 </button>
               </div>
             </div>

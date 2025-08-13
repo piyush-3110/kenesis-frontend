@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Upload, FileText, Video, Trash2, Plus } from 'lucide-react';
+import { X, Upload, FileText, Video, Trash2, Plus, Loader2 } from 'lucide-react';
 import { CourseAPI } from '@/lib/api';
 import { DASHBOARD_COLORS } from '../../../constants';
+import { useLoading } from '@/hooks/useLoading';
 
 interface ModuleEditModalProps {
   isOpen: boolean;
@@ -38,6 +39,18 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
   courseId,
   onModuleUpdated
 }) => {
+  const {
+    loading,
+    status,
+    startLoading,
+    stopLoading,
+    updateStatus,
+    setError: setLoadingError,
+  } = useLoading({
+    successMessage: "Module updated successfully!",
+    minDuration: 1000,
+  });
+  
   const [formData, setFormData] = useState<ModuleFormData>({
     title: '',
     description: '',
@@ -53,7 +66,6 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
     }
   });
   
-  const [loading, setLoading] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [originalData, setOriginalData] = useState<ModuleFormData | null>(null);
@@ -90,8 +102,20 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
       setError(null);
 
       console.log('📊 Loading module content for editing...');
-      // Updated to use new API endpoint format
-      const response = await CourseAPI.getModuleContent(courseId, module.id);
+      console.log('📋 Module object:', module);
+      console.log('📋 Course ID:', courseId);
+      
+      // Extract chapterId from module object
+      const chapterId = module.chapterId || module.chapter?.id;
+      if (!chapterId) {
+        console.error('❌ No chapterId found in module object:', module);
+        throw new Error('Chapter ID is required to load module content');
+      }
+      
+      console.log('📋 Using chapterId:', chapterId);
+      
+      // Updated to use new API endpoint format with chapterId
+      const response = await CourseAPI.getModuleContent(courseId, chapterId, module.id);
       
       console.log('📥 Module content response:', response);
       
@@ -186,7 +210,7 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
     }
 
     try {
-      setLoading(true);
+      startLoading("Validating module data...");
       setError(null);
 
       // Prepare form data for multipart upload - only send fields the backend expects
@@ -306,9 +330,9 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
         hasChanges = true;
       });
 
-      // Always allow submission if user made some form interaction, force update is checked, or if originalData is not available
       if (!hasChanges && !forceUpdate) {
         setError('No changes detected. Check "Force Update" below if you want to update anyway, or modify at least one field.');
+        stopLoading(false, 'No changes to save');
         return;
       }
 
@@ -359,6 +383,7 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
         hasChanges = true; // Mark as having changes since we're forcing update
       }
 
+      updateStatus("Preparing module update...");
       console.log('🔄 Updating module with changes:', Array.from(updateData.keys()));
       console.log('📋 Force update enabled:', forceUpdate);
       console.log('📊 Original data available:', !!originalData);
@@ -368,14 +393,17 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
       // Ensure courseId and moduleId are strings
       if (!courseId || typeof courseId !== 'string') {
         setError('Invalid course ID');
+        stopLoading(false, 'Invalid course ID');
         return;
       }
       
       if (!module.id || typeof module.id !== 'string') {
         setError('Invalid module ID');
+        stopLoading(false, 'Invalid module ID');
         return;
       }
       
+      updateStatus("Saving module changes...");
       // Log the form data being sent
       console.log('📦 FormData entries:');
       /* eslint-disable prefer-const */
@@ -388,30 +416,37 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
 
       if (response.success) {
         console.log('✅ Module updated successfully');
+        stopLoading(true);
         onModuleUpdated();
         onClose();
       } else {
         console.error('❌ Update failed:', response);
         // Handle specific validation errors from backend
         if (response.errors && Array.isArray(response.errors)) {
-          setError(response.errors.map((err: any) => err.message || err).join(', '));
+          const errorMessage = response.errors.map((err: any) => err.message || err).join(', ');
+          setError(errorMessage);
+          stopLoading(false, errorMessage);
         } else {
-          setError(response.message || 'Failed to update module');
+          const errorMessage = response.message || 'Failed to update module';
+          setError(errorMessage);
+          stopLoading(false, errorMessage);
         }
       }
     } catch (error: any) {
       console.error('💥 Failed to update module:', error);
       
       // Handle network and other errors
+      let errorMessage = 'Failed to update module';
       if (error.response?.data?.errors) {
-        setError(error.response.data.errors.map((err: any) => err.message || err).join(', '));
+        errorMessage = error.response.data.errors.map((err: any) => err.message || err).join(', ');
       } else if (error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else {
-        setError(error.message || 'Failed to update module');
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
-    } finally {
-      setLoading(false);
+      
+      setError(errorMessage);
+      stopLoading(false, errorMessage);
     }
   };
 
@@ -863,9 +898,16 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
                   >
-                    {loading ? 'Updating...' : 'Update Module'}
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-sm">{status || "Updating..."}</span>
+                      </>
+                    ) : (
+                      'Update Module'
+                    )}
                   </button>
                 </div>
               </div>
