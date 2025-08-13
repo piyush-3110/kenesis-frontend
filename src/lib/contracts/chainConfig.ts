@@ -303,12 +303,12 @@ export const CHAIN_CONFIGS: EnvironmentConfig = {
 const getEnvironment = (): keyof EnvironmentConfig => {
   if (typeof window === "undefined") {
     // SSR fallback
-    return process.env.NODE_ENV === "development"
+    return process.env.NEXT_PUBLIC_NODE_ENV === "development"
       ? "development"
       : "production";
   }
 
-  const isDevelopment = process.env.NODE_ENV === "development";
+  const isDevelopment = process.env.NEXT_PUBLIC_NODE_ENV === "development";
 
   if (isDevelopment) return "development";
   return "production";

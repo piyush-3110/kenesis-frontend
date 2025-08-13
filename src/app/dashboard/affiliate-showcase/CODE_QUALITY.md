@@ -5,6 +5,7 @@ This document outlines how the Affiliate Showcase feature follows the establishe
 ## ✅ Code Quality Compliance Checklist
 
 ### 📐 General Principles
+
 - [x] **Clean Code**: Clear naming conventions, small focused functions, minimal side-effects
 - [x] **Readability**: Code is self-documenting with proper TypeScript types
 - [x] **Modular Architecture**: Components are reusable and follow SRP
@@ -13,12 +14,14 @@ This document outlines how the Affiliate Showcase feature follows the establishe
 - [x] **Robust Error Handling**: Comprehensive error states and user feedback
 
 ### 🧱 File & Component Structure
+
 - [x] **Small Focused Components**: Each component has a single responsibility
 - [x] **Separated Concerns**: UI components separated from logic/data-fetching
 - [x] **Proper Directory Structure**: Follows the mandatory page-level folder structure
 - [x] **Correct Naming**: PascalCase for components, camelCase for functions
 
 ### 📦 Mandatory Page-Level Structure
+
 ```
 /app/dashboard/affiliate-showcase/
 ├── components/          ✅ Reusable UI components specific to this page
@@ -46,6 +49,7 @@ This document outlines how the Affiliate Showcase feature follows the establishe
 ```
 
 ### 🛡️ API Handling
+
 - [x] **Async/Await**: All API calls use async/await syntax consistently
 - [x] **Try/Catch**: Every API call wrapped in proper error handling
 - [x] **Clear Error Messages**: User-friendly error messages with retry options
@@ -53,6 +57,7 @@ This document outlines how the Affiliate Showcase feature follows the establishe
 - [x] **API Abstraction**: Clean separation between mock and real API calls
 
 ### 📦 Zustand State Management
+
 - [x] **Centralized Stores**: All shared state managed via Zustand
 - [x] **Proper Organization**: Stores in dedicated `/store` directory
 - [x] **Flat State Structure**: Minimal, normalized state design
@@ -60,22 +65,26 @@ This document outlines how the Affiliate Showcase feature follows the establishe
 - [x] **No Derived State**: Only essential state stored
 
 ### 🧼 Performance & Scalability
+
 - [x] **Debounced Search**: Search API calls debounced to prevent spam
 - [x] **Efficient Re-renders**: Zustand selectors used appropriately
 - [x] **Error Boundaries**: Proper error handling prevents app crashes
 - [x] **Pagination Ready**: API structure supports pagination for large datasets
 
 ### 🧭 Code Comments & Documentation
+
 - [x] **Component Documentation**: All exported components documented
 - [x] **Complex Logic Comments**: Error handling and async flows explained
 - [x] **API Documentation**: Clear interface definitions and usage examples
 
 ### 🧪 Testing & Validation
+
 - [x] **TypeScript Interfaces**: Strong component contracts enforced
 - [x] **Props Validation**: No assumptions, all inputs validated
 - [x] **Manual QA**: Responsive design tested across screen sizes
 
 ### 🧹 UI/UX Best Practices
+
 - [x] **Skeleton Loaders**: LoadingState component for async content
 - [x] **Responsive Design**: Fully responsive across all devices
 - [x] **Semantic HTML**: Proper HTML structure with accessibility
@@ -85,6 +94,7 @@ This document outlines how the Affiliate Showcase feature follows the establishe
 ## 🔧 Implementation Highlights
 
 ### Error Handling Pattern
+
 ```typescript
 // ✅ Proper error handling in store
 try {
@@ -92,48 +102,49 @@ try {
   if (response.success) {
     set({ products: response.data, error: null });
   } else {
-    set({ error: response.message || 'Failed to load products' });
+    set({ error: response.message || "Failed to load products" });
   }
 } catch (error) {
-  const errorMsg = error instanceof Error 
-    ? error.message 
-    : 'An unexpected error occurred';
+  const errorMsg =
+    error instanceof Error ? error.message : "An unexpected error occurred";
   set({ error: errorMsg });
 }
 ```
 
 ### API Abstraction
+
 ```typescript
 // ✅ Clean API abstraction with mock/real API switching
-export const affiliateApi = process.env.NODE_ENV === 'development' 
-  ? MOCK_API 
-  : REAL_API;
+export const affiliateApi =
+  process.env.NEXT_PUBLIC_NODE_ENV === "development" ? MOCK_API : REAL_API;
 ```
 
 ### Toast Notification System
+
 ```typescript
 // ✅ Professional notification system instead of alerts
 addToast({
-  type: 'success',
-  title: 'Affiliate Link Created!',
+  type: "success",
+  title: "Affiliate Link Created!",
   message: `Commission: 30% • Ready to promote "${product.title}"`,
   duration: 4000,
 });
 ```
 
 ### Debounced Search
+
 ```typescript
 // ✅ Performance-optimized search
 setSearchQuery: (query: string) => {
   set({ searchQuery: query });
-  
+
   const currentTimeout = get().searchTimeout;
   if (currentTimeout) clearTimeout(currentTimeout);
-  
+
   const timeoutId = setTimeout(() => {
     get().loadProducts();
   }, 300);
-  
+
   set({ searchTimeout: timeoutId });
 },
 ```

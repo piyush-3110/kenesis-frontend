@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import React, { Component, ErrorInfo, ReactNode } from "react";
+import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 
 interface Props {
   children: ReactNode;
@@ -26,8 +26,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-    
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+
     this.setState({
       error,
       errorInfo,
@@ -46,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   handleGoHome = () => {
     this.setState({ hasError: false, error: null, errorInfo: null });
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   render() {
@@ -61,13 +61,14 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen bg-gradient-to-br from-[#0A071A] to-[#1A1A2E] flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-white/5 backdrop-blur-sm rounded-2xl p-8 text-center border border-white/10">
             <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-6" />
-            
+
             <h1 className="text-2xl font-bold text-white mb-4">
               Oops! Something went wrong
             </h1>
-            
+
             <p className="text-gray-300 mb-6">
-              We&apos;re sorry, but something unexpected happened. Please try refreshing the page or go back to the homepage.
+              We&apos;re sorry, but something unexpected happened. Please try
+              refreshing the page or go back to the homepage.
             </p>
 
             <div className="space-y-3">
@@ -78,7 +79,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 <RefreshCw className="w-4 h-4" />
                 Refresh Page
               </button>
-              
+
               <button
                 onClick={this.handleGoHome}
                 className="w-full bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
@@ -89,23 +90,24 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
 
             {/* Development error details */}
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-red-400 font-medium mb-2">
-                  Error Details (Development Only)
-                </summary>
-                <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-sm">
-                  <p className="text-red-300 font-mono mb-2">
-                    {this.state.error.toString()}
-                  </p>
-                  {this.state.errorInfo && (
-                    <pre className="text-red-200 text-xs overflow-auto">
-                      {this.state.errorInfo.componentStack}
-                    </pre>
-                  )}
-                </div>
-              </details>
-            )}
+            {process.env.NEXT_PUBLIC_NODE_ENV === "development" &&
+              this.state.error && (
+                <details className="mt-6 text-left">
+                  <summary className="cursor-pointer text-red-400 font-medium mb-2">
+                    Error Details (Development Only)
+                  </summary>
+                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-sm">
+                    <p className="text-red-300 font-mono mb-2">
+                      {this.state.error.toString()}
+                    </p>
+                    {this.state.errorInfo && (
+                      <pre className="text-red-200 text-xs overflow-auto">
+                        {this.state.errorInfo.componentStack}
+                      </pre>
+                    )}
+                  </div>
+                </details>
+              )}
           </div>
         </div>
       );
@@ -118,7 +120,7 @@ export class ErrorBoundary extends Component<Props, State> {
 // HOC for easy wrapping of components
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<Props, 'children'>
+  errorBoundaryProps?: Omit<Props, "children">
 ) {
   const WrappedComponent = (props: P) => (
     <ErrorBoundary {...errorBoundaryProps}>
@@ -126,8 +128,10 @@ export function withErrorBoundary<P extends object>(
     </ErrorBoundary>
   );
 
-  WrappedComponent.displayName = `withErrorBoundary(${Component.displayName || Component.name})`;
-  
+  WrappedComponent.displayName = `withErrorBoundary(${
+    Component.displayName || Component.name
+  })`;
+
   return WrappedComponent;
 }
 
