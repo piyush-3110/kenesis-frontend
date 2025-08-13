@@ -1448,7 +1448,6 @@ export const CourseAPI = {
   },
 
   /**
-   * Get course modules (DEPRECATED - backend requires chapterId as URL param)
    * GET /api/courses/{courseId}/modules
    * Supports filtering by chapterId (required), status, and type
    */
@@ -1493,6 +1492,7 @@ export const CourseAPI = {
       order: number;
       duration: number;
       videoUrl?: string;
+      documentUrl?: string;
       attachments?: Array<{
         name: string;
         url: string;
@@ -1523,7 +1523,7 @@ export const CourseAPI = {
     );
 
     const response = await http.get(
-      `/api/courses/${courseId}/chapters/${chapterId}/modules/${moduleId}/content`
+      `/api/courses/${courseId}/modules/${moduleId}/content`
     );
 
     console.log(
