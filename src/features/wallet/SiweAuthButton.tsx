@@ -67,7 +67,8 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
     siweRunningRef.current = true;
     try {
       // Clear the pending flag early to avoid duplicate auto-runs
-      if (typeof window !== "undefined") localStorage.removeItem(PENDING_SIWE_KEY);
+      if (typeof window !== "undefined")
+        localStorage.removeItem(PENDING_SIWE_KEY);
       const { challengeId, message } = await prepare.mutateAsync(address);
       const signature = await signMessageAsync({ message });
       await verify.mutateAsync({ challengeId, signature, message });
@@ -80,8 +81,9 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
       addToast({ type: "error", message: getErrorMessage(err) });
       throw err;
     } finally {
-  if (typeof window !== "undefined") localStorage.removeItem(PENDING_SIWE_KEY);
-  siweRunningRef.current = false;
+      if (typeof window !== "undefined")
+        localStorage.removeItem(PENDING_SIWE_KEY);
+      siweRunningRef.current = false;
     }
   };
 
@@ -117,7 +119,14 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
 
   return (
     <ConnectButton.Custom>
-      {({ account, chain, openConnectModal, openAccountModal, openChainModal, mounted }) => {
+      {({
+        account,
+        chain,
+        openConnectModal,
+        openAccountModal,
+        openChainModal,
+        mounted,
+      }) => {
         const connected = mounted && !!account;
         const authed = isAuthenticated;
         const accountLabel = account?.displayName;
@@ -142,7 +151,9 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
 
         return (
           <button
-            className={buttonClass + (busy ? " opacity-80 cursor-not-allowed" : "")}
+            className={
+              buttonClass + (busy ? " opacity-80 cursor-not-allowed" : "")
+            }
             onClick={async () => {
               if (!connected) {
                 if (typeof window !== "undefined")
