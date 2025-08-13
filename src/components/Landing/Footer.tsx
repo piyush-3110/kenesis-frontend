@@ -3,6 +3,8 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { LiaApple } from "react-icons/lia";
+import { IoLogoGooglePlaystore } from "react-icons/io5";
 
 const Footer = () => {
   return (
@@ -61,9 +63,7 @@ const Footer = () => {
                   href="#" 
                   className="flex items-center gap-2 bg-black hover:bg-gray-900 text-white px-7 py-4 rounded-full border border-gray-700 transition-all duration-300 hover:scale-105"
                 >
-                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">▶</span>
-                  </div>
+                  <IoLogoGooglePlaystore className="w-6 h-6 text-green-500" />
                   <span className="font-medium">Google Play</span>
                 </Link>
                 
@@ -72,9 +72,7 @@ const Footer = () => {
                   href="#" 
                   className="flex items-center gap-2 bg-black hover:bg-gray-900 text-white px-7 py-4 rounded-full border border-gray-700 transition-all duration-300 hover:scale-105"
                 >
-                  <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">🍎</span>
-                  </div>
+                  <LiaApple className="w-6 h-6 text-white" />
                   <span className="font-medium">App Store</span>
                 </Link>
               </div>
