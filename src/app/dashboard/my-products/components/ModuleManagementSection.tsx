@@ -482,6 +482,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
           {modules.map((module) => (
             <ModuleCard
               key={module.id}
+              chapterId={selectedChapter}
               module={module}
               courseId={courseId}
               canEdit={canEdit}
@@ -544,9 +545,10 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 const ModuleCard: React.FC<{
   module: any;
   courseId: string;
+  chapterId: string;
   canEdit: boolean;
   onDelete: () => void;
-}> = ({ module, courseId, canEdit, onDelete }) => {
+}> = ({ module, courseId, chapterId, canEdit, onDelete }) => {
   const [expanded, setExpanded] = useState(false);
   const [moduleContent, setModuleContent] = useState<any>(null);
   const [loadingContent, setLoadingContent] = useState(false);
@@ -568,7 +570,11 @@ const ModuleCard: React.FC<{
       });
 
       // Updated to use new API endpoint format (removed chapterId parameter)
-      const response = await CourseAPI.getModuleContent(courseId, module.id);
+      const response = await CourseAPI.getModuleContent(
+        courseId,
+        chapterId,
+        module.id
+      );
 
       console.log("📥 Module content response:", response);
 
