@@ -57,8 +57,25 @@ function NavLinks({
           size={20}
           className="text-blue-400 group-hover:text-blue-300 transition-colors"
         />
-        <span className="font-medium text-xl">Marketplace</span>
+        <span className="font-medium text-lg">Marketplace</span>
       </Link>
+      
+      <Link
+        href="/presale"
+        className="text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
+      >
+        <span className="font-medium text-lg">Presale</span>
+      </Link>
+      
+      <Link
+        href="https://kenesis.gitbook.io/whitepaper"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
+      >
+        <span className="font-medium text-lg">Whitepaper</span>
+      </Link>
+      
       {isClient && isAuthenticated && user && (
         <button
           onClick={onDashboard}
@@ -263,6 +280,25 @@ function AuthSection() {
                 />
                 <span className="font-medium text-lg">Marketplace</span>
               </Link>
+              
+              <Link
+                href="/presale"
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
+              >
+                <span className="font-medium text-lg">Presale</span>
+              </Link>
+              
+              <Link
+                href="https://kenesis.gitbook.io/whitepaper"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-orange-500/20 transition-all duration-300 group"
+              >
+                <span className="font-medium text-lg">Whitepaper</span>
+              </Link>
+              
               <button
                 onClick={(e) => {
                   setIsDropdownOpen(false);
