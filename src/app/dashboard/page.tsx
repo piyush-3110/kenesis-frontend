@@ -13,7 +13,8 @@ import { useDashboardStore } from "./store/useDashboardStore";
  * Main dashboard overview page with modular components
  */
 const DashboardPage: React.FC = () => {
-  const { metrics, initializeDashboard, isLoading } = useDashboardStore();
+  const { metrics, analytics, initializeDashboard, isLoading } =
+    useDashboardStore();
 
   useEffect(() => {
     initializeDashboard();
@@ -56,7 +57,10 @@ const DashboardPage: React.FC = () => {
 
           {/* Charts Row: Sales Analytics full width */}
           <div className="w-full">
-            <SalesAnalytics />
+            <SalesAnalytics 
+              analytics={analytics}
+              isLoading={isLoading}
+            />
           </div>
 
           {/* Transactions: Full width below analytics */}
