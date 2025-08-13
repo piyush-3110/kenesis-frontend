@@ -5,6 +5,7 @@ import {
   DashboardMetric,
   Transaction,
 } from "../types";
+import type { User } from "@/types/auth";
 
 interface DashboardActions {
   // Navigation actions
@@ -27,7 +28,7 @@ interface DashboardActions {
   setError: (error: string | null) => void;
 
   // Combined actions
-  initializeDashboard: () => Promise<void>;
+  initializeDashboard: (authUser?: User | null) => Promise<void>;
   refreshData: () => Promise<void>;
   reset: () => void;
 }
@@ -116,7 +117,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
   },
 
   // Combined actions
-  initializeDashboard: async () => {
+  initializeDashboard: async (authUser?: User | null) => {
     const { setLoading, setError, setUser, setMetrics, setTransactions } =
       get();
 
@@ -124,13 +125,9 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
       setLoading(true);
       setError(null);
 
-      // Get real user data from auth store instead of mock data
-      const { useAuthStore } = await import("@/store/useAuthStore");
-      const authUser = useAuthStore.getState().user;
-
       if (authUser) {
         const dashboardUser: DashboardUser = {
-          id: authUser.id,  
+          id: authUser.id,
           name: authUser.username || authUser.email?.split("@")[0] || "User",
           email: authUser.email || "",
           avatar: "", // No avatar in API yet, will be added later
