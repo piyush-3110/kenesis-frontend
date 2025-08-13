@@ -1,23 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProductCreationStore } from "../store/useProductCreationStore";
 import { useCreateCourse } from "@/hooks/useCourse";
 import { useLogout } from "@/features/auth/hooks";
 import { useUIStore } from "@/store/useUIStore";
-import { CourseFormData, PaymentToken, Course, CourseStatus } from "../types";
+import { CourseFormData, Course, CourseStatus, CourseLevel } from "../types";
 import {
   COURSE_TYPES,
   COURSE_LEVELS,
   SUPPORTED_LANGUAGES,
-  PAYMENT_TOKENS,
   FILE_UPLOAD_LIMITS,
 } from "../constants";
 import { Upload, X, ArrowRight, Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TokenManager } from "@/features/auth/tokenManager";
 import Image from "next/image";
+import { getCurrentChainConfigs } from "@/lib/contracts/chainConfig";
+import { useCurrentUser } from "@/features/auth/useCurrentUser";
+import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 
 /**
  * CourseCreationForm Component
@@ -60,24 +62,102 @@ const CourseCreationForm: React.FC = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [selectedChainId, setSelectedChainId] = useState<number>(1); // Default to Ethereum
 
-  // Get unique chains from payment tokens
-  const uniqueChains = Array.from(
-    new Set(PAYMENT_TOKENS.map((token) => token.chainId))
-  )
-    .map((chainId) => {
-      const token = PAYMENT_TOKENS.find((t) => t.chainId === chainId);
-      return token
-        ? { chainId: token.chainId, chainName: token.chainName }
-        : null;
-    })
-    .filter(Boolean) as Array<{ chainId: number; chainName: string }>;
+  // UI-only token type used for selection inside the form
+  type SelectedToken = {
+    symbol: string;
+    name: string;
+    address: string;
+    chainId: number;
+    chainName: string;
+    decimals: number;
+  };
 
-  // Filter tokens by selected chain
-  const availableTokens = PAYMENT_TOKENS.filter(
-    (token) => token.chainId === selectedChainId
+  // Derive supported chains/tokens from on-chain config
+  const chainConfigs = useMemo(() => getCurrentChainConfigs(), []);
+  const supportedChains = useMemo(
+    () => chainConfigs.map((c) => ({ chainId: c.chainId, chainName: c.name })),
+    [chainConfigs]
   );
+  const supportedTokens = useMemo(
+    () =>
+      chainConfigs.flatMap((c) =>
+        c.supportedTokens.map((t) => ({
+          symbol: t.symbol,
+          name: t.symbol, // simple label; can be refined later
+          address: t.address,
+          chainId: c.chainId,
+          chainName: c.name,
+          decimals: t.decimals,
+        }))
+      ),
+    [chainConfigs]
+  );
+
+  const [selectedChainId, setSelectedChainId] = useState<number>(
+    supportedChains[0]?.chainId ?? 1
+  );
+
+  // Current user (to enforce wallet requirement)
+  const me = useCurrentUser();
+
+  // Unique chains and tokens derived from config
+  const uniqueChains = supportedChains;
+  const availableTokens = useMemo(
+    () => supportedTokens.filter((t) => t.chainId === selectedChainId),
+    [supportedTokens, selectedChainId]
+  );
+
+  // Maintain UI selection state separately from formData (which uses string[])
+  const [selectedTokens, setSelectedTokens] = useState<SelectedToken[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize selectedTokens from existing formData.tokenToPayWith when supportedTokens are available
+  useEffect(() => {
+    if (isInitialized || supportedTokens.length === 0) return; // Only run once when ready
+    
+    const source = formData.tokenToPayWith || [];
+    if (source.length === 0) {
+      setSelectedTokens([]);
+      setIsInitialized(true);
+      return;
+    }
+    
+    const initialTokens = source
+      .map((s) => {
+        const [symbol, chainIdStr] = s.split("-");
+        const chainId = Number(chainIdStr);
+        const match = supportedTokens.find(
+          (t) => t.symbol === symbol && t.chainId === chainId
+        );
+        return match || null;
+      })
+      .filter((t): t is SelectedToken => Boolean(t));
+    
+    setSelectedTokens(initialTokens);
+    setIsInitialized(true);
+  }, [supportedTokens, formData.tokenToPayWith, isInitialized]);
+
+  // Keep formData.tokenToPayWith (string[]) in sync with selectedTokens (one-way after init)
+  useEffect(() => {
+    if (!isInitialized) return; // Don't sync until initialized
+    
+    const tokenStrings = Array.from(
+      new Set(selectedTokens.map((t) => `${t.symbol}-${t.chainId}`))
+    );
+    
+    setFormData((prev) => ({ ...prev, tokenToPayWith: tokenStrings }));
+  }, [selectedTokens, isInitialized]);
+
+  // When switching chains, drop any previously selected tokens from other chains
+  useEffect(() => {
+    if (!isInitialized) return;
+    
+    setSelectedTokens((prev) => {
+      const filtered = prev.filter((t) => t.chainId === selectedChainId);
+      return filtered.length !== prev.length ? filtered : prev;
+    });
+  }, [selectedChainId, isInitialized]);
 
   const handleInputChange = (
     field: keyof CourseFormData,
@@ -131,17 +211,18 @@ const CourseCreationForm: React.FC = () => {
     }
   };
 
-  const handleTokenToggle = (token: PaymentToken) => {
-    setFormData((prev) => ({
-      ...prev,
-      tokenToPayWith: prev.tokenToPayWith.some(
+  const handleTokenToggle = (token: SelectedToken) => {
+    setSelectedTokens((prev) => {
+      const exists = prev.some(
         (t) => t.address === token.address && t.chainId === token.chainId
-      )
-        ? prev.tokenToPayWith.filter(
-            (t) => !(t.address === token.address && t.chainId === token.chainId)
-          )
-        : [...prev.tokenToPayWith, token],
-    }));
+      );
+      if (exists) {
+        return prev.filter(
+          (t) => !(t.address === token.address && t.chainId === token.chainId)
+        );
+      }
+      return [...prev, token];
+    });
   };
 
   const validateForm = () => {
@@ -154,7 +235,7 @@ const CourseCreationForm: React.FC = () => {
     if (!formData.description.trim())
       newErrors.description = "Description is required";
     if (formData.price < 0) newErrors.price = "Price cannot be negative";
-    if (formData.price > 0 && formData.tokenToPayWith.length === 0)
+  if (formData.price > 0 && formData.tokenToPayWith.length === 0)
       newErrors.tokenToPayWith =
         "Select at least one payment token for paid courses";
 
@@ -196,6 +277,16 @@ const CourseCreationForm: React.FC = () => {
       return;
     }
 
+    // Wallet must be linked to account (server-side walletAddress present)
+    if (!me.data?.walletAddress) {
+      addToast({
+        type: "error",
+        message:
+          "Please connect your wallet to your account before creating a course.",
+      });
+      return;
+    }
+
     if (!validateForm()) {
       addToast({
         type: "error",
@@ -218,10 +309,10 @@ const CourseCreationForm: React.FC = () => {
       courseFormData.append("level", formData.level);
       courseFormData.append("language", formData.language);
       courseFormData.append("price", formData.price.toString());
-      courseFormData.append(
-        "tokenToPayWith",
-        JSON.stringify(formData.tokenToPayWith)
-      );
+  // Backend expects an array of strings in format TOKEN_SYMBOL-CHAIN_ID
+  // For multipart/form-data, append as repeated fields with the same key
+  const tokenStrings = Array.from(new Set(formData.tokenToPayWith || []));
+  tokenStrings.forEach((tok) => courseFormData.append("tokenToPayWith", tok));
       courseFormData.append(
         "accessDuration",
         formData.accessDuration.toString()
@@ -471,7 +562,7 @@ const CourseCreationForm: React.FC = () => {
               <select
                 value={formData.level}
                 onChange={(e) =>
-                  handleInputChange("level", e.target.value as any)
+                  handleInputChange("level", e.target.value as CourseLevel)
                 }
                 className={inputClass}
               >
@@ -652,6 +743,23 @@ const CourseCreationForm: React.FC = () => {
             Payment Configuration
           </h3>
 
+          {/* Wallet requirement notice */}
+          {!me.isLoading && !me.data?.walletAddress && (
+            <div className="p-4 rounded-lg bg-red-600/15 border border-red-600/30 text-red-300 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm">
+                  You need to connect a wallet to your account to accept crypto
+                  payments and create courses.
+                </p>
+                <p className="text-xs opacity-80 mt-1">
+                  Use the wallet button at the top-right, or click below to
+                  authorize with your wallet.
+                </p>
+              </div>
+              <SiweAuthButton />
+            </div>
+          )}
+
           {/* Chain Selection */}
           <div>
             <label className="block text-white font-medium mb-3">
@@ -691,9 +799,8 @@ const CourseCreationForm: React.FC = () => {
             </label>
             <div className="space-y-2">
               {availableTokens.map((token) => {
-                const isSelected = formData.tokenToPayWith.some(
-                  (t) =>
-                    t.address === token.address && t.chainId === token.chainId
+                const isSelected = selectedTokens.some(
+                  (t) => t.address === token.address && t.chainId === token.chainId
                 );
                 return (
                   <button
@@ -1106,7 +1213,7 @@ const CourseCreationForm: React.FC = () => {
         <div className="flex justify-end pt-6">
           <button
             type="submit"
-            disabled={apiLoading}
+            disabled={apiLoading || (!!me.data && !me.data.walletAddress)}
             className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {apiLoading ? (
