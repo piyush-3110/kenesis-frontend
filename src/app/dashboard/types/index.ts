@@ -38,6 +38,8 @@ export interface DashboardMetric {
   icon?: React.ComponentType<{ className?: string }>;
 }
 
+// Legacy local transaction (wallet) representation used by Transactions component UI.
+// We'll map backend analytics purchases into this shape minimally.
 export interface Transaction {
   id: string;
   from: string;
