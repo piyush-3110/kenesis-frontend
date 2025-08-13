@@ -31,7 +31,10 @@ import {
 import { useUIStore } from "@/store/useUIStore";
 import CustomVideoPlayer from "@/components/video/CustomVideoPlayer";
 import CourseReviewsSection from "@/components/CourseReviewsSection";
-import { DocumentViewer, type DocumentAttachment } from "@/components/document/DocumentViewer";
+import {
+  DocumentViewer,
+  type DocumentAttachment,
+} from "@/components/document/DocumentViewer";
 
 interface Course {
   id: string;
@@ -113,7 +116,8 @@ const LearningPage: React.FC = () => {
       type?: string;
     }>;
   } | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<DocumentAttachment | null>(null);
+  const [selectedDocument, setSelectedDocument] =
+    useState<DocumentAttachment | null>(null);
   const [loading, setLoading] = useState(true);
   const [contentLoading, setContentLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -1489,13 +1493,15 @@ const LearningPage: React.FC = () => {
                           <div className="bg-gray-900/50 p-4">
                             <div className="flex gap-3">
                               <button
-                                onClick={() => setSelectedDocument({
-                                  id: selectedModule.id,
-                                  title: selectedModule.title,
-                                  url: moduleContent.documentUrl!,
-                                  type: 'pdf', // Default to PDF, could be enhanced to detect type
-                                  size: undefined
-                                })}
+                                onClick={() =>
+                                  setSelectedDocument({
+                                    id: selectedModule.id,
+                                    title: selectedModule.title,
+                                    url: moduleContent.documentUrl!,
+                                    type: "pdf", // Default to PDF, could be enhanced to detect type
+                                    size: undefined,
+                                  })
+                                }
                                 className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-colors font-medium"
                               >
                                 <FileText size={20} />
@@ -1504,7 +1510,9 @@ const LearningPage: React.FC = () => {
                               <button
                                 onClick={() => {
                                   // Mark module as completed when user finishes reading
-                                  console.log(`Marking document module ${selectedModule.id} as completed`);
+                                  console.log(
+                                    `Marking document module ${selectedModule.id} as completed`
+                                  );
                                   // TODO: Implement markModuleCompleted function
                                   // markModuleCompleted(selectedModule.id);
                                 }}
