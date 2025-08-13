@@ -4,39 +4,100 @@ import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import GradientBorder from "./GradientBorder";
 import { useDashboardStore } from "../store/useDashboardStore";
+import { formatCurrency, formatCompactNumber } from "@/shared/utils/formatters";
+import { TimeSeriesPoint } from "@/lib/api/dashboardApi";
 
 interface SalesAnalyticsProps {
   className?: string;
 }
 
+interface TooltipData {
+  label: string;
+  revenue: number;
+  orders: number;
+  x: number;
+  y: number;
+}
+
 /**
  * SalesChart Component
- * Line chart for sales analytics
+ * Interactive line chart for sales analytics with tooltips
  */
-const SalesChart: React.FC<{ data: { month: string; value: number }[] }> = ({
-  data,
-}) => {
-  if (!data || data.length === 0) return null;
+const SalesChart: React.FC<{
+  data: TimeSeriesPoint[];
+  activeTab: string;
+  showRevenue: boolean;
+}> = ({ data, activeTab, showRevenue }) => {
+  const [tooltip, setTooltip] = useState<TooltipData | null>(null);
 
-  const max = Math.max(...data.map((d) => d.value));
-  const min = Math.min(...data.map((d) => d.value));
-  const range = max - min || 1;
+  const formatYAxisLabel = React.useCallback((value: number) => {
+    if (showRevenue) {
+      return formatCompactNumber(value);
+    }
+    return value.toString();
+  }, [showRevenue]);
 
-  const points = data
-    .map((item, index) => {
-      const x = (index / (data.length - 1)) * 100;
-      const y = 100 - ((item.value - min) / range) * 80; // 80% of height for padding
-      return `${x},${y}`;
-    })
-    .join(" ");
+  const values = useMemo(() => data.map((d) => (showRevenue ? d.revenue : d.orders)), [data, showRevenue]);
+  const max = useMemo(() => Math.max(...values), [values]);
+  const min = useMemo(() => Math.min(...values), [values]);
+  const range = useMemo(() => max - min || 1, [max, min]);
+
+  const points = useMemo(() => {
+    return data
+      .map((item, index) => {
+        const value = showRevenue ? item.revenue : item.orders;
+        const x = (index / (data.length - 1)) * 100;
+        const y = 100 - ((value - min) / range) * 80; // 80% of height for padding
+        return `${x},${y}`;
+      })
+      .join(" ");
+  }, [data, showRevenue, min, range]);
+
+  const yAxisLabels = useMemo(() => {
+    const steps = 4;
+    const step = range / steps;
+    return Array.from({ length: steps + 1 }, (_, i) => {
+      const value = max - (step * i);
+      return formatYAxisLabel(value);
+    });
+  }, [max, range, formatYAxisLabel]);
+
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full h-40 sm:h-48 lg:h-64 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">
+          No data available for {activeTab.toLowerCase()} view
+        </div>
+      </div>
+    );
+  }
+
+  const handleMouseEnter = (item: TimeSeriesPoint, index: number) => {
+    const value = showRevenue ? item.revenue : item.orders;
+    const x = (index / (data.length - 1)) * 100;
+    const y = 100 - ((value - min) / range) * 80;
+    
+    setTooltip({
+      label: item.label,
+      revenue: item.revenue,
+      orders: item.orders,
+      x,
+      y,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setTooltip(null);
+  };
 
   return (
-    <div className="w-full h-40 sm:h-48 lg:h-64">
+    <div className="w-full h-40 sm:h-48 lg:h-64 relative">
       <svg
         width="100%"
         height="100%"
         viewBox="0 0 100 100"
         className="overflow-visible"
+        onMouseLeave={handleMouseLeave}
       >
         <defs>
           <linearGradient id="salesGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -85,24 +146,58 @@ const SalesChart: React.FC<{ data: { month: string; value: number }[] }> = ({
           filter="url(#glow)"
         />
 
-        {/* Data points */}
+        {/* Interactive data points */}
         {data.map((item, index) => {
+          const value = showRevenue ? item.revenue : item.orders;
           const x = (index / (data.length - 1)) * 100;
-          const y = 100 - ((item.value - min) / range) * 80;
+          const y = 100 - ((value - min) / range) * 80;
+          
           return (
-            <circle
-              key={index}
-              cx={x}
-              cy={y}
-              r="2"
-              fill="#0680FF"
-              stroke="white"
-              strokeWidth="1"
-              className="hover:r-3 transition-all duration-200"
-            />
+            <g key={index}>
+              {/* Invisible larger circle for easier hover */}
+              <circle
+                cx={x}
+                cy={y}
+                r="8"
+                fill="transparent"
+                className="cursor-pointer"
+                onMouseEnter={() => handleMouseEnter(item, index)}
+              />
+              {/* Visible data point */}
+              <circle
+                cx={x}
+                cy={y}
+                r={tooltip?.label === item.label ? "4" : "2"}
+                fill="#0680FF"
+                stroke="white"
+                strokeWidth="1"
+                className="transition-all duration-200 pointer-events-none"
+              />
+            </g>
           );
         })}
       </svg>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="absolute z-10 bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-lg p-3 pointer-events-none"
+          style={{
+            left: `${tooltip.x}%`,
+            top: `${tooltip.y - 20}%`,
+            transform: 'translate(-50%, -100%)',
+            minWidth: '120px',
+          }}
+        >
+          <div className="text-white text-sm font-medium mb-1">{tooltip.label}</div>
+          <div className="text-gray-300 text-xs">
+            Revenue: {formatCurrency(tooltip.revenue)}
+          </div>
+          <div className="text-gray-300 text-xs">
+            Orders: {tooltip.orders.toLocaleString()}
+          </div>
+        </div>
+      )}
 
       {/* X-axis labels */}
       <div className="flex justify-between mt-2 px-1 sm:px-2 overflow-hidden">
@@ -115,7 +210,16 @@ const SalesChart: React.FC<{ data: { month: string; value: number }[] }> = ({
               fontSize: "clamp(8px, 1.5vw, 11px)",
             }}
           >
-            {item.month}
+            {item.label}
+          </span>
+        ))}
+      </div>
+
+      {/* Y-axis labels */}
+      <div className="absolute left-2 top-0 bottom-8 flex flex-col justify-between text-gray-400 text-xs">
+        {yAxisLabels.map((label, index) => (
+          <span key={index} style={{ fontSize: "clamp(9px, 1.5vw, 11px)" }}>
+            {label}
           </span>
         ))}
       </div>
@@ -125,28 +229,60 @@ const SalesChart: React.FC<{ data: { month: string; value: number }[] }> = ({
 
 /**
  * SalesAnalytics Component
- * Sales analytics card with time period tabs and line chart
+ * Sales analytics card with time period tabs and interactive line chart
  */
 const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({ className }) => {
-  const [activeTab, setActiveTab] = useState("Monthly");
-  const { metrics } = useDashboardStore(); // keep if needed later
-  // We'll derive sales analytics from last initialize (metrics don't include time series yet)
-  // For now, we tap directly into window-managed store by extending store later; placeholder.
+  const [activeTab, setActiveTab] = useState<"Daily" | "Weekly" | "Monthly" | "Yearly">("Monthly");
+  const [showRevenue, setShowRevenue] = useState(true);
+  const { metrics, isLoading } = useDashboardStore();
 
-  const tabs = ["Daily", "Weekly", "Monthly", "Yearly"];
+  const tabs: Array<{ key: "Daily" | "Weekly" | "Monthly" | "Yearly"; label: string }> = [
+    { key: "Daily", label: "Daily" },
+    { key: "Weekly", label: "Weekly" },
+    { key: "Monthly", label: "Monthly" },
+    { key: "Yearly", label: "Yearly" },
+  ];
 
-  // Temporary: no direct analytics time series stored yet in store; this will be replaced when store is extended.
+  // For now, use the trend data from metrics until we add full analytics to store
   const salesData = useMemo(() => {
-    // Placeholder if metrics contain trends (e.g., revenue trend for last 7 days)
     const revenueMetric = metrics.find((m) => m.id === "revenue");
-    if (revenueMetric?.trend) {
-      return revenueMetric.trend.map((v, i) => ({
-        month: `${i + 1}`,
-        value: v,
+    const ordersMetric = metrics.find((m) => m.id === "orders");
+    
+    if (revenueMetric?.trend && ordersMetric?.trend) {
+      // Create synthetic data points from trend data
+      return revenueMetric.trend.map((revenue, index) => ({
+        label: `Day ${index + 1}`,
+        revenue,
+        orders: ordersMetric.trend?.[index] || 0,
       }));
     }
-    return [] as { month: string; value: number }[];
+    
+    // Fallback to empty array
+    return [] as TimeSeriesPoint[];
   }, [metrics]);
+
+  const totalRevenue = useMemo(() => {
+    return salesData.reduce((sum: number, point: TimeSeriesPoint) => sum + point.revenue, 0);
+  }, [salesData]);
+
+  const totalOrders = useMemo(() => {
+    return salesData.reduce((sum: number, point: TimeSeriesPoint) => sum + point.orders, 0);
+  }, [salesData]);
+
+  if (isLoading) {
+    return (
+      <GradientBorder
+        className={cn(
+          "transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/5",
+          className
+        )}
+      >
+        <div className="p-4 lg:p-6 flex items-center justify-center h-80">
+          <div className="text-gray-400">Loading analytics...</div>
+        </div>
+      </GradientBorder>
+    );
+  }
 
   return (
     <GradientBorder
@@ -158,28 +294,40 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({ className }) => {
       <div className="p-4 lg:p-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 lg:mb-6 gap-3">
-          <h3
-            className="text-white truncate"
-            style={{
-              fontFamily: "CircularXX, Inter, sans-serif",
-              fontSize: "clamp(14px, 2.5vw, 18px)",
-              fontWeight: 450,
-              lineHeight: "140%",
-            }}
-          >
-            Sales Analytics
-          </h3>
+          <div className="flex flex-col">
+            <h3
+              className="text-white truncate"
+              style={{
+                fontFamily: "CircularXX, Inter, sans-serif",
+                fontSize: "clamp(14px, 2.5vw, 18px)",
+                fontWeight: 450,
+                lineHeight: "140%",
+              }}
+            >
+              Sales Analytics
+            </h3>
+            {salesData.length > 0 && (
+              <div className="flex items-center gap-4 mt-1">
+                <div className="text-gray-400 text-xs">
+                  Total Revenue: {formatCurrency(totalRevenue)}
+                </div>
+                <div className="text-gray-400 text-xs">
+                  Total Orders: {totalOrders.toLocaleString()}
+                </div>
+              </div>
+            )}
+          </div>
 
-          {/* Tabs */}
+          {/* Time period tabs */}
           <div className="flex gap-1 bg-gray-900/50 rounded-lg p-1 overflow-x-auto">
             {tabs.map((tab) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
                 className={cn(
                   "px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all duration-200",
                   "whitespace-nowrap flex-shrink-0",
-                  activeTab === tab
+                  activeTab === tab.key
                     ? "bg-blue-600 text-white shadow-lg shadow-blue-600/30"
                     : "text-gray-400 hover:text-white hover:bg-gray-800"
                 )}
@@ -188,23 +336,46 @@ const SalesAnalytics: React.FC<SalesAnalyticsProps> = ({ className }) => {
                   fontSize: "clamp(10px, 1.8vw, 13px)",
                 }}
               >
-                {tab}
+                {tab.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Chart */}
-        <SalesChart data={salesData} />
+        {/* Metric toggle buttons */}
+        {salesData.length > 0 && (
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setShowRevenue(true)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs transition-all duration-200",
+                showRevenue
+                  ? "bg-blue-600/20 text-blue-400 border border-blue-600/50"
+                  : "bg-gray-800/50 text-gray-400 hover:text-white"
+              )}
+            >
+              Revenue
+            </button>
+            <button
+              onClick={() => setShowRevenue(false)}
+              className={cn(
+                "px-3 py-1.5 rounded-lg text-xs transition-all duration-200",
+                !showRevenue
+                  ? "bg-blue-600/20 text-blue-400 border border-blue-600/50"
+                  : "bg-gray-800/50 text-gray-400 hover:text-white"
+              )}
+            >
+              Orders
+            </button>
+          </div>
+        )}
 
-        {/* Y-axis labels */}
-        <div className="absolute left-2 top-16 bottom-16 flex flex-col justify-between text-gray-400 text-xs">
-          {["180k", "120k", "60k", "0"].map((label) => (
-            <span key={label} style={{ fontSize: "clamp(9px, 1.5vw, 11px)" }}>
-              {label}
-            </span>
-          ))}
-        </div>
+        {/* Chart */}
+        <SalesChart 
+          data={salesData} 
+          activeTab={activeTab}
+          showRevenue={showRevenue}
+        />
       </div>
     </GradientBorder>
   );
