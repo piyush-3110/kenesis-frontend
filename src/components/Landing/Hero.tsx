@@ -1,12 +1,13 @@
 "use client";
 
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
+import { Search } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 
 const Hero: React.FC = () => {
   return (
-    <section className="relative flex flex-col items-center text-center px-4 pt-28 sm:pt-40 md:pt-40 max-w-screen-xl mx-auto overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center px-4 md:px-24 overflow-hidden">
       {/* Grid Background */}
       <div className="absolute inset-0 opacity-60">
         <div
@@ -18,74 +19,99 @@ const Hero: React.FC = () => {
             `,
             backgroundSize: "80px 80px",
             maskImage:
-              "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.2) 80%, transparent 100%)",
+              "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
             WebkitMaskImage:
-              "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.6) 60%, rgba(0,0,0,0.2) 80%, transparent 100%)",
+              "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
           }}
         />
       </div>
 
       {/* Glowing Blue Effect */}
-      <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/4 w-[1000px] h-[600px] pointer-events-none">
+      <div className="">
         <div
           className="w-full h-full rounded-full blur-3xl opacity-40"
           style={{
             background:
               "radial-gradient(circle, rgba(6,128,255,0.8) 0%, rgba(2,46,210,0.5) 40%, rgba(6,128,255,0.2) 70%, transparent 90%)",
-            maskImage:
-              "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.3) 80%, transparent 100%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.3) 80%, transparent 100%)",
           }}
         />
       </div>
 
       {/* Content */}
-      <div className="relative z-10">
-        {/* Heading */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto">
+        {/* Main Content Grid - Text on Left, Image on Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+          
+          {/* Left Side - Text Content */}
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+            {/* Heading */}
+            <div className="mb-6">
+              <h1 
+                className="text-white font-poppins font-normal"
+                style={{
+                  fontSize: "45.79px",
+                  lineHeight: "75px",
+                  letterSpacing: "-2%",
+                  fontWeight: 400,
+                }}
+              >
+                Your upgrade starts here<br />
+                with{" "}
+                <span
+                  className="bg-gradient-to-b from-white to-[#0036F6] bg-clip-text text-transparent"
+                  style={{
+                      fontSize: "55.79px",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Your Knowledge
+                </span>
+              </h1>
+            </div>
 
-        <div className="mb-6">
-          <h1 className="text-white font-poppins text-[32px] sm:text-[48px] md:text-[64px] lg:text-[90px] leading-none font-normal">
-            Your upgrade starts here
-          </h1>
-          <h2 className="font-poppins text-[32px] sm:text-[48px] md:text-[64px] lg:text-[90px] leading-none font-normal">
-            with{" "}
-            <span
-              className="bg-gradient-to-b from-white to-[#0036F6] bg-clip-text text-transparent"
-              style={{
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              Your Knowledge
-            </span>
-          </h2>
-        </div>
+            {/* Subheading Text */}
+            <p className="font-poppins font-normal text-[14px] sm:text-[16px] md:text-[18px] text-white max-w-lg mb-8">
+              <span className="font-normal">Kenesis</span> puts you in control.{" "}
+              <span className="font-normal">Create, sell,</span> and{" "}
+              <span className="font-normal">earn</span> from your info products—no
+              middlemen, just rewards. Discover topics and find the perfect product
+              for you.
+            </p>
 
-        {/* Subheading Text */}
-        <p className="font-poppins font-normal mx-auto text-[14px] sm:text-[16px] md:text-[18px] text-white  max-w-3xl text-center mb-6">
-          <span className="font-normal">Kenesis</span> puts you in control.{" "}
-          <span className="font-normal">Create, sell,</span> and{" "}
-          <span className="font-normal">earn</span> from your info products—no
-          middlemen, just rewards. Discover topics and find the perfect product
-          for you.
-        </p>
+            {/* Search Bar */}
+            <div className="flex justify-center lg:justify-start w-full max-w-md">
+              <div className="relative w-full">
+                <div 
+                  className="relative rounded-lg p-[1px]"
+                  style={{
+                    background: "linear-gradient(90deg, #0680FF 0%, #022ED2 100%)",
+                  }}
+                >
+                  <div className="relative flex items-center bg-black rounded-lg">
+                    <Search className="absolute left-4 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search"
+                      className="w-full py-3 pl-12 pr-4 bg-black text-white placeholder-gray-400 rounded-lg border-none outline-none focus:ring-0"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        {/* Connect Wallet Button (enhanced, unified auth flow) */}
-        <div className="mb-12 flex justify-center items-center">
-          <SiweAuthButton />
-        </div>
-
-        {/* Girls Image */}
-        <div className="w-full flex justify-center px-4">
-          <Image
-            src="/images/landing/girls.png"
-            alt="Kenesis Banner Models"
-            width={650}
-            height={400}
-            className="w-full  max-w-[650px] object-contain"
-            priority
-          />
+          {/* Right Side - Girls Image */}
+          <div className="flex justify-center lg:justify-end order-first lg:order-last">
+            <Image
+              src="/images/landing/girls.png"
+              alt="Kenesis Banner Models"
+              width={650}
+              height={400}
+              className="w-full max-w-[500px] lg:max-w-[600px] xl:max-w-[650px] object-contain"
+              priority
+            />
+          </div>
         </div>
       </div>
     </section>
