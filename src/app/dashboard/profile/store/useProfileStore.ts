@@ -2,17 +2,15 @@
 
 import { create } from "zustand";
 import type { User } from "@/types/auth";
-import type { ProfileStore, InstructorProfile, InstructorStats, Course } from "../types";
+import type {
+  ProfileStore,
+  InstructorProfile,
+  InstructorStats,
+  Course,
+} from "../types";
+import { UserApi } from "@/lib/api/userApi";
 
-// Mock data for development
-const mockStats: InstructorStats = {
-  totalStudents: 12847,
-  totalCourses: 15,
-  totalEarnings: 89420.5,
-  averageRating: 4.8,
-  totalReviews: 2341,
-  completionRate: 87.5,
-};
+// Note: stats will be fetched from backend via UserApi.getDashboardOverview
 
 const mockCourses: Course[] = [
   {
@@ -88,7 +86,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
             instagram: undefined,
           },
         };
-        
+
         set({ profile, loading: false });
         return;
       }
@@ -98,7 +96,8 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
     } catch (error) {
       console.error("Failed to load profile:", error);
       set({
-        error: error instanceof Error ? error.message : "Failed to load profile",
+        error:
+          error instanceof Error ? error.message : "Failed to load profile",
         loading: false,
       });
     }
@@ -107,11 +106,25 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   loadStats: async () => {
     try {
       set({ loading: true, error: null });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      set({ stats: mockStats, loading: false });
+      // Fetch dashboard overview from backend
+      const res = await UserApi.getDashboardOverview();
+      if (!res.data.success || !res.data.data) {
+        throw new Error(
+          res.data.message || "Failed to fetch dashboard overview"
+        );
+      }
+
+      const api = res.data;
+      const stats: InstructorStats = {
+        totalStudents: api.data.totalStudents ?? 0,
+        totalCourses: api.data.totalCourses ?? 0,
+        totalEarnings: api.data.totalEarnings ?? 0,
+        averageRating: api.data.averageRating ?? 0,
+        totalReviews: api.data.totalReviews ?? 0,
+        completionRate: api.data.completionRate ?? null,
+      };
+
+      set({ stats, loading: false });
     } catch (error) {
       console.error("Failed to load stats:", error);
       set({
@@ -124,15 +137,16 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   loadCourses: async () => {
     try {
       set({ loading: true, error: null });
-      
+
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
       set({ courses: mockCourses, loading: false });
     } catch (error) {
       console.error("Failed to load courses:", error);
       set({
-        error: error instanceof Error ? error.message : "Failed to load courses",
+        error:
+          error instanceof Error ? error.message : "Failed to load courses",
         loading: false,
       });
     }
@@ -141,24 +155,25 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
   updateProfile: async (profileData: Partial<InstructorProfile>) => {
     try {
       set({ loading: true, error: null });
-      
+
       const currentProfile = get().profile;
       if (!currentProfile) {
         throw new Error("No profile loaded");
       }
 
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Update profile
       const updatedProfile = { ...currentProfile, ...profileData };
       set({ profile: updatedProfile, loading: false });
-      
+
       return true;
     } catch (error) {
       console.error("Failed to update profile:", error);
       set({
-        error: error instanceof Error ? error.message : "Failed to update profile",
+        error:
+          error instanceof Error ? error.message : "Failed to update profile",
         loading: false,
       });
       return false;
