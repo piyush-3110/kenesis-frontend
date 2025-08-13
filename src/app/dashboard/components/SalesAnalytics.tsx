@@ -37,27 +37,56 @@ const SalesChart: React.FC<{
     return value.toString();
   }, [showRevenue]);
 
-  const values = useMemo(() => data.map((d) => (showRevenue ? d.revenue : d.orders)), [data, showRevenue]);
-  const max = useMemo(() => Math.max(...values), [values]);
-  const min = useMemo(() => Math.min(...values), [values]);
-  const range = useMemo(() => max - min || 1, [max, min]);
+  // Extract series values (ensure numeric & finite)
+  const values = useMemo(
+    () => data.map((d) => (showRevenue ? d.revenue : d.orders)).filter((v) => Number.isFinite(v)),
+    [data, showRevenue]
+  );
 
+  // Guard: if no valid values
+  const safeValues = useMemo(() => (values.length ? values : [0]), [values]);
+
+  // Always include zero as a baseline so a single large spike doesn't flatten everything else visually
+  const max = useMemo(() => Math.max(0, ...safeValues), [safeValues]);
+  const min = useMemo(() => Math.min(0, ...safeValues), [safeValues]);
+  const range = useMemo(() => (max - min === 0 ? 1 : max - min), [max, min]);
+
+  // Plot area padding (percent units of the SVG viewBox)
+  const PAD_LEFT = 8;   // leave space so first point not glued to y-axis labels
+  const PAD_RIGHT = 4;  // slight right breathing room
+  const PAD_TOP = 5;    // top padding
+  const PAD_BOTTOM = 10; // bottom padding for x labels & tooltip space
+  const plotWidth = 100 - PAD_LEFT - PAD_RIGHT;
+  const plotHeight = 100 - PAD_TOP - PAD_BOTTOM; // coordinate system height for data
+
+  // Helper to compute x/y for an index & value
+  const getPoint = React.useCallback(
+    (index: number, value: number) => {
+      const count = data.length;
+      const denom = count > 1 ? count - 1 : 1; // avoid divide-by-zero when only one point
+      const x = PAD_LEFT + (index / denom) * plotWidth;
+      const y = PAD_TOP + (1 - (value - min) / range) * plotHeight;
+      return { x, y };
+    },
+    [data.length, plotWidth, plotHeight, min, range]
+  );
+
+  // Polyline string & area path points
   const points = useMemo(() => {
     return data
-      .map((item, index) => {
-        const value = showRevenue ? item.revenue : item.orders;
-        const x = (index / (data.length - 1)) * 100;
-        const y = 100 - ((value - min) / range) * 80; // 80% of height for padding
+      .map((item, idx) => {
+        const v = showRevenue ? item.revenue : item.orders;
+        const { x, y } = getPoint(idx, v);
         return `${x},${y}`;
       })
       .join(" ");
-  }, [data, showRevenue, min, range]);
+  }, [data, showRevenue, getPoint]);
 
   const yAxisLabels = useMemo(() => {
     const steps = 4;
     const step = range / steps;
     return Array.from({ length: steps + 1 }, (_, i) => {
-      const value = max - (step * i);
+      const value = max - step * i;
       return formatYAxisLabel(value);
     });
   }, [max, range, formatYAxisLabel]);
@@ -73,9 +102,8 @@ const SalesChart: React.FC<{
   }
 
   const handleMouseEnter = (item: TimeSeriesPoint, index: number) => {
-    const value = showRevenue ? item.revenue : item.orders;
-    const x = (index / (data.length - 1)) * 100;
-    const y = 100 - ((value - min) / range) * 80;
+  const value = showRevenue ? item.revenue : item.orders;
+  const { x, y } = getPoint(index, value);
     
     setTooltip({
       label: item.label,
@@ -91,7 +119,7 @@ const SalesChart: React.FC<{
   };
 
   return (
-    <div className="w-full h-40 sm:h-48 lg:h-64 relative">
+  <div className="w-full h-40 sm:h-48 lg:h-64 relative">
       <svg
         width="100%"
         height="100%"
@@ -116,61 +144,67 @@ const SalesChart: React.FC<{
         </defs>
 
         {/* Grid lines */}
-        {[20, 40, 60, 80].map((y) => (
-          <line
-            key={y}
-            x1="0"
-            y1={y}
-            x2="100"
-            y2={y}
-            stroke="rgba(107, 114, 128, 0.2)"
-            strokeWidth="0.5"
-          />
-        ))}
+        {/* Grid lines inside plot area */}
+        {Array.from({ length: 4 }, (_, i) => {
+          const rel = i / 4; // 0 to <1
+          const y = PAD_TOP + rel * plotHeight;
+          return (
+            <line
+              key={i}
+              x1={PAD_LEFT}
+              y1={y}
+              x2={100 - PAD_RIGHT}
+              y2={y}
+              stroke="rgba(107, 114, 128, 0.18)"
+              strokeWidth="0.5"
+            />
+          );
+        })}
 
         {/* Area under curve */}
-        <path
-          d={`M 0,100 L ${points} L 100,100 Z`}
-          fill="url(#salesGradient)"
-          fillOpacity="0.1"
-        />
+        {/* Area under curve (closes at baseline zero or min) */}
+        {data.length > 0 && (
+          <path
+            d={`M ${PAD_LEFT},${PAD_TOP + plotHeight} L ${points} L ${PAD_LEFT + plotWidth},${PAD_TOP + plotHeight} Z`}
+            fill="url(#salesGradient)"
+            fillOpacity="0.08"
+          />
+        )}
 
         {/* Main line */}
-        <polyline
-          fill="none"
-          stroke="url(#salesGradient)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          points={points}
-          filter="url(#glow)"
-        />
+        {data.length > 0 && (
+          <polyline
+            fill="none"
+            stroke="url(#salesGradient)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={points}
+            filter="url(#glow)"
+          />
+        )}
 
         {/* Interactive data points */}
         {data.map((item, index) => {
           const value = showRevenue ? item.revenue : item.orders;
-          const x = (index / (data.length - 1)) * 100;
-          const y = 100 - ((value - min) / range) * 80;
-          
+          const { x, y } = getPoint(index, value);
           return (
             <g key={index}>
-              {/* Invisible larger circle for easier hover */}
               <circle
                 cx={x}
                 cy={y}
-                r="8"
+                r={8}
                 fill="transparent"
                 className="cursor-pointer"
                 onMouseEnter={() => handleMouseEnter(item, index)}
               />
-              {/* Visible data point */}
               <circle
                 cx={x}
                 cy={y}
-                r={tooltip?.label === item.label ? "4" : "2"}
+                r={tooltip?.label === item.label ? 4 : 2.2}
                 fill="#0680FF"
                 stroke="white"
-                strokeWidth="1"
+                strokeWidth={1}
                 className="transition-all duration-200 pointer-events-none"
               />
             </g>
@@ -199,29 +233,38 @@ const SalesChart: React.FC<{
         </div>
       )}
 
-      {/* X-axis labels */}
-      <div className="flex justify-between mt-2 px-1 sm:px-2 overflow-hidden">
-        {data.map((item, index) => (
-          <span
-            key={index}
-            className="text-gray-400 text-xs truncate"
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "clamp(8px, 1.5vw, 11px)",
-            }}
-          >
-            {item.label}
-          </span>
-        ))}
+      {/* X-axis labels (absolute positioned to align with points) */}
+      <div className="absolute left-0 right-0 bottom-1 px-2" style={{ pointerEvents: 'none' }}>
+        {data.map((item, index) => {
+          const { x } = getPoint(index, showRevenue ? item.revenue : item.orders);
+          // Throttle label density if too many points (>20) -> show every n-th
+          const maxLabels = 16;
+          const skip = data.length > maxLabels ? Math.ceil(data.length / maxLabels) : 1;
+          if (index % skip !== 0 && index !== data.length - 1) return null;
+          return (
+            <span
+              key={index}
+              className="absolute text-gray-400 text-[10px] whitespace-nowrap translate-x-[-50%]"
+              style={{ left: `${x}%`, bottom: 0, fontFamily: 'Inter, sans-serif' }}
+            >
+              {item.label}
+            </span>
+          );
+        })}
       </div>
 
       {/* Y-axis labels */}
-      <div className="absolute left-2 top-0 bottom-8 flex flex-col justify-between text-gray-400 text-xs">
-        {yAxisLabels.map((label, index) => (
-          <span key={index} style={{ fontSize: "clamp(9px, 1.5vw, 11px)" }}>
-            {label}
-          </span>
-        ))}
+      <div
+        className="absolute top-1 bottom-6 flex flex-col justify-between text-gray-400 text-[10px]"
+        style={{ left: '4px', fontFamily: 'Inter, sans-serif' }}
+      >
+        {yAxisLabels.map((label, index) => {
+          return (
+            <span key={index} className="tabular-nums">
+              {label}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
