@@ -1,13 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useVerifyEmail, useResendVerification } from "@/features/auth/hooks";
 import AuthShell from "@/components/auth/AuthShell";
 import { Mail, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const search = useSearchParams();
   const token = search?.get("token") || "";
 
@@ -63,7 +63,7 @@ export default function VerifyEmailPage() {
       title="Verify your email"
       subtitle={
         status === "idle"
-          ? "We’ve sent you a verification link. If you didn’t receive it, resend below."
+          ? "We've sent you a verification link. If you didn't receive it, resend below."
           : undefined
       }
       backHref="/auth/login"
@@ -152,5 +152,26 @@ export default function VerifyEmailPage() {
         </form>
       )}
     </AuthShell>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthShell
+          title="Verify your email"
+          subtitle="Loading..."
+          backHref="/auth/login"
+          backText="Back to Login"
+        >
+          <div className="flex items-center justify-center py-4 text-gray-300">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading...
+          </div>
+        </AuthShell>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

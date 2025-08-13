@@ -3,7 +3,7 @@
  * Handles only blockchain-based purchases with NFT generation
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Award,
@@ -45,7 +45,7 @@ interface BlockchainPurchaseSectionProps {
   className?: string;
 }
 
-const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
+function BlockchainPurchaseSectionContent({
   price,
   courseAccess,
   course,
@@ -53,7 +53,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   accessLoading = false,
   tokenToPayWith = [],
   className = "",
-}) => {
+}: BlockchainPurchaseSectionProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addToast } = useUIStore();
@@ -524,6 +524,28 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
       {/* Purchase Status */}
       <div className="space-y-3">{renderPurchaseButton()}</div>
     </div>
+  );
+};
+
+const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = (props) => {
+  return (
+    <Suspense
+      fallback={
+        <div className={`space-y-4 ${props.className}`}>
+          <div className="text-white text-4xl font-bold">${props.price.toFixed(2)}</div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-600/30">
+            <Award size={20} />
+            <span className="font-medium">NFT Certificate Included</span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-gray-600/20 text-gray-400 border border-gray-600/30">
+            <Loader2 size={20} className="animate-spin" />
+            <span className="font-medium">Loading...</span>
+          </div>
+        </div>
+      }
+    >
+      <BlockchainPurchaseSectionContent {...props} />
+    </Suspense>
   );
 };
 
