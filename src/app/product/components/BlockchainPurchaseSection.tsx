@@ -109,7 +109,8 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   useEffect(() => {
     if (tokenToPayWith.length === 0) return;
     const key = `kenesis:lastToken:${course?.id || "global"}`;
-    const saved = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+    const saved =
+      typeof window !== "undefined" ? localStorage.getItem(key) : null;
     const validSaved = saved && tokenToPayWith.includes(saved) ? saved : null;
     setSelectedToken(validSaved || tokenToPayWith[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,7 +121,8 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     if (!selectedToken) return;
     const key = `kenesis:lastToken:${course?.id || "global"}`;
     try {
-      if (typeof window !== "undefined") localStorage.setItem(key, selectedToken);
+      if (typeof window !== "undefined")
+        localStorage.setItem(key, selectedToken);
     } catch {}
   }, [selectedToken, course?.id]);
 
@@ -138,7 +140,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     setPurchaseStep("generating-nft");
     setNftResult(null);
 
-  try {
+    try {
       console.log("Generating NFT metadata for course purchase...");
 
       const nftPurchaseResult = await purchaseCourseWithNFT({
@@ -157,7 +159,10 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
         setPurchaseStep("ready-for-purchase");
       } else {
         console.error("NFT metadata creation failed:", nftPurchaseResult.error);
-        addToast({ type: "error", message: "Failed to prepare NFT certificate." });
+        addToast({
+          type: "error",
+          message: "Failed to prepare NFT certificate.",
+        });
         setPurchaseStep("idle");
       }
     } catch (error) {
@@ -168,7 +173,10 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
         error:
           error instanceof Error ? error.message : "Unknown error occurred",
       });
-      addToast({ type: "error", message: "Failed to prepare NFT certificate." });
+      addToast({
+        type: "error",
+        message: "Failed to prepare NFT certificate.",
+      });
       setPurchaseStep("idle");
     }
   };
@@ -185,8 +193,8 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
   }) => {
     console.log("Blockchain purchase successful:", result);
 
-  // Toast for blockchain success
-  addToast({ type: "success", message: "Blockchain transaction confirmed." });
+    // Toast for blockchain success
+    addToast({ type: "success", message: "Blockchain transaction confirmed." });
 
     // Log backend confirmation status
     if (result.backendConfirmation) {
@@ -195,13 +203,20 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
           "✅ Backend confirmation successful:",
           result.backendConfirmation
         );
-    addToast({ type: "success", message: "Purchase confirmed. Course access activated." });
+        addToast({
+          type: "success",
+          message: "Purchase confirmed. Course access activated.",
+        });
       } else {
         console.warn(
           "⚠️ Backend confirmation failed:",
           result.backendConfirmation.error
         );
-    addToast({ type: "warning", message: "Payment succeeded, but access activation failed. We will verify shortly." });
+        addToast({
+          type: "warning",
+          message:
+            "Payment succeeded, but access activation failed. We will verify shortly.",
+        });
       }
     }
 
@@ -211,7 +226,7 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
 
   const handlePurchaseError = (error: string) => {
     console.error("Blockchain purchase failed:", error);
-  addToast({ type: "error", message: `Purchase failed: ${error}` });
+    addToast({ type: "error", message: `Purchase failed: ${error}` });
     setPurchaseStep("idle"); // Reset state
   };
 
@@ -228,7 +243,10 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
 
     // Block self-referral
     if (affiliateAddress === "__SELF__") {
-      addToast({ type: "warning", message: "You cannot use your own wallet as a referral." });
+      addToast({
+        type: "warning",
+        message: "You cannot use your own wallet as a referral.",
+      });
       return;
     }
 
@@ -236,12 +254,16 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
     if (chainSwitchInfo.needsSwitch && chainSwitchInfo.requiredChainId) {
       try {
         setIsSwitchingNetwork(true);
-        addToast({ type: "info", message: `Switching to ${chainSwitchInfo.requiredChainName}...` });
+        addToast({
+          type: "info",
+          message: `Switching to ${chainSwitchInfo.requiredChainName}...`,
+        });
         await switchChain({ chainId: chainSwitchInfo.requiredChainId });
         // Small delay to allow provider state to settle
         await new Promise((r) => setTimeout(r, 800));
       } catch (err) {
-        const msg = err instanceof Error ? err.message : "Failed to switch network";
+        const msg =
+          err instanceof Error ? err.message : "Failed to switch network";
         addToast({ type: "error", message: msg });
         return;
       } finally {
@@ -394,7 +416,9 @@ const BlockchainPurchaseSection: React.FC<BlockchainPurchaseSectionProps> = ({
                   ) : (
                     <>
                       <ShoppingCart size={20} />
-                      <span>Purchase Course with {selectedToken.split("-")[0]}</span>
+                      <span>
+                        Purchase Course with {selectedToken.split("-")[0]}
+                      </span>
                     </>
                   )}
                 </button>
