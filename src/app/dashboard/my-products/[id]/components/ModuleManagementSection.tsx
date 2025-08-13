@@ -1,11 +1,19 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Video, FileText, Edit2, Trash2, Download, Eye, Filter, ChevronDown } from 'lucide-react';
-import { CourseAPI } from '@/lib/api';
-import { DASHBOARD_COLORS } from '../../../constants';
-import ModuleEditModal from './ModuleEditModal';
-import ConfirmDialog from './ConfirmDialog';
+import React, { useState, useEffect } from "react";
+import {
+  Video,
+  FileText,
+  Edit2,
+  Trash2,
+  Eye,
+  Filter,
+  ChevronDown,
+} from "lucide-react";
+import { CourseAPI } from "@/lib/api";
+import { DASHBOARD_COLORS } from "../../../constants";
+import ModuleEditModal from "./ModuleEditModal";
+import ConfirmDialog from "./ConfirmDialog";
 
 interface ModuleManagementSectionProps {
   courseId: string;
@@ -14,11 +22,11 @@ interface ModuleManagementSectionProps {
 }
 
 interface ModuleFilters {
-  status?: 'draft' | 'published';
-  type?: 'video' | 'document';
+  status?: "draft" | "published";
+  type?: "video" | "document";
   includeUnpublished?: boolean;
-  sortBy?: 'order' | 'createdAt' | 'title';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "order" | "createdAt" | "title";
+  sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
   includeStats?: boolean;
@@ -32,18 +40,18 @@ interface ModuleFilters {
 const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   courseId,
   chapters,
-  canEdit
+  canEdit,
 }) => {
   const [modules, setModules] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedChapter, setSelectedChapter] = useState<string>('');
+  const [selectedChapter, setSelectedChapter] = useState<string>("");
   const [filters, setFilters] = useState<ModuleFilters>({
     includeStats: true,
-    sortBy: 'order',
-    sortOrder: 'asc',
+    sortBy: "order",
+    sortOrder: "asc",
     page: 1,
-    limit: 20
+    limit: 20,
   });
   const [showFilters, setShowFilters] = useState(false);
   const [editingModule, setEditingModule] = useState<any>(null);
@@ -56,7 +64,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
     if (chapters.length > 0 && !selectedChapter) {
       setSelectedChapter(chapters[0].id);
     }
-  }, [chapters, selectedChapter]);  
+  }, [chapters, selectedChapter]);
 
   useEffect(() => {
     if (selectedChapter) {
@@ -74,9 +82,9 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
     try {
       setLoading(true);
-      
+
       // If "All Chapters" selected, aggregate from all chapters
-      if (selectedChapter === 'all') {
+      if (selectedChapter === "all") {
         await loadAllChaptersModules();
         return;
       }
@@ -87,43 +95,55 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         sortBy: filters.sortBy,
         sortOrder: filters.sortOrder,
         page: filters.page,
-        limit: filters.limit
+        limit: filters.limit,
       };
 
       // Add optional filters
       if (filters.status) params.status = filters.status;
       if (filters.type) params.type = filters.type;
-      if (filters.includeUnpublished !== undefined) params.includeUnpublished = filters.includeUnpublished;
+      if (filters.includeUnpublished !== undefined)
+        params.includeUnpublished = filters.includeUnpublished;
 
-      console.log('🔄 Loading modules for chapter:', selectedChapter, 'with params:', params);
-      
-      const response = await CourseAPI.getModulesForChapter(selectedChapter, params);
-      
+      console.log(
+        "🔄 Loading modules for chapter:",
+        selectedChapter,
+        "with params:",
+        params
+      );
+
+      const response = await CourseAPI.getModulesForChapter(
+        selectedChapter,
+        params
+      );
+
       if (response.success && response.data) {
         // Find the current chapter info
-        const currentChapter = chapters.find(ch => ch.id === selectedChapter);
-        
+        const currentChapter = chapters.find((ch) => ch.id === selectedChapter);
+
         // Add chapter info to each module for consistency
-        const modulesWithChapter = (response.data.modules || []).map((module: any) => ({
-          ...module,
-          chapterId: selectedChapter, // Add chapterId for API calls
-          chapter: currentChapter ? {
-            id: currentChapter.id,
-            title: currentChapter.title,
-            order: currentChapter.order
-          } : null
-        }));
-        
+        const modulesWithChapter = (response.data.modules || []).map(
+          (module: any) => ({
+            ...module,
+            chapterId: selectedChapter, // Add chapterId for API calls
+            chapter: currentChapter
+              ? {
+                  id: currentChapter.id,
+                  title: currentChapter.title,
+                  order: currentChapter.order,
+                }
+              : null,
+          })
+        );
+
         setModules(modulesWithChapter);
-        setStats(response.data.stats || null);
-        console.log('✅ Modules loaded:', modulesWithChapter.length);
+        console.log("✅ Modules loaded:", modulesWithChapter.length);
       } else {
-        console.error('❌ Failed to load modules:', response.message);
+        console.error("❌ Failed to load modules:", response.message);
         setModules([]);
         setStats(null);
       }
     } catch (error: any) {
-      console.error('💥 Error loading modules:', error);
+      console.error("💥 Error loading modules:", error);
       setModules([]);
       setStats(null);
     } finally {
@@ -139,7 +159,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         videoModules: 0,
         documentModules: 0,
         previewModules: 0,
-        totalDuration: 0
+        totalDuration: 0,
       };
 
       for (const chapter of chapters) {
@@ -148,15 +168,19 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
             includeStats: true,
             sortBy: filters.sortBy,
             sortOrder: filters.sortOrder,
-            limit: 1000 // Get all modules for aggregation
+            limit: 1000, // Get all modules for aggregation
           };
 
           if (filters.status) params.status = filters.status;
           if (filters.type) params.type = filters.type;
-          if (filters.includeUnpublished !== undefined) params.includeUnpublished = filters.includeUnpublished;
+          if (filters.includeUnpublished !== undefined)
+            params.includeUnpublished = filters.includeUnpublished;
 
-          const response = await CourseAPI.getModulesForChapter(chapter.id, params);
-          
+          const response = await CourseAPI.getModulesForChapter(
+            chapter.id,
+            params
+          );
+
           if (response.success && response.data) {
             const chapterModules = response.data.modules || [];
             // Add chapter info to each module for display
@@ -166,47 +190,44 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
               chapter: {
                 id: chapter.id,
                 title: chapter.title,
-                order: chapter.order
-              }
+                order: chapter.order,
+              },
             }));
-            
-            allModules = [...allModules, ...modulesWithChapter];
 
-            // Aggregate stats
-            if (response.data.stats) {
-              const chapterStats = response.data.stats;
-              aggregatedStats.totalModules += chapterStats.totalModules || 0;
-              aggregatedStats.videoModules += chapterStats.videoModules || 0;
-              aggregatedStats.documentModules += chapterStats.documentModules || 0;
-              aggregatedStats.previewModules += chapterStats.previewModules || 0;
-              aggregatedStats.totalDuration += chapterStats.totalDuration || 0;
-            }
+            allModules = [...allModules, ...modulesWithChapter];
           }
         } catch (error) {
-          console.error(`Failed to load modules for chapter ${chapter.title}:`, error);
+          console.error(
+            `Failed to load modules for chapter ${chapter.title}:`,
+            error
+          );
         }
       }
 
       // Sort aggregated modules
-      if (filters.sortBy === 'order') {
+      if (filters.sortBy === "order") {
         allModules.sort((a, b) => {
           const chapterOrderA = a.chapter?.order || 0;
           const chapterOrderB = b.chapter?.order || 0;
           if (chapterOrderA !== chapterOrderB) {
-            return filters.sortOrder === 'asc' ? chapterOrderA - chapterOrderB : chapterOrderB - chapterOrderA;
+            return filters.sortOrder === "asc"
+              ? chapterOrderA - chapterOrderB
+              : chapterOrderB - chapterOrderA;
           }
-          return filters.sortOrder === 'asc' ? a.order - b.order : b.order - a.order;
+          return filters.sortOrder === "asc"
+            ? a.order - b.order
+            : b.order - a.order;
         });
-      } else if (filters.sortBy === 'title') {
+      } else if (filters.sortBy === "title") {
         allModules.sort((a, b) => {
           const comparison = a.title.localeCompare(b.title);
-          return filters.sortOrder === 'asc' ? comparison : -comparison;
+          return filters.sortOrder === "asc" ? comparison : -comparison;
         });
-      } else if (filters.sortBy === 'createdAt') {
+      } else if (filters.sortBy === "createdAt") {
         allModules.sort((a, b) => {
           const dateA = new Date(a.createdAt || 0).getTime();
           const dateB = new Date(b.createdAt || 0).getTime();
-          return filters.sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+          return filters.sortOrder === "asc" ? dateA - dateB : dateB - dateA;
         });
       }
 
@@ -217,25 +238,30 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
       setModules(paginatedModules);
       setStats(aggregatedStats);
-      console.log('✅ All chapters modules loaded:', allModules.length, 'displayed:', paginatedModules.length);
+      console.log(
+        "✅ All chapters modules loaded:",
+        allModules.length,
+        "displayed:",
+        paginatedModules.length
+      );
     } catch (error) {
-      console.error('Error loading all chapters modules:', error);
+      console.error("Error loading all chapters modules:", error);
       setModules([]);
       setStats(null);
     }
   };
 
   const handleFilterChange = (key: keyof ModuleFilters, value: any) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       [key]: value,
-      page: key !== 'page' ? 1 : value // Reset to page 1 when other filters change
+      page: key !== "page" ? 1 : value, // Reset to page 1 when other filters change
     }));
   };
 
   const handleChapterChange = (chapterId: string) => {
     setSelectedChapter(chapterId);
-    setFilters(prev => ({ ...prev, page: 1 })); // Reset pagination
+    setFilters((prev) => ({ ...prev, page: 1 })); // Reset pagination
   };
 
   const formatDuration = (seconds: number): string => {
@@ -245,27 +271,31 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   };
 
   const formatFileSize = (bytes: number): string => {
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    if (bytes === 0) return '0 Bytes';
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    if (bytes === 0) return "0 Bytes";
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
   };
 
   const handleDeleteModule = async (module: any) => {
     try {
       const chapterId = module.chapterId || module.chapter?.id;
       if (!chapterId) {
-        console.error('No chapterId found for module:', module);
+        console.error("No chapterId found for module:", module);
         return;
       }
-      
-      const response = await CourseAPI.deleteModule(courseId, chapterId, module.id);
+
+      const response = await CourseAPI.deleteModule(
+        courseId,
+        chapterId,
+        module.id
+      );
       if (response.success) {
         // Reload modules to get updated list
         loadModules();
       }
     } catch (error) {
-      console.error('Failed to delete module:', error);
+      console.error("Failed to delete module:", error);
     }
   };
 
@@ -305,7 +335,8 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
     return (
       <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
-          <div key={i} 
+          <div
+            key={i}
             className="rounded-xl p-6 animate-pulse"
             style={{ background: DASHBOARD_COLORS.CARD_BG }}
           >
@@ -325,8 +356,10 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
           <h2 className="text-2xl font-bold text-white">Course Modules</h2>
           {stats && (
             <p className="text-gray-400 text-sm mt-1">
-              {stats.totalModules} modules • {stats.videoModules} videos • {stats.documentModules} documents
-              {stats.totalDuration > 0 && ` • ${formatDuration(stats.totalDuration)} total`}
+              {stats.totalModules} modules • {stats.videoModules} videos •{" "}
+              {stats.documentModules} documents
+              {stats.totalDuration > 0 &&
+                ` • ${formatDuration(stats.totalDuration)} total`}
             </p>
           )}
         </div>
@@ -336,20 +369,27 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         >
           <Filter size={16} />
           Filters
-          <ChevronDown size={16} className={`transform transition-transform ${showFilters ? 'rotate-180' : ''}`} />
+          <ChevronDown
+            size={16}
+            className={`transform transition-transform ${
+              showFilters ? "rotate-180" : ""
+            }`}
+          />
         </button>
       </div>
 
       {/* Chapter Selection - Always Visible */}
-      <div 
+      <div
         className="rounded-xl p-[1px]"
         style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
       >
-        <div 
+        <div
           className="rounded-xl p-4"
           style={{ background: DASHBOARD_COLORS.CARD_BG }}
         >
-          <label className="block text-white font-medium mb-2">Select Chapter</label>
+          <label className="block text-white font-medium mb-2">
+            Select Chapter
+          </label>
           <select
             value={selectedChapter}
             onChange={(e) => handleChapterChange(e.target.value)}
@@ -368,23 +408,27 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div 
+        <div
           className="rounded-xl p-[1px]"
           style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
         >
-          <div 
+          <div
             className="rounded-xl p-4 space-y-4"
             style={{ background: DASHBOARD_COLORS.CARD_BG }}
           >
             <h3 className="text-white font-medium">Filter & Sort Options</h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Status Filter */}
               <div>
-                <label className="block text-gray-300 text-sm mb-1">Status</label>
+                <label className="block text-gray-300 text-sm mb-1">
+                  Status
+                </label>
                 <select
-                  value={filters.status || ''}
-                  onChange={(e) => handleFilterChange('status', e.target.value || undefined)}
+                  value={filters.status || ""}
+                  onChange={(e) =>
+                    handleFilterChange("status", e.target.value || undefined)
+                  }
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
                 >
                   <option value="">All Status</option>
@@ -397,8 +441,10 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
               <div>
                 <label className="block text-gray-300 text-sm mb-1">Type</label>
                 <select
-                  value={filters.type || ''}
-                  onChange={(e) => handleFilterChange('type', e.target.value || undefined)}
+                  value={filters.type || ""}
+                  onChange={(e) =>
+                    handleFilterChange("type", e.target.value || undefined)
+                  }
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
                 >
                   <option value="">All Types</option>
@@ -409,10 +455,12 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
               {/* Sort By */}
               <div>
-                <label className="block text-gray-300 text-sm mb-1">Sort By</label>
+                <label className="block text-gray-300 text-sm mb-1">
+                  Sort By
+                </label>
                 <select
                   value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                  onChange={(e) => handleFilterChange("sortBy", e.target.value)}
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
                 >
                   <option value="order">Order</option>
@@ -423,10 +471,14 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
               {/* Sort Order */}
               <div>
-                <label className="block text-gray-300 text-sm mb-1">Sort Order</label>
+                <label className="block text-gray-300 text-sm mb-1">
+                  Sort Order
+                </label>
                 <select
                   value={filters.sortOrder}
-                  onChange={(e) => handleFilterChange('sortOrder', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("sortOrder", e.target.value)
+                  }
                   className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white text-sm"
                 >
                   <option value="asc">Ascending</option>
@@ -441,7 +493,9 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
                 <input
                   type="checkbox"
                   checked={filters.includeUnpublished || false}
-                  onChange={(e) => handleFilterChange('includeUnpublished', e.target.checked)}
+                  onChange={(e) =>
+                    handleFilterChange("includeUnpublished", e.target.checked)
+                  }
                   className="rounded bg-gray-700 border-gray-600"
                 />
                 Include Unpublished
@@ -452,7 +506,9 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
                 <label className="text-gray-300 text-sm">Per Page:</label>
                 <select
                   value={filters.limit}
-                  onChange={(e) => handleFilterChange('limit', parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleFilterChange("limit", parseInt(e.target.value))
+                  }
                   className="px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-sm"
                 >
                   <option value={10}>10</option>
@@ -468,18 +524,21 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
       {/* No Chapter Selected */}
       {!selectedChapter && (
-        <div 
+        <div
           className="rounded-xl p-[1px]"
           style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
         >
-          <div 
+          <div
             className="rounded-xl p-8 text-center"
             style={{ background: DASHBOARD_COLORS.CARD_BG }}
           >
             <Video className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-semibold text-white mb-2">Select a Chapter</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              Select a Chapter
+            </h3>
             <p className="text-gray-400">
-              Choose a chapter from the dropdown above to view its modules, or select "All Chapters" to see everything.
+              Choose a chapter from the dropdown above to view its modules, or
+              select &ldquo;All Chapters&rdquo; to see everything.
             </p>
           </div>
         </div>
@@ -487,21 +546,22 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
       {/* No Modules Found */}
       {selectedChapter && modules.length === 0 && !loading && (
-        <div 
+        <div
           className="rounded-xl p-[1px]"
           style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
         >
-          <div 
+          <div
             className="rounded-xl p-8 text-center"
             style={{ background: DASHBOARD_COLORS.CARD_BG }}
           >
             <Video className="mx-auto mb-4 text-gray-400" size={48} />
-            <h3 className="text-lg font-semibold text-white mb-2">No modules found</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">
+              No modules found
+            </h3>
             <p className="text-gray-400">
-              {selectedChapter === 'all' 
-                ? 'No modules match the current filters across all chapters.'
-                : 'No modules found in the selected chapter with current filters.'
-              }
+              {selectedChapter === "all"
+                ? "No modules match the current filters across all chapters."
+                : "No modules found in the selected chapter with current filters."}
             </p>
           </div>
         </div>
@@ -524,40 +584,59 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
       )}
 
       {/* Pagination */}
-      {modules.length > 0 && stats && stats.totalModules > (filters.limit || 20) && (
-        <div 
-          className="rounded-xl p-[1px]"
-          style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
-        >
-          <div 
-            className="rounded-xl p-4 flex items-center justify-between"
-            style={{ background: DASHBOARD_COLORS.CARD_BG }}
+      {modules.length > 0 &&
+        stats &&
+        stats.totalModules > (filters.limit || 20) && (
+          <div
+            className="rounded-xl p-[1px]"
+            style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
           >
-            <div className="text-gray-400 text-sm">
-              Showing {((filters.page || 1) - 1) * (filters.limit || 20) + 1} to {Math.min((filters.page || 1) * (filters.limit || 20), stats.totalModules)} of {stats.totalModules} modules
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => handleFilterChange('page', Math.max(1, (filters.page || 1) - 1))}
-                disabled={(filters.page || 1) <= 1}
-                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm"
-              >
-                Previous
-              </button>
-              <span className="text-gray-300 text-sm px-3">
-                Page {filters.page || 1} of {Math.ceil(stats.totalModules / (filters.limit || 20))}
-              </span>
-              <button
-                onClick={() => handleFilterChange('page', (filters.page || 1) + 1)}
-                disabled={(filters.page || 1) >= Math.ceil(stats.totalModules / (filters.limit || 20))}
-                className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm"
-              >
-                Next
-              </button>
+            <div
+              className="rounded-xl p-4 flex items-center justify-between"
+              style={{ background: DASHBOARD_COLORS.CARD_BG }}
+            >
+              <div className="text-gray-400 text-sm">
+                Showing {((filters.page || 1) - 1) * (filters.limit || 20) + 1}{" "}
+                to{" "}
+                {Math.min(
+                  (filters.page || 1) * (filters.limit || 20),
+                  stats.totalModules
+                )}{" "}
+                of {stats.totalModules} modules
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    handleFilterChange(
+                      "page",
+                      Math.max(1, (filters.page || 1) - 1)
+                    )
+                  }
+                  disabled={(filters.page || 1) <= 1}
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm"
+                >
+                  Previous
+                </button>
+                <span className="text-gray-300 text-sm px-3">
+                  Page {filters.page || 1} of{" "}
+                  {Math.ceil(stats.totalModules / (filters.limit || 20))}
+                </span>
+                <button
+                  onClick={() =>
+                    handleFilterChange("page", (filters.page || 1) + 1)
+                  }
+                  disabled={
+                    (filters.page || 1) >=
+                    Math.ceil(stats.totalModules / (filters.limit || 20))
+                  }
+                  className="px-3 py-1 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded text-sm"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Edit Modal */}
       {editingModule && (
@@ -605,38 +684,41 @@ const ModuleCard: React.FC<{
 
   const loadModuleContent = async () => {
     if (moduleContent) return;
-    
+
     try {
       setLoadingContent(true);
-      console.log('🔍 Loading module content for:', { courseId, moduleId: module.id });
-      
+      console.log("🔍 Loading module content for:", {
+        courseId,
+        moduleId: module.id,
+      });
+
       // Updated to use new API endpoint format
       const response = await CourseAPI.getModuleContent(courseId, module.id);
-      
-      console.log('📥 Module content response:', response);
-      
+
+      console.log("📥 Module content response:", response);
+
       if (response.success && response.data) {
-        console.log('✅ Module content loaded successfully:', response.data);
+        console.log("✅ Module content loaded successfully:", response.data);
         setModuleContent(response.data);
       } else {
-        console.error('❌ Failed to load module content:', response.message);
+        console.error("❌ Failed to load module content:", response.message);
         // Show error toast
-        if (typeof window !== 'undefined') {
-          const { useUIStore } = await import('@/store/useUIStore');
+        if (typeof window !== "undefined") {
+          const { useUIStore } = await import("@/store/useUIStore");
           useUIStore.getState().addToast({
-            type: 'error',
-            message: response.message || 'Failed to load module content'
+            type: "error",
+            message: response.message || "Failed to load module content",
           });
         }
       }
     } catch (error) {
-      console.error('❌ Error loading module content:', error);
+      console.error("❌ Error loading module content:", error);
       // Show error toast
-      if (typeof window !== 'undefined') {
-        const { useUIStore } = await import('@/store/useUIStore');
+      if (typeof window !== "undefined") {
+        const { useUIStore } = await import("@/store/useUIStore");
         useUIStore.getState().addToast({
-          type: 'error',
-          message: 'Failed to load module content. Please try again.'
+          type: "error",
+          message: "Failed to load module content. Please try again.",
         });
       }
     } finally {
@@ -652,11 +734,11 @@ const ModuleCard: React.FC<{
   };
 
   return (
-    <div 
+    <div
       className="rounded-xl p-[1px] overflow-hidden"
       style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
     >
-      <div 
+      <div
         className="rounded-xl p-6"
         style={{ background: DASHBOARD_COLORS.CARD_BG }}
       >
@@ -669,57 +751,66 @@ const ModuleCard: React.FC<{
                   {module.chapter.title}
                 </span>
               )}
-              
+
               {/* Module Type Icon */}
-              {module.type === 'video' ? 
-                <Video size={16} className="text-purple-400" /> : 
+              {module.type === "video" ? (
+                <Video size={16} className="text-purple-400" />
+              ) : (
                 <FileText size={16} className="text-blue-400" />
-              }
-              
+              )}
+
               {/* Module Title */}
-              <h3 className="text-lg font-semibold text-white">{module.title}</h3>
-              
+              <h3 className="text-lg font-semibold text-white">
+                {module.title}
+              </h3>
+
               {/* Preview Badge */}
               {module.isPreview && (
                 <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded border border-green-500/30">
                   Preview
                 </span>
               )}
-              
+
               {/* Published Status */}
-              <span className={`px-2 py-1 rounded text-xs border ${
-                module.status === 'published' 
-                  ? 'bg-green-500/20 text-green-400 border-green-500/30' 
-                  : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-              }`}>
+              <span
+                className={`px-2 py-1 rounded text-xs border ${
+                  module.status === "published"
+                    ? "bg-green-500/20 text-green-400 border-green-500/30"
+                    : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                }`}
+              >
                 {module.status}
               </span>
             </div>
-            
+
             {/* Description */}
             {module.description && (
               <p className="text-gray-400 mb-3 text-sm">{module.description}</p>
             )}
-            
+
             {/* Module Metadata */}
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-blue-400 rounded-full"></span>
                 Order: {module.order}
               </span>
-              
+
               {module.duration && (
                 <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
                   {formatDuration(module.duration)}
                 </span>
               )}
-              
+
               <span className="flex items-center gap-1">
-                <span className={`w-1.5 h-1.5 rounded-full ${module.hasContent ? 'bg-green-400' : 'bg-red-400'}`}></span>
-                {module.hasContent ? 'Has Content' : 'No Content'}
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    module.hasContent ? "bg-green-400" : "bg-red-400"
+                  }`}
+                ></span>
+                {module.hasContent ? "Has Content" : "No Content"}
               </span>
-              
+
               {module.isPublished && (
                 <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-green-400 rounded-full"></span>
@@ -734,15 +825,15 @@ const ModuleCard: React.FC<{
             <button
               onClick={handleExpand}
               className={`p-2 rounded transition-colors ${
-                expanded 
-                  ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' 
-                  : 'text-gray-400 hover:text-blue-400 hover:bg-blue-500/10'
+                expanded
+                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                  : "text-gray-400 hover:text-blue-400 hover:bg-blue-500/10"
               }`}
               title={expanded ? "Hide Content" : "View Content"}
             >
               <Eye size={16} />
             </button>
-            
+
             {canEdit && (
               <>
                 <button
@@ -770,7 +861,9 @@ const ModuleCard: React.FC<{
             {loadingContent ? (
               <div className="text-center py-4">
                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
-                <p className="text-gray-400 text-sm mt-2">Loading module content...</p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Loading module content...
+                </p>
               </div>
             ) : moduleContent ? (
               <div className="space-y-4">
@@ -782,22 +875,30 @@ const ModuleCard: React.FC<{
                   </div>
                   <div>
                     <span className="text-gray-400">Chapter:</span>
-                    <span className="ml-2 text-gray-300">{module.chapter?.title || 'No chapter'}</span>
+                    <span className="ml-2 text-gray-300">
+                      {module.chapter?.title || "No chapter"}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Has Content:</span>
-                    <span className="ml-2 text-gray-300">{module.hasContent ? 'Yes' : 'No'}</span>
+                    <span className="ml-2 text-gray-300">
+                      {module.hasContent ? "Yes" : "No"}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Published:</span>
-                    <span className="ml-2 text-gray-300">{module.isPublished ? 'Yes' : 'No'}</span>
+                    <span className="ml-2 text-gray-300">
+                      {module.isPublished ? "Yes" : "No"}
+                    </span>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="text-center py-4">
                 <FileText className="mx-auto mb-2 text-gray-500" size={24} />
-                <p className="text-gray-400 text-sm">Failed to load module content</p>
+                <p className="text-gray-400 text-sm">
+                  Failed to load module content
+                </p>
                 <button
                   onClick={loadModuleContent}
                   className="mt-2 text-blue-400 hover:text-blue-300 text-sm underline"
@@ -814,10 +915,10 @@ const ModuleCard: React.FC<{
 };
 
 const formatFileSize = (bytes: number): string => {
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  if (bytes === 0) return '0 Bytes';
+  const sizes = ["Bytes", "KB", "MB", "GB"];
+  if (bytes === 0) return "0 Bytes";
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+  return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
 };
 
 export default ModuleManagementSection;
