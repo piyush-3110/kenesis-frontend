@@ -98,10 +98,10 @@ const MyAffiliationProductDetailPage: React.FC = () => {
       process.env.NEXT_PUBLIC_SITE_URL ||
       (typeof window !== "undefined"
         ? window.location.origin
-        : "https://kenesis.com");
+        : "https://kenesis.io");
     const code = detail?.affiliateCode || user?.walletAddress || "";
     const origin = String(base).replace(/\/$/, "");
-    const url = slug ? `${origin}/products/${slug}` : origin;
+    const url = slug ? `${origin}/product/${slug}` : origin;
     return code ? `${url}?ref=${encodeURIComponent(code)}` : url;
   }, [
     detail?.course.slug,
