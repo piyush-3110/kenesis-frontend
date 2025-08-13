@@ -27,6 +27,7 @@ import { useCurrentUser } from "@/features/auth/useCurrentUser";
  */
 const ProfilePage: React.FC = () => {
   const {
+    profile,
     stats,
     courses,
     loading,
@@ -37,21 +38,25 @@ const ProfilePage: React.FC = () => {
     resetError,
   } = useProfileStore();
 
-  const { data: profile } = useCurrentUser();
+  const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
-  // Load initial data
+  // Load initial data - pass user data to avoid duplicate API calls
   useEffect(() => {
-    loadProfile();
+    if (currentUser) {
+      loadProfile(currentUser); // Pass user data to store
+    } else if (!isUserLoading) {
+      loadProfile(); // Fallback if no user data
+    }
     loadStats();
     loadCourses();
-  }, [loadProfile, loadStats, loadCourses]);
+  }, [currentUser, isUserLoading, loadProfile, loadStats, loadCourses]);
 
   // Reset error when component unmounts
   useEffect(() => {
     return () => resetError();
   }, [resetError]);
 
-  if (loading && !profile) {
+  if ((loading || isUserLoading) && !currentUser) {
     return (
       <DashboardLayout
         title="Profile"
