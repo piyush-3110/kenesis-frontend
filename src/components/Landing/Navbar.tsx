@@ -34,40 +34,16 @@ function Logo() {
   );
 }
 
-function NavLinks({
-  onDashboard,
-}: {
-  onDashboard: (e: React.MouseEvent) => void;
-}) {
-  const [isClient, setIsClient] = useState(false);
-  const { isAuthenticated } = useAuth();
-  const { data: user } = useCurrentUser();
-
-  // Only run on client to avoid hydration mismatches
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
+function NavLinks() {
   return (
     <div className="hidden md:flex items-center space-x-8">
-      <Link
-        href="/marketplace"
-        className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
-      >
-        <ShoppingBag
-          size={20}
-          className="text-blue-400 group-hover:text-blue-300 transition-colors"
-        />
-        <span className="font-medium text-lg">Marketplace</span>
-      </Link>
-      
       <Link
         href="/presale"
         className="text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
       >
         <span className="font-medium text-lg">Presale</span>
       </Link>
-      
+
       <Link
         href="https://kenesis.gitbook.io/whitepaper"
         target="_blank"
@@ -76,19 +52,6 @@ function NavLinks({
       >
         <span className="font-medium text-lg">Whitepaper</span>
       </Link>
-      
-      {isClient && isAuthenticated && user && (
-        <button
-          onClick={onDashboard}
-          className="flex items-center space-x-2 text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
-        >
-          <LayoutDashboard
-            size={20}
-            className="text-purple-400 group-hover:text-purple-300 transition-colors"
-          />
-          <span className="font-medium text-xl">Dashboard</span>
-        </button>
-      )}
     </div>
   );
 }
@@ -167,17 +130,9 @@ function AuthSection() {
   if (!isAuthenticated) {
     return (
       <div className="flex items-center gap-4">
-        <div className="md:hidden">
-          <Link
-            href="/marketplace"
-            className="flex items-center justify-center w-12 h-12 text-gray-300 hover:text-white hover:bg-blue-500/20 rounded-full transition-all duration-300 border border-blue-400/20 hover:border-blue-400/40"
-          >
-            <ShoppingBag size={22} />
-          </Link>
-        </div>
         <Link
           href="/auth/login"
-          className="flex items-center space-x-2 text-white font-semibold text-sm md:text-lg px-6 py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          className="flex items-center space-x-2 text-white font-semibold text-sm md:text-lg px-4 md:px-6 py-2 md:py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
           style={{
             background:
               "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",
@@ -219,9 +174,21 @@ function AuthSection() {
           boxShadow: "0 4px 20px rgba(70, 72, 255, 0.3)",
         }}
       >
-        <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base shadow-lg">
-          {avatarLetter}
-        </div>
+        {user?.avatar ? (
+          <div className="w-7 h-7 md:w-9 md:h-9 rounded-full overflow-hidden shadow-lg">
+            <Image
+              src={user.avatar}
+              alt={displayName}
+              width={36}
+              height={36}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ) : (
+          <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base shadow-lg">
+            {avatarLetter}
+          </div>
+        )}
         <span className="hidden sm:inline max-w-28 md:max-w-36 truncate font-semibold">
           {displayName}
         </span>
@@ -239,9 +206,21 @@ function AuthSection() {
           <div className="py-3">
             <div className="px-5 py-4 border-b border-gray-700/40">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  {avatarLetter}
-                </div>
+                {user?.avatar ? (
+                  <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
+                    <Image
+                      src={user.avatar}
+                      alt={displayName}
+                      width={48}
+                      height={48}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                    {avatarLetter}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   {/* Primary line: preferred display */}
                   <p className="text-white font-semibold text-base md:text-lg truncate">
@@ -271,6 +250,26 @@ function AuthSection() {
 
             <div className="md:hidden border-b border-gray-700/40 py-1">
               <Link
+                href="/presale"
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
+              >
+                <span className="font-medium text-lg">Presale</span>
+              </Link>
+
+              <Link
+                href="https://kenesis.gitbook.io/whitepaper"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsDropdownOpen(false)}
+                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-orange-500/20 transition-all duration-300 group"
+              >
+                <span className="font-medium text-lg">Whitepaper</span>
+              </Link>
+            </div>
+
+            <div className="py-1">
+              <Link
                 href="/marketplace"
                 onClick={() => setIsDropdownOpen(false)}
                 className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-blue-500/20 transition-all duration-300 group"
@@ -281,25 +280,7 @@ function AuthSection() {
                 />
                 <span className="font-medium text-lg">Marketplace</span>
               </Link>
-              
-              <Link
-                href="/presale"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
-              >
-                <span className="font-medium text-lg">Presale</span>
-              </Link>
-              
-              <Link
-                href="https://kenesis.gitbook.io/whitepaper"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-orange-500/20 transition-all duration-300 group"
-              >
-                <span className="font-medium text-lg">Whitepaper</span>
-              </Link>
-              
+
               <button
                 onClick={(e) => {
                   setIsDropdownOpen(false);
@@ -313,9 +294,7 @@ function AuthSection() {
                 />
                 <span className="font-medium text-lg">Dashboard</span>
               </button>
-            </div>
 
-            <div className="py-1">
               <Link
                 href="/dashboard/profile"
                 onClick={() => setIsDropdownOpen(false)}
@@ -327,6 +306,7 @@ function AuthSection() {
                 />
                 <span className="font-medium text-lg">Profile</span>
               </Link>
+
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut || logout.isPending}
@@ -353,7 +333,6 @@ function AuthSection() {
 export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -366,11 +345,6 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
-
-  const handleDashboardClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    router.push("/dashboard");
-  };
 
   return (
     <nav
@@ -390,7 +364,7 @@ export default function Navbar() {
       >
         <Logo />
         <div className="flex items-center space-x-8">
-          <NavLinks onDashboard={handleDashboardClick} />
+          <NavLinks />
           <SiweAuthButton />
           <AuthSection />
         </div>
