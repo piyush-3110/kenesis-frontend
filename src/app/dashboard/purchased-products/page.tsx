@@ -252,14 +252,15 @@ const PurchasedProductsPage: React.FC = () => {
 
     try {
       setLoadingCourseId(purchase.courseId);
-      
+
       // Simulate a brief delay for better UX (API call or access check could go here)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       router.push(`/learn/${purchase.courseId}`);
       setLoadingCourseId(null);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to access course";
+      const errorMsg =
+        error instanceof Error ? error.message : "Failed to access course";
       addToast({
         type: "error",
         message: errorMsg,
@@ -785,7 +786,9 @@ const PurchasedCoursesContent: React.FC<{
                     e.stopPropagation();
                     onCourseClick(purchase);
                   }}
-                  disabled={!purchase.hasAccess || loadingCourseId === purchase.courseId}
+                  disabled={
+                    !purchase.hasAccess || loadingCourseId === purchase.courseId
+                  }
                   className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
                     purchase.hasAccess && loadingCourseId !== purchase.courseId
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
@@ -798,7 +801,11 @@ const PurchasedCoursesContent: React.FC<{
                       <span>Accessing...</span>
                     </>
                   ) : (
-                    <span>{purchase.hasAccess ? "Continue Learning" : "Access Expired"}</span>
+                    <span>
+                      {purchase.hasAccess
+                        ? "Continue Learning"
+                        : "Access Expired"}
+                    </span>
                   )}
                 </button>
               </div>
