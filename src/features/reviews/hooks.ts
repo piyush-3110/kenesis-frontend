@@ -1,5 +1,5 @@
 "use client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { ReviewAPI, type GetReviewsParams, type CreateReviewRequest, type UpdateReviewRequest } from "@/lib/api/reviewApi";
 
 export const reviewKeys = {
@@ -14,7 +14,7 @@ export const useReviews = (courseId: string, params: GetReviewsParams) => useQue
     if(!res.success) throw new Error(res.message || 'Failed to load reviews');
     return res.data!;
   },
-  keepPreviousData: true,
+  placeholderData: keepPreviousData,
 });
 
 export const useReviewSummary = (courseId: string) => useQuery({
