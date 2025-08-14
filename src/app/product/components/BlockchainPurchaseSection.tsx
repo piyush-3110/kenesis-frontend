@@ -12,6 +12,7 @@ import {
   Loader2,
   ShoppingCart,
   ExternalLink,
+  Play,
 } from "lucide-react";
 import { useAccount, useSwitchChain } from "wagmi";
 import { isAddress } from "viem";
@@ -288,9 +289,15 @@ function BlockchainPurchaseSectionContent({
     if (courseAccess.hasAccess) {
       return (
         <div className="space-y-3">
-          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-600/20 text-green-400 border border-green-600/30">
-            <CheckCircle size={20} />
-            <span className="font-medium">You own this course</span>
+          <div className="flex flex-col gap-3">
+            {/* Access Course Button */}
+            <button
+              onClick={() => router.push(`/learn/${course.id}`)}
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-green-600/20 text-green-400 border border-green-600/30 hover:bg-green-600/30 hover:border-green-500/50 transition-all duration-200 font-medium"
+            >
+              <Play size={20} />
+              <span>Access Course</span>
+            </button>
           </div>
 
           {courseAccess.progress !== undefined && (
