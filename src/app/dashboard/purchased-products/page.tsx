@@ -9,8 +9,6 @@ import {
   Clock,
   Play,
   Star,
-  Calendar,
-  Shield,
   AlertCircle,
   ShoppingBag,
   Book,
@@ -18,7 +16,6 @@ import {
 } from "lucide-react";
 import { useUIStore } from "@/store/useUIStore";
 import Image from "next/image";
-import { useLoading } from "@/hooks/useLoading";
 
 interface Purchase {
   id: string;
@@ -79,20 +76,12 @@ type FilterType = "all" | "active" | "expired" | "listed";
 const PurchasedProductsPage: React.FC = () => {
   const router = useRouter();
   const { addToast } = useUIStore();
-  const {
-    loading: courseAccessLoading,
-    startLoading,
-    stopLoading,
-    setError: setCourseAccessError,
-  } = useLoading({
-    successMessage: "Redirecting to course...",
-    minDuration: 800,
-  });
 
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [listedCourses, setListedCourses] = useState<ListedCourse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingCourseId, setLoadingCourseId] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>("all");
 
   useEffect(() => {
@@ -164,11 +153,12 @@ const PurchasedProductsPage: React.FC = () => {
         console.error("❌ [PURCHASES] API returned error:", response.message);
         throw new Error(response.message || "Failed to load purchases");
       }
-    } catch (err: any) {
-      console.error("❌ [PURCHASES] Exception caught:", err);
-      console.error("❌ [PURCHASES] Error message:", err.message);
-      console.error("❌ [PURCHASES] Error stack:", err.stack);
-      setError(err.message || "Failed to load purchased courses");
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("❌ [PURCHASES] Exception caught:", error);
+      console.error("❌ [PURCHASES] Error message:", error.message);
+      console.error("❌ [PURCHASES] Error stack:", error.stack);
+      setError(error.message || "Failed to load purchased courses");
 
       addToast({
         type: "error",
@@ -234,11 +224,12 @@ const PurchasedProductsPage: React.FC = () => {
         console.error("❌ [LISTED] API returned error:", response.message);
         throw new Error(response.message || "Failed to load listed courses");
       }
-    } catch (err: any) {
-      console.error("❌ [LISTED] Exception caught:", err);
-      console.error("❌ [LISTED] Error message:", err.message);
-      console.error("❌ [LISTED] Error stack:", err.stack);
-      setError(err.message || "Failed to load listed courses");
+    } catch (err: unknown) {
+      const error = err as Error;
+      console.error("❌ [LISTED] Exception caught:", error);
+      console.error("❌ [LISTED] Error message:", error.message);
+      console.error("❌ [LISTED] Error stack:", error.stack);
+      setError(error.message || "Failed to load listed courses");
 
       addToast({
         type: "error",
@@ -260,16 +251,20 @@ const PurchasedProductsPage: React.FC = () => {
     }
 
     try {
-      startLoading("Accessing course...");
+      setLoadingCourseId(purchase.courseId);
       
       // Simulate a brief delay for better UX (API call or access check could go here)
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      stopLoading(true);
       router.push(`/learn/${purchase.courseId}`);
+      setLoadingCourseId(null);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Failed to access course";
-      setCourseAccessError(errorMsg);
+      addToast({
+        type: "error",
+        message: errorMsg,
+      });
+      setLoadingCourseId(null);
     }
   };
 
@@ -503,7 +498,7 @@ const PurchasedProductsPage: React.FC = () => {
             formatDate={formatDate}
             getRemainingDaysText={getRemainingDaysText}
             getStatusColor={getStatusColor}
-            courseAccessLoading={courseAccessLoading}
+            loadingCourseId={loadingCourseId}
           />
         )}
       </div>
@@ -660,7 +655,7 @@ const PurchasedCoursesContent: React.FC<{
   formatDate: (date: string) => string;
   getRemainingDaysText: (days: number | null) => string;
   getStatusColor: (isActive: boolean, days: number | null) => string;
-  courseAccessLoading: boolean;
+  loadingCourseId: string | null;
 }> = ({
   purchases,
   filter,
@@ -669,7 +664,7 @@ const PurchasedCoursesContent: React.FC<{
   formatDate,
   getRemainingDaysText,
   getStatusColor,
-  courseAccessLoading,
+  loadingCourseId,
 }) => {
   if (purchases.length === 0) {
     return (
@@ -790,14 +785,14 @@ const PurchasedCoursesContent: React.FC<{
                     e.stopPropagation();
                     onCourseClick(purchase);
                   }}
-                  disabled={!purchase.hasAccess || courseAccessLoading}
+                  disabled={!purchase.hasAccess || loadingCourseId === purchase.courseId}
                   className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
-                    purchase.hasAccess && !courseAccessLoading
+                    purchase.hasAccess && loadingCourseId !== purchase.courseId
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
                       : "bg-gray-600 text-gray-400 cursor-not-allowed"
                   }`}
                 >
-                  {courseAccessLoading ? (
+                  {loadingCourseId === purchase.courseId ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Accessing...</span>
