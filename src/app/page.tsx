@@ -25,20 +25,9 @@ const page = () => {
           boldWord2: "Marketplace",
         }}
         buttonText="Start Now"
-        buttonLink="/get-started"
+        buttonLink="/marketplace"
       />
       <Skills />
-
-      <Banner
-        title={{
-          line1: "Infoproducts, rewards, and freedom",
-          boldWord1: "freedom",
-          line2: "all in one ecosystem with Kenesis",
-          boldWord2: "all",
-        }}
-        buttonText="Start Now"
-        buttonLink="/get-started"
-      />
     </div>
   );
 };
