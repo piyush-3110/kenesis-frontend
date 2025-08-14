@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useCourse } from "@/hooks/useCourseQuery";
 import { useCourseAccess } from "@/hooks/useCourseAccess";
-import ReviewsRatings from "@/components/product/ReviewsRatings";
+import CourseReviewsSection from "@/features/reviews/CourseReviewsSection";
 import { CourseAccessBanner } from "../components/CourseAccessStatus";
 // import CourseContentViewer from "@/components/product/CourseContentViewer";
 import {
@@ -53,9 +53,6 @@ const ProductDetailPage: React.FC = () => {
     // You can add progress here if available from another API
     // progress: userProgress?.progress
   };
-
-  // User can review if they have access to the course
-  const userCanReview = courseAccess.hasAccess;
 
   return (
     <div className="min-h-screen bg-[#0A071A] mt-8">
@@ -151,24 +148,10 @@ const ProductDetailPage: React.FC = () => {
           </div>
         )} */}
 
-        {/* Reviews and Ratings */}
-        <ReviewsRatings
-          productId={product.id}
-          reviews={[]}
-          reviewSummary={{
-            averageRating: product.stats.rating,
-            totalReviews: product.stats.reviewCount,
-            ratingDistribution: {
-              "1": 0,
-              "2": 0,
-              "3": 0,
-              "4": 0,
-              "5": 0,
-            },
-          }}
-          userCanReview={userCanReview}
-          onSubmitReview={() => null}
-          onLikeReview={() => null}
+        <CourseReviewsSection
+          courseId={product.id}
+          courseTitle={product.title}
+          hasAccess={courseAccess.hasAccess}
         />
       </div>
     </div>
