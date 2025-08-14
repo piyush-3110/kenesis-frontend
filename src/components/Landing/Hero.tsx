@@ -1,8 +1,8 @@
 "use client";
 
-import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
-import { Search } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import React from "react";
 
 const Hero: React.FC = () => {
@@ -41,12 +41,11 @@ const Hero: React.FC = () => {
       <div className="relative z-10 w-full max-w-7xl mx-auto">
         {/* Main Content Grid - Text on Left, Image on Right */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-          
           {/* Left Side - Text Content */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
             {/* Heading */}
             <div className="mb-6">
-              <h1 
+              <h1
                 className="text-white font-poppins font-normal"
                 style={{
                   fontSize: "45.79px",
@@ -55,12 +54,13 @@ const Hero: React.FC = () => {
                   fontWeight: 400,
                 }}
               >
-                Your upgrade starts here<br />
+                Your upgrade starts here
+                <br />
                 with{" "}
                 <span
                   className="bg-gradient-to-b from-white to-[#0036F6] bg-clip-text text-transparent"
                   style={{
-                      fontSize: "55.79px",
+                    fontSize: "55.79px",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                   }}
@@ -74,30 +74,27 @@ const Hero: React.FC = () => {
             <p className="font-poppins font-normal text-[14px] sm:text-[16px] md:text-[18px] text-white max-w-lg mb-8">
               <span className="font-normal">Kenesis</span> puts you in control.{" "}
               <span className="font-normal">Create, sell,</span> and{" "}
-              <span className="font-normal">earn</span> from your info products—no
-              middlemen, just rewards. Discover topics and find the perfect product
-              for you.
+              <span className="font-normal">earn</span> from your info
+              products—no middlemen, just rewards. Discover topics and find the
+              perfect product for you.
             </p>
 
-            {/* Search Bar */}
+            {/* Marketplace Link */}
             <div className="flex justify-center lg:justify-start w-full max-w-md">
-              <div className="relative w-full">
-                <div 
-                  className="relative rounded-lg p-[1px]"
-                  style={{
-                    background: "linear-gradient(90deg, #0680FF 0%, #022ED2 100%)",
-                  }}
-                >
-                  <div className="relative flex items-center bg-black rounded-lg">
-                    <Search className="absolute left-4 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search"
-                      className="w-full py-3 pl-12 pr-4 bg-black text-white placeholder-gray-400 rounded-lg border-none outline-none focus:ring-0"
-                    />
-                  </div>
-                </div>
-              </div>
+              <Link
+                href="/marketplace"
+                className="inline-flex items-center gap-3 px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105 group"
+                style={{
+                  background:
+                    "linear-gradient(90deg, #0680FF 0%, #022ED2 100%)",
+                  boxShadow: "0 4px 20px rgba(6, 128, 255, 0.3)",
+                }}
+              >
+                <ShoppingBag className="w-5 h-5 text-white group-hover:text-blue-200 transition-colors" />
+                <span className="text-white font-medium group-hover:text-blue-200 transition-colors">
+                  Marketplace
+                </span>
+              </Link>
             </div>
           </div>
 
