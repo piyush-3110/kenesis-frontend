@@ -860,7 +860,7 @@ const CourseCreationForm: React.FC = () => {
                         setThumbnailPreview(null);
                         setThumbnailFile(null);
                       }}
-                      className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                      className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors z-10"
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
@@ -915,7 +915,7 @@ const CourseCreationForm: React.FC = () => {
                         setVideoPreview(null);
                         setPreviewVideoFile(null);
                       }}
-                      className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors"
+                      className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors z-10"
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
