@@ -8,10 +8,27 @@ import { useLogin } from "@/features/auth/hooks";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 import AuthShell from "@/components/auth/AuthShell";
 import { Mail, Lock, ArrowRight } from "lucide-react";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function LoginPage() {
   const form = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
   const login = useLogin();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
+  // Don't render if authenticated (will redirect)
+  if (isAuthenticated) {
+    return null;
+  }
 
   const onSubmit = (values: LoginInput) => login.mutate(values);
 

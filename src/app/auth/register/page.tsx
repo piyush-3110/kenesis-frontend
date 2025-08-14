@@ -8,12 +8,29 @@ import { useRegister } from "@/features/auth/hooks";
 import AuthShell from "@/components/auth/AuthShell";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 import { Mail, User, Lock, AlignLeft, ArrowRight } from "lucide-react";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function RegisterPage() {
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
   });
   const registerMut = useRegister();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, router]);
+
+  // Don't render if authenticated (will redirect)
+  if (isAuthenticated) {
+    return null;
+  }
 
   const onSubmit = (values: RegisterInput) => registerMut.mutate(values);
 
