@@ -176,11 +176,6 @@ export default function RegisterPage() {
             </>
           )}
         </button>
-        {registerMut.isError && (
-          <p className="text-red-400 text-sm mt-2">
-            {(registerMut.error as Error).message}
-          </p>
-        )}
       </form>
 
       {/* Footer */}
