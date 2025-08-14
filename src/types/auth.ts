@@ -14,6 +14,7 @@ export interface User {
   email?: string; // Optional for wallet-only users
   username?: string; // Optional for wallet-only users
   bio?: string;
+  avatar?: string; // User profile image URL
   emailVerified?: boolean; // Optional for wallet-only users
   createdAt: string;
 
