@@ -72,7 +72,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
         const profile: InstructorProfile = {
           id: user.id,
           username: user.username,
-          avatar: undefined, // Not available in User type
+          avatar: user.avatar, // Now available from User type
           bio: user.bio,
           createdAt: user.createdAt,
           emailVerified: user.emailVerified || false,
