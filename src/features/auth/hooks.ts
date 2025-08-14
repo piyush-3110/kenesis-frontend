@@ -48,42 +48,71 @@ export function useRegister() {
       }
     },
     onError: (error: unknown) => {
-      // Handle different error types
+      // Handle different error types according to backend API documentation
       let errorMessage = "Registration failed. Please try again.";
 
       const apiError = error as {
         response?: {
           status?: number;
           data?: {
+            success?: boolean;
             message?: string;
             errors?: Array<{ field: string; message: string }>;
+            data?: { retryAfter?: number } | null;
           };
           headers?: { "retry-after"?: string };
         };
         message?: string;
       };
 
-      if (apiError?.response?.status === 409) {
-        errorMessage = "User already exists with this email";
-      } else if (apiError?.response?.status === 400) {
-        // Validation errors
-        const validationErrors = apiError?.response?.data?.errors;
-        if (validationErrors && Array.isArray(validationErrors)) {
-          errorMessage = validationErrors
-            .map(
-              (err: { field: string; message: string }) =>
-                `${err.field}: ${err.message}`
-            )
-            .join(", ");
+      const responseData = apiError?.response?.data;
+      const status = apiError?.response?.status;
+
+      // Handle validation errors (400 Bad Request)
+      if (status === 400 && responseData?.errors && Array.isArray(responseData.errors)) {
+        // Show each validation error as a separate toast for better UX
+        responseData.errors.forEach((err: { field: string; message: string }) => {
+          const fieldName = err.field.replace('body.', ''); // Remove 'body.' prefix if present
+          addToast({
+            type: "error",
+            message: `${fieldName}: ${err.message}`,
+            duration: 5000,
+          });
+        });
+        return; // Exit early to avoid showing additional error toast
+      }
+      
+      // Handle user already exists (409 Conflict)
+      if (status === 409) {
+        const message = responseData?.message;
+        if (message?.includes("email already exists")) {
+          errorMessage = "User with this email already exists";
+        } else if (message?.includes("Username is already taken")) {
+          errorMessage = "Username is already taken";
         } else {
-          errorMessage =
-            apiError?.response?.data?.message || "Invalid input data";
+          errorMessage = message || "User already exists";
         }
-      } else if (apiError?.response?.status === 429) {
-        const retryAfter = apiError?.response?.headers?.["retry-after"];
-        errorMessage = retryAfter
-          ? `Too many requests. Please try again in ${retryAfter} seconds.`
-          : "Too many requests. Please try again later.";
+      }
+      
+      // Handle rate limit exceeded (429 Too Many Requests)
+      else if (status === 429) {
+        const retryAfter = responseData?.data?.retryAfter || apiError?.response?.headers?.["retry-after"];
+        if (retryAfter) {
+          const minutes = Math.ceil(parseInt(retryAfter.toString()) / 60);
+          errorMessage = `Too many registration attempts, please try again in ${minutes} minute${minutes > 1 ? 's' : ''}.`;
+        } else {
+          errorMessage = responseData?.message || "Too many registration attempts, please try again later.";
+        }
+      }
+      
+      // Handle server error (500 Internal Server Error)
+      else if (status === 500) {
+        errorMessage = "Registration failed due to server error. Please try again later.";
+      }
+      
+      // Handle other status codes or use the provided message
+      else if (responseData?.message) {
+        errorMessage = responseData.message;
       } else if (apiError?.message) {
         errorMessage = apiError.message;
       }
@@ -130,10 +159,82 @@ export function useLogin() {
         router.push("/dashboard");
       }, 500);
     },
-    onError: (error: Error) => {
+    onError: (error: unknown) => {
+      // Handle different error types according to backend API documentation
+      let errorMessage = "Login failed. Please try again.";
+
+      const apiError = error as {
+        response?: {
+          status?: number;
+          data?: {
+            success?: boolean;
+            message?: string;
+            errors?: Array<{ field: string; message: string }>;
+            data?: { retryAfter?: number } | null;
+          };
+          headers?: { "retry-after"?: string };
+        };
+        message?: string;
+      };
+
+      const responseData = apiError?.response?.data;
+      const status = apiError?.response?.status;
+
+      // Handle validation errors (400 Bad Request)
+      if (status === 400 && responseData?.errors && Array.isArray(responseData.errors)) {
+        // Show each validation error as a separate toast for better UX
+        responseData.errors.forEach((err: { field: string; message: string }) => {
+          const fieldName = err.field.replace('body.', ''); // Remove 'body.' prefix if present
+          addToast({
+            type: "error",
+            message: `${fieldName}: ${err.message}`,
+            duration: 5000,
+          });
+        });
+        return; // Exit early to avoid showing additional error toast
+      }
+      
+      // Handle invalid credentials (401 Unauthorized)
+      if (status === 401) {
+        errorMessage = responseData?.message || "Invalid email or password";
+      }
+      
+      // Handle account deactivated (403 Forbidden)
+      else if (status === 403) {
+        errorMessage = responseData?.message || "Account is deactivated";
+      }
+      
+      // Handle account locked (423 Locked)
+      else if (status === 423) {
+        errorMessage = responseData?.message || "Account is temporarily locked due to multiple failed login attempts";
+      }
+      
+      // Handle rate limit exceeded (429 Too Many Requests)
+      else if (status === 429) {
+        const retryAfter = responseData?.data?.retryAfter || apiError?.response?.headers?.["retry-after"];
+        if (retryAfter) {
+          const minutes = Math.ceil(parseInt(retryAfter.toString()) / 60);
+          errorMessage = `Too many login attempts, please try again in ${minutes} minute${minutes > 1 ? 's' : ''}.`;
+        } else {
+          errorMessage = responseData?.message || "Too many login attempts, please try again later.";
+        }
+      }
+      
+      // Handle server error (500 Internal Server Error)
+      else if (status === 500) {
+        errorMessage = responseData?.message || "Login failed due to server error. Please try again later.";
+      }
+      
+      // Handle other status codes or use the provided message
+      else if (responseData?.message) {
+        errorMessage = responseData.message;
+      } else if (apiError?.message) {
+        errorMessage = apiError.message;
+      }
+
       addToast({
         type: "error",
-        message: error.message || "Login failed. Please try again.",
+        message: errorMessage,
         duration: 4000,
       });
     },
