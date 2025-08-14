@@ -115,14 +115,14 @@ const CourseCreationForm: React.FC = () => {
   // Initialize selectedTokens from existing formData.tokenToPayWith when supportedTokens are available
   useEffect(() => {
     if (isInitialized || supportedTokens.length === 0) return; // Only run once when ready
-    
+
     const source = formData.tokenToPayWith || [];
     if (source.length === 0) {
       setSelectedTokens([]);
       setIsInitialized(true);
       return;
     }
-    
+
     const initialTokens = source
       .map((s) => {
         const [symbol, chainIdStr] = s.split("-");
@@ -133,7 +133,7 @@ const CourseCreationForm: React.FC = () => {
         return match || null;
       })
       .filter((t): t is SelectedToken => Boolean(t));
-    
+
     setSelectedTokens(initialTokens);
     setIsInitialized(true);
   }, [supportedTokens, formData.tokenToPayWith, isInitialized]);
@@ -141,18 +141,18 @@ const CourseCreationForm: React.FC = () => {
   // Keep formData.tokenToPayWith (string[]) in sync with selectedTokens (one-way after init)
   useEffect(() => {
     if (!isInitialized) return; // Don't sync until initialized
-    
+
     const tokenStrings = Array.from(
       new Set(selectedTokens.map((t) => `${t.symbol}-${t.chainId}`))
     );
-    
+
     setFormData((prev) => ({ ...prev, tokenToPayWith: tokenStrings }));
   }, [selectedTokens, isInitialized]);
 
   // When switching chains, drop any previously selected tokens from other chains
   useEffect(() => {
     if (!isInitialized) return;
-    
+
     setSelectedTokens((prev) => {
       const filtered = prev.filter((t) => t.chainId === selectedChainId);
       return filtered.length !== prev.length ? filtered : prev;
@@ -235,7 +235,7 @@ const CourseCreationForm: React.FC = () => {
     if (!formData.description.trim())
       newErrors.description = "Description is required";
     if (formData.price < 0) newErrors.price = "Price cannot be negative";
-  if (formData.price > 0 && formData.tokenToPayWith.length === 0)
+    if (formData.price > 0 && formData.tokenToPayWith.length === 0)
       newErrors.tokenToPayWith =
         "Select at least one payment token for paid courses";
 
@@ -309,10 +309,12 @@ const CourseCreationForm: React.FC = () => {
       courseFormData.append("level", formData.level);
       courseFormData.append("language", formData.language);
       courseFormData.append("price", formData.price.toString());
-  // Backend expects an array of strings in format TOKEN_SYMBOL-CHAIN_ID
-  // For multipart/form-data, append as repeated fields with the same key
-  const tokenStrings = Array.from(new Set(formData.tokenToPayWith || []));
-  tokenStrings.forEach((tok) => courseFormData.append("tokenToPayWith", tok));
+      // Backend expects an array of strings in format TOKEN_SYMBOL-CHAIN_ID
+      // For multipart/form-data, append as repeated fields with the same key
+      const tokenStrings = Array.from(new Set(formData.tokenToPayWith || []));
+      tokenStrings.forEach((tok) =>
+        courseFormData.append("tokenToPayWith", tok)
+      );
       courseFormData.append(
         "accessDuration",
         formData.accessDuration.toString()
@@ -800,7 +802,8 @@ const CourseCreationForm: React.FC = () => {
             <div className="space-y-2">
               {availableTokens.map((token) => {
                 const isSelected = selectedTokens.some(
-                  (t) => t.address === token.address && t.chainId === token.chainId
+                  (t) =>
+                    t.address === token.address && t.chainId === token.chainId
                 );
                 return (
                   <button
