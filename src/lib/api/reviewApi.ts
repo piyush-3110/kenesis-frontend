@@ -8,8 +8,7 @@ import { ApiResponse } from "../api";
 
 // API base URL and headers setup
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  "https://kenesis-backend.onrender.com";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "https://kenesis-backend.kenesis.io";
 
 /**
  * Helper function to get auth headers
