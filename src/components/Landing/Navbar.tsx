@@ -155,8 +155,9 @@ function AuthSection() {
     .charAt(0)
     .toUpperCase();
   // Preferred display: username > email > wallet (short)
+  // Limit username to 6 characters with '..' suffix if longer
   const displayName = user?.username
-    ? user.username
+    ? user.username.length > 6 ? `${user.username.slice(0, 6)}..` : user.username
     : user?.email
     ? user.email
     : user?.walletAddress
