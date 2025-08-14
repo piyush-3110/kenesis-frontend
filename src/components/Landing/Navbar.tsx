@@ -157,7 +157,9 @@ function AuthSection() {
   // Preferred display: username > email > wallet (short)
   // Limit username to 6 characters with '..' suffix if longer
   const displayName = user?.username
-    ? user.username.length > 6 ? `${user.username.slice(0, 6)}..` : user.username
+    ? user.username.length > 6
+      ? `${user.username.slice(0, 6)}..`
+      : user.username
     : user?.email
     ? user.email
     : user?.walletAddress
@@ -168,7 +170,7 @@ function AuthSection() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="flex items-center space-x-2 md:space-x-3 text-white font-medium text-sm md:text-lg px-4 md:px-6 py-2 md:py-3 rounded-full transition-all duration-300 hover:scale-105"
+        className="flex items-center space-x-2 md:space-x-3 text-white font-medium text-sm md:text-lg px-4 md:px-6 py-2 md:py-3 rounded-full transition-all duration-300 hover:scale-105 h-10 md:h-12"
         style={{
           background:
             "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",

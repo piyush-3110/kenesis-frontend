@@ -137,7 +137,7 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
           : "idle";
 
         const pill =
-          "relative inline-flex items-center gap-2 rounded-full px-4 py-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/40";
+          "relative inline-flex items-center gap-2 rounded-full px-4 md:px-6 py-2 md:py-3 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500/40 h-10 md:h-12";
         let buttonClass = `${pill} bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-[0_0_0_0_rgba(59,130,246,0.0)] hover:shadow-[0_0_24px_4px_rgba(59,130,246,0.35)]`;
         if (state === "error") {
           buttonClass = `${pill} border border-red-500/50 bg-red-600/15 text-red-200 hover:bg-red-600/25`;
