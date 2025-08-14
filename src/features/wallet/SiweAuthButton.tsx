@@ -19,6 +19,8 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
   const { addToast } = useUIStore();
   const siweRunningRef = React.useRef(false);
   const autoRanRef = React.useRef(false);
+  // Track the last address we successfully performed SIWE for so we don't force re-sign every click
+  const lastLinkedAddressRef = React.useRef<string | null>(null);
 
   const prepare = useMutation({
     mutationFn: async (addr?: string) => {
@@ -43,6 +45,8 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
       if (data?.tokens?.accessToken && data?.tokens?.refreshToken) {
         setTokens(data.tokens);
       }
+  // Mark successful link for current address
+  if (address) lastLinkedAddressRef.current = address.toLowerCase();
     },
   });
 
@@ -107,7 +111,6 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
       pending &&
       isConnected &&
       address &&
-      !isAuthenticated &&
       !siweRunningRef.current &&
       !autoRanRef.current
     ) {
@@ -115,7 +118,7 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
       runSiweFlow().catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConnected, address, isAuthenticated]);
+  }, [isConnected, address]);
 
   return (
     <ConnectButton.Custom>
@@ -161,11 +164,16 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
                 openConnectModal?.();
                 return;
               }
-              if (!authed) {
-                // Do not set PENDING_SIWE_KEY here to avoid effect-based duplicate; run directly
+              // If we haven't linked (signed) for this address this session, run SIWE
+              if (
+                address &&
+                lastLinkedAddressRef.current !== address.toLowerCase() &&
+                !siweRunningRef.current
+              ) {
                 await runSiweFlow();
-                return;
+                return; // Account modal will be available on next click
               }
+              // Already linked for this address; open account modal
               openAccountModal?.();
             }}
             disabled={busy}
