@@ -10,13 +10,89 @@ import { useRouter } from "next/navigation";
 
 export function useRegister() {
   const { setTokens } = useAuth();
+  const { addToast } = useUIStore();
+  const router = useRouter();
+
   return useMutation({
     mutationFn: async (payload: RegisterInput) => {
       const res = await AuthAPI.register(payload);
       const data = res.data as ApiEnvelope<{ user: User; tokens: Tokens }>;
       if (!data.success) throw new Error(data.message);
-      setTokens(data.data!.tokens);
       return data.data;
+    },
+    onSuccess: (data) => {
+      if (data && data.user && data.tokens) {
+        // Check if email is verified
+        if (data.user.emailVerified) {
+          // Email already verified (shouldn't happen in registration but handle it)
+          setTokens(data.tokens);
+          addToast({
+            type: "success",
+            message: "Account created! Redirecting to your dashboard...",
+            duration: 3000,
+          });
+          setTimeout(() => {
+            router.push("/dashboard");
+          }, 1000);
+        } else {
+          // Email needs verification - don't store tokens yet
+          addToast({
+            type: "warning",
+            message: "Please verify your email before accessing the dashboard.",
+            duration: 4000,
+          });
+          setTimeout(() => {
+            router.push("/auth/verify-email");
+          }, 1000);
+        }
+      }
+    },
+    onError: (error: unknown) => {
+      // Handle different error types
+      let errorMessage = "Registration failed. Please try again.";
+
+      const apiError = error as {
+        response?: {
+          status?: number;
+          data?: {
+            message?: string;
+            errors?: Array<{ field: string; message: string }>;
+          };
+          headers?: { "retry-after"?: string };
+        };
+        message?: string;
+      };
+
+      if (apiError?.response?.status === 409) {
+        errorMessage = "User already exists with this email";
+      } else if (apiError?.response?.status === 400) {
+        // Validation errors
+        const validationErrors = apiError?.response?.data?.errors;
+        if (validationErrors && Array.isArray(validationErrors)) {
+          errorMessage = validationErrors
+            .map(
+              (err: { field: string; message: string }) =>
+                `${err.field}: ${err.message}`
+            )
+            .join(", ");
+        } else {
+          errorMessage =
+            apiError?.response?.data?.message || "Invalid input data";
+        }
+      } else if (apiError?.response?.status === 429) {
+        const retryAfter = apiError?.response?.headers?.["retry-after"];
+        errorMessage = retryAfter
+          ? `Too many requests. Please try again in ${retryAfter} seconds.`
+          : "Too many requests. Please try again later.";
+      } else if (apiError?.message) {
+        errorMessage = apiError.message;
+      }
+
+      addToast({
+        type: "error",
+        message: errorMessage,
+        duration: 5000,
+      });
     },
   });
 }
@@ -25,7 +101,7 @@ export function useLogin() {
   const { setTokens } = useAuth();
   const { addToast } = useUIStore();
   const router = useRouter();
-  
+
   return useMutation({
     mutationFn: async (payload: LoginInput) => {
       // Show login loading toast
@@ -68,7 +144,7 @@ export function useLogout() {
   const { clear } = useAuth();
   const { addToast } = useUIStore();
   const router = useRouter();
-  
+
   return useMutation({
     mutationFn: async () => {
       // Show logout loading toast
@@ -105,7 +181,7 @@ export function useLogout() {
         message: error.message || "Logout failed",
         duration: 3000,
       });
-      
+
       // Even on error, redirect to home as a fallback
       setTimeout(() => {
         router.push("/");
