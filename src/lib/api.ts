@@ -1175,40 +1175,11 @@ export const CourseAPI = {
   getMyCourses: async (
     params?: GetMyCoursesParams
   ): Promise<ApiResponse<MyCoursesResponse>> => {
-    console.log("📚 [API] Starting getMyCourses request...");
-    console.log("📚 [API] Request params:", JSON.stringify(params, null, 2));
-    console.log("📚 [API] API endpoint: /api/courses/my-courses");
-
     try {
       const response = await http.get("/api/courses/my-courses", {
         params,
       });
-
-      console.log(
-        "📚 [API] getMyCourses response received:",
-        JSON.stringify(response, null, 2)
-      );
-
-      // Handle the response properly - it should be ApiResponse<MyCoursesResponse>
       const apiResponse = response.data as ApiResponse<MyCoursesResponse>;
-
-      if (apiResponse.success) {
-        console.log("✅ [API] My courses fetched successfully");
-        console.log(
-          "✅ [API] Courses data:",
-          JSON.stringify(apiResponse.data, null, 2)
-        );
-      } else {
-        console.error(
-          "❌ [API] Failed to fetch my courses:",
-          apiResponse.message
-        );
-        console.error(
-          "❌ [API] Full error response:",
-          JSON.stringify(apiResponse, null, 2)
-        );
-      }
-
       return apiResponse;
     } catch (error: any) {
       console.error("❌ [API] Network error in getMyCourses:", error);
