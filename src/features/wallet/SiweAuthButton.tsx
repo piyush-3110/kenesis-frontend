@@ -45,8 +45,8 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
       if (data?.tokens?.accessToken && data?.tokens?.refreshToken) {
         setTokens(data.tokens);
       }
-  // Mark successful link for current address
-  if (address) lastLinkedAddressRef.current = address.toLowerCase();
+      // Mark successful link for current address
+      if (address) lastLinkedAddressRef.current = address.toLowerCase();
     },
   });
 
