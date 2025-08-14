@@ -61,8 +61,26 @@ export const updateUserProfile = async (data: UpdateProfileRequest): Promise<Upd
     }
     
     return response.data.data!;
-  } catch (error) {
-    // Enhance error messages for better UX
+  } catch (error: unknown) {
+    // Enhanced error handling for better UX
+    const apiError = error as {
+      response?: {
+        status?: number;
+        data?: { message?: string };
+      };
+      message?: string;
+    };
+    
+    if (apiError?.response?.status === 409) {
+      throw new Error('Username is already taken. Please choose a different username.');
+    }
+    if (apiError?.response?.status === 400) {
+      const errorMsg = apiError?.response?.data?.message || 'Invalid input data';
+      throw new Error(errorMsg);
+    }
+    if (apiError?.response?.status === 429) {
+      throw new Error('Too many updates. Please wait a moment and try again.');
+    }
     if (error instanceof Error) {
       if (error.message.includes('network')) {
         throw new Error('Network error. Please check your connection and try again.');
