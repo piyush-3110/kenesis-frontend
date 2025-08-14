@@ -8,16 +8,11 @@ import {
   Star,
   MessageCircle,
   TrendingUp,
-  Plus,
-  Filter,
-  Search,
 } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import { useProfileStore } from "./store/useProfileStore";
-import GradientBox from "./components/GradientBox";
 import StatCard from "./components/StatCard";
 import InstructorCard from "./components/InstructorCard";
-import CourseCard from "./components/CourseCard";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
 
 /**
@@ -26,17 +21,8 @@ import { useCurrentUser } from "@/features/auth/useCurrentUser";
  * Shows instructor info, stats, courses, and about section
  */
 const ProfilePage: React.FC = () => {
-  const {
-    profile,
-    stats,
-    courses,
-    loading,
-    error,
-    loadProfile,
-    loadStats,
-    loadCourses,
-    resetError,
-  } = useProfileStore();
+  const { profile, stats, loading, error, loadProfile, loadStats, resetError } =
+    useProfileStore();
 
   const { data: currentUser, isLoading: isUserLoading } = useCurrentUser();
 
@@ -48,8 +34,7 @@ const ProfilePage: React.FC = () => {
       loadProfile(); // Fallback if no user data
     }
     loadStats();
-    loadCourses();
-  }, [currentUser, isUserLoading, loadProfile, loadStats, loadCourses]);
+  }, [currentUser, isUserLoading, loadProfile, loadStats]);
 
   // Reset error when component unmounts
   useEffect(() => {
@@ -174,70 +159,6 @@ const ProfilePage: React.FC = () => {
             </div>
           </section>
         )}
-
-        {/* Courses Section */}
-        <section>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-white text-xl font-semibold mb-2">
-                My Courses
-              </h2>
-              <p className="text-gray-400 text-sm">
-                Manage your published and draft courses
-              </p>
-            </div>
-
-            {/* Course Actions */}
-            <div className="flex items-center gap-3">
-              {/* Search */}
-              <div className="relative">
-                <Search
-                  size={16}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                />
-                <input
-                  type="text"
-                  placeholder="Search courses..."
-                  className="pl-10 pr-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50 transition-colors"
-                />
-              </div>
-
-              {/* Filter */}
-              <button className="flex items-center gap-2 px-3 py-2 bg-gray-800/50 border border-gray-700/50 rounded-lg text-gray-300 hover:text-white transition-colors">
-                <Filter size={16} />
-                <span className="text-sm">Filter</span>
-              </button>
-
-              {/* Add Course */}
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-sm font-medium transition-colors">
-                <Plus size={16} />
-                <span>New Course</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Courses Grid */}
-          {courses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {courses.map((course) => (
-                <CourseCard key={course.id} course={course} />
-              ))}
-            </div>
-          ) : (
-            <GradientBox>
-              <div className="text-center py-12">
-                <BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-400 text-lg mb-2">No courses yet</p>
-                <p className="text-gray-500 text-sm mb-6">
-                  Create your first course to start teaching
-                </p>
-                <button className="px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-medium transition-colors">
-                  Create Your First Course
-                </button>
-              </div>
-            </GradientBox>
-          )}
-        </section>
       </div>
     </DashboardLayout>
   );
