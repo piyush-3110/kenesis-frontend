@@ -114,11 +114,6 @@ export default function LoginPage() {
             </>
           )}
         </button>
-        {login.isError && (
-          <p className="text-red-400 text-sm mt-2">
-            {(login.error as Error).message}
-          </p>
-        )}
       </form>
 
       {/* Footer */}
