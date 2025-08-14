@@ -3,7 +3,6 @@ export type ApiEnvelope<T = unknown> = {
   message: string;
   data?: T | null;
   errors?: Array<{ field: string; message: string }>;
-  retryAfter?: number;
 };
 
 export type User = {
