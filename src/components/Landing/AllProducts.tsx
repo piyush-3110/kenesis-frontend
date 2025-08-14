@@ -1,62 +1,61 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import ProductCard from "./ProductCard";
 import Link from "next/link";
+import { fetchProducts } from "@/lib/marketplaceApi";
+import { CourseForMarketplacePage } from "@/types/Product";
 
-const categories = [
-  "All",
-  "Investment",
-  "Digital Marketing",
-  "Sports and Health",
-  "Beauty",
-] as const;
-type Category = (typeof categories)[number];
-
-interface Product {
+interface LandingProductCardProps {
+  id: string;
   title: string;
   author: string;
   price: string;
   link: string;
 }
 
-const mockProducts: Record<Category, Product[]> = {
-  All: Array.from({ length: 12 }, (_, i) => ({
-    title: `Mastering Web3 #${i + 1}`,
-    author: "Alex Morgan",
-    price: "3.2 ETH",
-    link: `/course/web3-${i + 1}`,
-  })),
-  Investment: Array.from({ length: 8 }, (_, i) => ({
-    title: `Crypto Investment #${i + 1}`,
-    author: "Eliot Ray",
-    price: "1.5 ETH",
-    link: `/course/investment-${i + 1}`,
-  })),
-  "Digital Marketing": Array.from({ length: 6 }, (_, i) => ({
-    title: `Funnel Secrets #${i + 1}`,
-    author: "Sara Moe",
-    price: "2.0 TRX",
-    link: `/course/marketing-${i + 1}`,
-  })),
-  "Sports and Health": Array.from({ length: 4 }, (_, i) => ({
-    title: `Fitness & Diet #${i + 1}`,
-    author: "James Stark",
-    price: "0.9 ETH",
-    link: `/course/fitness-${i + 1}`,
-  })),
-  Beauty: Array.from({ length: 3 }, (_, i) => ({
-    title: `Skin Glow #${i + 1}`,
-    author: "Ella Grace",
-    price: "1.2 TRX",
-    link: `/course/beauty-${i + 1}`,
-  })),
+// Placeholder products to ensure we always show 8 products
+const createPlaceholderProducts = (count: number): LandingProductCardProps[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `placeholder-${i}`,
+    title: `Course ${i + 1}`,
+    author: "Coming Soon",
+    price: "$0",
+    link: "/marketplace",
+  }));
 };
 
 const AllProducts: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState<Category>("All");
+  // Fetch products from the backend API
+  const { data: productsData, isLoading, error } = useQuery({
+    queryKey: ["landing-products"],
+    queryFn: () => fetchProducts({}, 1, 20), // Fetch more than 8 to have variety
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+  });
 
-  const productsToShow = mockProducts[selectedCategory].slice(0, 8);
+  // Transform backend products to landing card format and ensure 8 products
+  const productsToShow = useMemo((): LandingProductCardProps[] => {
+    const backendProducts = productsData?.data || [];
+    
+    // Map backend products to landing card format
+    const mappedProducts: LandingProductCardProps[] = backendProducts.map((product: CourseForMarketplacePage) => ({
+      id: product.id,
+      title: product.title,
+      author: product.instructor.username,
+      price: `$${product.price}`,
+      link: `/product/${product.slug}`,
+    }));
+
+    // Ensure we have exactly 8 products
+    if (mappedProducts.length >= 8) {
+      return mappedProducts.slice(0, 8);
+    } else {
+      const placeholdersNeeded = 8 - mappedProducts.length;
+      return [...mappedProducts, ...createPlaceholderProducts(placeholdersNeeded)];
+    }
+  }, [productsData]);
 
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-20 py-20 text-center">
@@ -65,35 +64,35 @@ const AllProducts: React.FC = () => {
         All Products
       </h2>
 
-      {/* Category Tabs */}
-      <div className="flex flex-wrap justify-center gap-3 mb-12">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-6 py-2 rounded-full border text-white font-poppins transition-colors duration-300 ${
-              selectedCategory === cat
-                ? "border-[#0680FF] bg-[#01155B]"
-                : "border-white bg-transparent hover:border-[#0680FF]"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex justify-center items-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !isLoading && (
+        <div className="text-center py-10">
+          <p className="text-red-400 mb-4">Failed to load products</p>
+          <p className="text-gray-400 text-sm">Showing placeholder content</p>
+        </div>
+      )}
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center mb-10">
-        {productsToShow.map((product, index) => (
-          <ProductCard
-            key={`${product.title}-${index}`}
-            title={product.title}
-            author={product.author}
-            price={product.price}
-            link={product.link}
-          />
-        ))}
-      </div>
+      {!isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center mb-10">
+          {productsToShow.map((product, index) => (
+            <ProductCard
+              key={`${product.id}-${index}`}
+              title={product.title}
+              author={product.author}
+              price={product.price}
+              link={product.link}
+            />
+          ))}
+        </div>
+      )}
 
       {/* See More Button */}
       <Link
