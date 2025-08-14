@@ -1,15 +1,13 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import Link from 'next/link';
 import { 
   Plus,
-  Filter,
   Search,
   Package,
   Eye,
   EyeOff,
-  Video,
-  FileText,
   Grid3X3
 } from 'lucide-react';
 import DashboardLayout from '../components/DashboardLayout';
@@ -217,10 +215,13 @@ const MyProductsPage: React.FC = () => {
               </button>
               
               {/* Add Product */}
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-sm font-medium transition-colors">
+              <Link
+                href="/dashboard/products"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-sm font-medium transition-colors"
+              >
                 <Plus size={16} />
                 <span>New Product</span>
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -257,9 +258,12 @@ const MyProductsPage: React.FC = () => {
                     <p className="text-gray-500 text-sm mb-6">
                       Create your first product to start teaching and selling
                     </p>
-                    <button className="px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-medium transition-colors">
+                    <Link
+                      href="/dashboard/products"
+                      className="inline-block px-6 py-3 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-medium transition-colors"
+                    >
                       Create Your First Product
-                    </button>
+                    </Link>
                   </>
                 )}
               </div>
