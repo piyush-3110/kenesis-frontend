@@ -28,9 +28,25 @@ interface ReviewItem {
   createdAt: string;
   helpfulCount: number;
 }
+
 interface ReviewsQueryData {
   reviews: ReviewItem[];
   pagination?: { totalPages: number; hasNextPage: boolean };
+}
+
+interface ApiError {
+  response?: {
+    status: number;
+    data: {
+      success: boolean;
+      message?: string;
+      errors?: Array<{
+        field: string;
+        message: string;
+      }>;
+    };
+  };
+  message?: string;
 }
 const CourseReviewsSection: React.FC<Props> = ({ courseId, hasAccess }) => {
   const { addToast } = useUIStore();
@@ -57,7 +73,7 @@ const CourseReviewsSection: React.FC<Props> = ({ courseId, hasAccess }) => {
     comment: string;
   }) => {
     if (!isAuthenticated) {
-      addToast({ type: "warning", message: "Login to review" });
+      addToast({ type: "warning", message: "Please login to write a review" });
       return;
     }
     createReview.mutate(
@@ -65,13 +81,117 @@ const CourseReviewsSection: React.FC<Props> = ({ courseId, hasAccess }) => {
       {
         onSuccess: (res: { success: boolean; message?: string }) => {
           if (res.success) {
-            addToast({ type: "success", message: "Review submitted" });
+            addToast({
+              type: "success",
+              message: "Review created successfully",
+            });
             setShowForm(false);
           } else {
-            addToast({ type: "error", message: res.message || "Failed" });
+            addToast({
+              type: "error",
+              message: res.message || "Failed to create review",
+            });
           }
         },
-        onError: (e: Error) => addToast({ type: "error", message: e.message }),
+        onError: (error: ApiError) => {
+          // Handle different error types based on the API documentation
+          if (error.response) {
+            const { status, data } = error.response;
+
+            switch (status) {
+              case 400:
+                // Validation errors - show specific field errors
+                if (data.errors && Array.isArray(data.errors)) {
+                  const errorMessages = data.errors
+                    .map(
+                      (err: { field: string; message: string }) => err.message
+                    )
+                    .join(", ");
+                  addToast({
+                    type: "error",
+                    message: `Validation failed: ${errorMessages}`,
+                  });
+                } else {
+                  addToast({
+                    type: "error",
+                    message: data.message || "Please check your review details",
+                  });
+                }
+                break;
+
+              case 401:
+                // Authentication error
+                addToast({
+                  type: "error",
+                  message: "Your session has expired. Please login again",
+                });
+                break;
+
+              case 403:
+                // Purchase verification error
+                addToast({
+                  type: "warning",
+                  message: "You must purchase the course before reviewing",
+                });
+                break;
+
+              case 404:
+                // Course or user not found
+                if (data.message === "User not found") {
+                  addToast({
+                    type: "error",
+                    message: "User account not found. Please login again",
+                  });
+                } else {
+                  addToast({
+                    type: "error",
+                    message: "Course not found or is no longer available",
+                  });
+                }
+                break;
+
+              case 409:
+                // Duplicate review
+                addToast({
+                  type: "warning",
+                  message:
+                    "You have already reviewed this course. You can edit your existing review instead",
+                });
+                break;
+
+              case 429:
+                // Rate limiting
+                addToast({
+                  type: "warning",
+                  message: "Too many requests. Please try again later",
+                });
+                break;
+
+              case 500:
+              default:
+                // Server error or unknown error
+                addToast({
+                  type: "error",
+                  message:
+                    data.message || "Failed to create review. Please try again",
+                });
+                break;
+            }
+          } else if (error.message) {
+            // Network or other errors
+            addToast({
+              type: "error",
+              message:
+                "Network error. Please check your connection and try again",
+            });
+          } else {
+            // Fallback error message
+            addToast({
+              type: "error",
+              message: "An unexpected error occurred. Please try again",
+            });
+          }
+        },
       }
     );
   };
@@ -88,7 +208,7 @@ const CourseReviewsSection: React.FC<Props> = ({ courseId, hasAccess }) => {
               if (!hasAccess) {
                 addToast({
                   type: "warning",
-                  message: "Purchase the course to write a review",
+                  message: "You must purchase the course before reviewing",
                 });
                 return;
               }
