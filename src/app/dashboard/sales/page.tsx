@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import ComingSoon from '../components/ComingSoon';
-import { TrendingUp } from 'lucide-react';
+import React from "react";
+import ComingSoon from "../components/ComingSoon";
+import { TrendingUp } from "lucide-react";
 
 /**
  * Sales Page
@@ -13,7 +13,7 @@ const SalesPage = () => {
     <ComingSoon
       title="Sales Dashboard Coming Soon"
       subtitle="Our comprehensive sales analytics platform is in development. Track your revenue, analyze sales trends, and get detailed reports on your products' performance."
-      estimatedRelease="Q3 2023"
+      estimatedRelease="Q1 2026"
       icon={<TrendingUp className="w-10 h-10 text-white" />}
     />
   );
