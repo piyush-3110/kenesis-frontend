@@ -18,6 +18,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { useLogout } from "@/features/auth/hooks";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 
 function Logo() {
   return (
@@ -336,6 +337,61 @@ function AuthSection() {
 export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  // Mobile sheet state related data (mirror of AuthSection logic)
+  const router = useRouter();
+  const { addToast } = useUIStore();
+  const { isAuthenticated } = useAuth();
+  const { data: user } = useCurrentUser();
+  const logout = useLogout();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+
+  const handleDashboardClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      addToast({
+        type: "error",
+        message: "Please log in to access the dashboard",
+      });
+      router.push("/auth/login");
+      return;
+    }
+    if (user?.email && !user.emailVerified) {
+      addToast({
+        type: "warning",
+        message: "Please verify your email before accessing the dashboard",
+      });
+      router.push("/auth/verify-email");
+      return;
+    }
+    router.push("/dashboard");
+  };
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await logout.mutateAsync();
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+  const avatarLetter = (
+    user?.username ||
+    user?.email ||
+    user?.walletAddress ||
+    "U"
+  )
+    .charAt(0)
+    .toUpperCase();
+  const displayName = user?.username
+    ? user.username.length > 6
+      ? `${user.username.slice(0, 6)}..`
+      : user.username
+    : user?.email
+    ? user.email
+    : user?.walletAddress
+    ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
+    : "User";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -357,7 +413,7 @@ export default function Navbar() {
       )}
     >
       <div
-        className="flex items-center justify-between px-4 py-4 md:py-6 md:px-24 bg-[#0A071A]"
+        className="flex items-center justify-between px-3 py-2 md:py-6 md:px-24 bg-[#0A071A]/90 backdrop-blur-sm"
         style={{
           borderBottom: "1.2px solid",
           borderImageSource:
@@ -366,10 +422,162 @@ export default function Navbar() {
         }}
       >
         <Logo />
-        <div className="flex items-center space-x-8">
+        <div className="flex items-center space-x-3 md:space-x-8">
           <NavLinks />
-          <SiweAuthButton />
-          <AuthSection />
+          {/* Desktop dropdown */}
+          <div className="hidden md:block">
+            <AuthSection />
+          </div>
+          {/* Mobile sheet trigger - avatar / placeholder */}
+          <div className="md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <button
+                  aria-label="Open profile menu"
+                  className="w-10 h-10 rounded-full overflow-hidden ring-1 ring-white/15 bg-gradient-to-br from-blue-500/40 to-purple-600/40 flex items-center justify-center"
+                >
+                  {isClient && isAuthenticated && user?.avatar ? (
+                    <Image
+                      src={user.avatar}
+                      alt={displayName}
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : isClient && isAuthenticated ? (
+                    <span className="text-sm font-semibold text-white">
+                      {avatarLetter}
+                    </span>
+                  ) : (
+                    <Image
+                      src="/images/landing/avatar1.png"
+                      alt="User"
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover opacity-80"
+                    />
+                  )}
+                </button>
+              </SheetTrigger>
+              <SheetContent
+                side="bottom"
+                className="p-0 pb-8 border-t border-white/10"
+              >
+                <div className="mx-auto h-1 w-12 rounded-full bg-white/20 mt-3 mb-4" />
+                <div className="px-6 flex flex-col gap-4">
+                  {/* User / Auth Section inside sheet */}
+                  {isClient && isAuthenticated ? (
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4">
+                      {user?.avatar ? (
+                        <Image
+                          src={user.avatar}
+                          alt={displayName}
+                          width={56}
+                          height={56}
+                          className="w-14 h-14 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-lg">
+                          {avatarLetter}
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white font-semibold text-base truncate">
+                          {displayName}
+                        </p>
+                        {user?.email && (
+                          <p className="text-gray-400 text-xs truncate">
+                            {user.email}
+                          </p>
+                        )}
+                        {user?.walletAddress && (
+                          <p className="text-gray-500 text-[10px] truncate">
+                            {user.walletAddress}
+                          </p>
+                        )}
+                        {user?.email && !user.emailVerified && (
+                          <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-medium bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                            Email Not Verified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      <Link
+                        href="/auth/login"
+                        className="w-full text-center font-semibold text-sm px-4 py-3 rounded-xl text-white bg-gradient-to-r from-sky-400 to-indigo-600 hover:from-sky-400/90 hover:to-indigo-600/90 transition"
+                      >
+                        Login
+                      </Link>
+                    </div>
+                  )}
+                  {/* Wallet Connect inside sheet */}
+                  <div className="w-full">
+                    <SiweAuthButton variant="sheet" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Link
+                      href="/marketplace"
+                      className="px-5 py-4 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-between text-white font-medium"
+                    >
+                      <span>Marketplace</span>
+                      <ShoppingBag className="w-5 h-5 text-blue-400" />
+                    </Link>
+                    {isClient && isAuthenticated && (
+                      <button
+                        onClick={handleDashboardClick}
+                        className="px-5 py-4 rounded-xl bg-gradient-to-r from-blue-600/30 to-indigo-600/30 hover:from-blue-600/40 hover:to-indigo-600/40 flex items-center justify-between text-white font-semibold"
+                      >
+                        <span>Dashboard</span>
+                        <LayoutDashboard className="w-5 h-5 text-purple-300" />
+                      </button>
+                    )}
+                    <Link
+                      href="/presale"
+                      className="px-5 py-4 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-between text-white font-medium"
+                    >
+                      Presale
+                    </Link>
+                    <Link
+                      href="https://kenesis.gitbook.io/whitepaper"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-4 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-between text-white font-medium"
+                    >
+                      Whitepaper
+                    </Link>
+                    {isClient && isAuthenticated && (
+                      <Link
+                        href="/dashboard/profile"
+                        className="px-5 py-4 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-between text-white font-medium"
+                      >
+                        <span>Profile</span>
+                        <User className="w-5 h-5 text-green-300" />
+                      </Link>
+                    )}
+                    {isClient && isAuthenticated && (
+                      <button
+                        onClick={handleLogout}
+                        disabled={isLoggingOut || logout.isPending}
+                        className="px-5 py-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 flex items-center justify-between text-red-300 font-medium disabled:opacity-60"
+                      >
+                        <span>
+                          {isLoggingOut || logout.isPending
+                            ? "Logging out..."
+                            : "Logout"}
+                        </span>
+                        <LogOut className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-center text-gray-500 mt-2">
+                    Explore. Create. Earn.
+                  </p>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </div>
     </nav>
