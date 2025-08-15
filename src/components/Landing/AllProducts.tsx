@@ -13,22 +13,30 @@ interface LandingProductCardProps {
   author: string;
   price: string;
   link: string;
+  thumbnail: string;
 }
 
 // Placeholder products to ensure we always show 8 products
-const createPlaceholderProducts = (count: number): LandingProductCardProps[] => {
+const createPlaceholderProducts = (
+  count: number
+): LandingProductCardProps[] => {
   return Array.from({ length: count }, (_, i) => ({
     id: `placeholder-${i}`,
     title: `Course ${i + 1}`,
     author: "Coming Soon",
     price: "$0",
     link: "/marketplace",
+    thumbnail: "/images/landing/product.png",
   }));
 };
 
 const AllProducts: React.FC = () => {
   // Fetch products from the backend API
-  const { data: productsData, isLoading, error } = useQuery({
+  const {
+    data: productsData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["landing-products"],
     queryFn: () => fetchProducts({}, 1, 20), // Fetch more than 8 to have variety
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -38,22 +46,28 @@ const AllProducts: React.FC = () => {
   // Transform backend products to landing card format and ensure 8 products
   const productsToShow = useMemo((): LandingProductCardProps[] => {
     const backendProducts = productsData?.data || [];
-    
+
     // Map backend products to landing card format
-    const mappedProducts: LandingProductCardProps[] = backendProducts.map((product: CourseForMarketplacePage) => ({
-      id: product.id,
-      title: product.title,
-      author: product.instructor.username,
-      price: `$${product.price}`,
-      link: `/product/${product.slug}`,
-    }));
+    const mappedProducts: LandingProductCardProps[] = backendProducts.map(
+      (product: CourseForMarketplacePage) => ({
+        id: product.id,
+        title: product.title,
+        author: product.instructor.username,
+        price: `$${product.price}`,
+        link: `/product/${product.slug}`,
+        thumbnail: product.thumbnail,
+      })
+    );
 
     // Ensure we have exactly 8 products
     if (mappedProducts.length >= 8) {
       return mappedProducts.slice(0, 8);
     } else {
       const placeholdersNeeded = 8 - mappedProducts.length;
-      return [...mappedProducts, ...createPlaceholderProducts(placeholdersNeeded)];
+      return [
+        ...mappedProducts,
+        ...createPlaceholderProducts(placeholdersNeeded),
+      ];
     }
   }, [productsData]);
 
@@ -89,6 +103,7 @@ const AllProducts: React.FC = () => {
               author={product.author}
               price={product.price}
               link={product.link}
+              image={product.thumbnail}
             />
           ))}
         </div>
