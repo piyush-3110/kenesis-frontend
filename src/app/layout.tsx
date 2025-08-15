@@ -45,6 +45,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${poppins.variable} antialiased bg-[#000526] text-white font-sans`}
       >
+        {/* Viewport meta for proper mobile scaling (improves wallet modal responsiveness) */}
+        <head>
+          <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,maximum-scale=1"
+          />
+        </head>
         <NextTopLoader
           color="#0680FF"
           initialPosition={0.08}

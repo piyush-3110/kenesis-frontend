@@ -143,6 +143,42 @@ html {
   scroll-behavior: smooth;
 }
 
+/* RainbowKit modal: convert to bottom sheet on small screens */
+@media (max-width: 640px) {
+  /* Modal container typically has data-rk and a generated class with modal radii; we target via attribute & size */
+  [data-rk] [role="dialog"][class*="ju367v"] {
+    /* Ensure full-width bottom attachment */
+    width: 100% !important;
+    max-width: none !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    bottom: 0 !important;
+    margin: 0 !important;
+    border-radius: 1.25rem 1.25rem 0 0 !important;
+    transform-origin: bottom center;
+    animation: rk-slide-up 260ms ease-out;
+    background: rgba(18,18,26,0.92) !important;
+    backdrop-filter: blur(12px);
+  }
+  /* Reduce internal panel split layout to stack if present (handled by hiding second pane below) */
+  [data-rk] [role="dialog"] .rk-modal-content { width: 100%; }
+  /* Hide large side-by-side explanation panel if horizontal layout exists */
+  [data-rk] [role="dialog"] > div[class*="ju367v14"] > div:last-child {
+    display: none !important;
+  }
+  /* Ensure overlay covers full screen & darkens a bit more for sheet feel */
+  [data-rk] div[class*="overlay"],
+  [data-rk] .rk-overlay {
+    background: rgba(0,0,0,0.72) !important;
+    backdrop-filter: blur(4px);
+  }
+  @keyframes rk-slide-up {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+}
+
 /* Focus styles */
 button:focus,
 input:focus,
