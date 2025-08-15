@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Slider from "react-slick";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import CourseCard from "./CourseCard";
-import Link from "next/link";
 
 const sellers = [
   {
