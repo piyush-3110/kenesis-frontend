@@ -1,4 +1,5 @@
 import React from "react";
+import { PillHeading } from "./PillHeading";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -51,20 +52,10 @@ const Skills = () => {
   return (
     <section className="max-w-7xl mx-auto px-4 md:px-16 py-20 text-center">
       {/* Header */}
-      <div
-        className="inline-block p-[2.07px] rounded-full mb-4"
-        style={{
-          backgroundImage:
-            "linear-gradient(270deg, #0036F6 0%, #FFFFFF 73.61%)",
-        }}
-      >
-        <h2 className="bg-black rounded-full px-6 py-2 font-poppins text-[18px] md:text-[25px] font-medium leading-[53.87px] text-white">
-          Develop a new skill wherever you are
-        </h2>
-      </div>
+      <PillHeading>Develop a new skill wherever you are</PillHeading>
 
       {/* Subheading */}
-      <p className="text-white text-lg font-poppins mb-12">
+      <p className="text-white/90 text-sm sm:text-base md:text-lg font-poppins mb-12 max-w-2xl mx-auto leading-relaxed">
         Explore our safe and resourceful environment.
       </p>
 

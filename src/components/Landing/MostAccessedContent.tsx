@@ -1,35 +1,26 @@
-'use client';
+"use client";
 
-import React from 'react';
-import AccessedContentCard from './AccessedContentCard';
+import React from "react";
+import AccessedContentCard from "./AccessedContentCard";
+import { PillHeading } from "./PillHeading";
 
 const contentTopics = [
-  'Investment',
-  'Digital Marketing',
-  'Health and Sports',
-  'Aesthetics',
-  'Entrepreneurship',
-  'Languages',
+  "Investment",
+  "Digital Marketing",
+  "Health and Sports",
+  "Aesthetics",
+  "Entrepreneurship",
+  "Languages",
 ];
 
 const MostAccessedContent: React.FC = () => {
   return (
     <section className="py-20 px-4 max-w-7xl mx-auto text-center">
       {/* Heading */}
-     <div
-  className="inline-block p-[2.07px] rounded-full mb-4"
-  style={{
-    backgroundImage: 'linear-gradient(270deg, #0036F6 0%, #FFFFFF 73.61%)',
-  }}
->
-  <h2 className="bg-black rounded-full px-6 py-2 font-poppins text-[25px] font-medium leading-[53.87px] text-white">
-    Most Accessed Content
-  </h2>
-</div>
-
+      <PillHeading>Most Accessed Content</PillHeading>
 
       {/* Subheading */}
-      <p className="font-poppins text-[20px] sm:text-[16px] md:text-[24px] font-normal leading-[45.6px] text-white mb-12">
+      <p className="font-poppins text-sm sm:text-base md:text-xl lg:text-2xl font-normal leading-relaxed md:leading-[1.35] text-white/90 mb-12 max-w-3xl mx-auto tracking-wide">
         THE WORLD&apos;S LARGEST WEB3 PLATFORM FOR DIGITAL PRODUCTS
       </p>
 
