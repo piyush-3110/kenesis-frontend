@@ -160,6 +160,8 @@ html {
     animation: rk-slide-up 260ms ease-out;
     background: rgba(18,18,26,0.92) !important;
     backdrop-filter: blur(12px);
+  z-index: 70 !important; /* Above sheet (40/50) */
+  pointer-events: auto;
   }
   /* Reduce internal panel split layout to stack if present (handled by hiding second pane below) */
   [data-rk] [role="dialog"] .rk-modal-content { width: 100%; }
@@ -172,6 +174,7 @@ html {
   [data-rk] .rk-overlay {
     background: rgba(0,0,0,0.72) !important;
     backdrop-filter: blur(4px);
+  z-index: 60 !important; /* Above sheet overlay (40) but below modal (70) */
   }
   @keyframes rk-slide-up {
     from { transform: translateY(30px); opacity: 0; }
