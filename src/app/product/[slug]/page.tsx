@@ -17,6 +17,7 @@ import {
   CourseDetails,
   // useProductActions,
 } from "../components";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 const ProductDetailPage: React.FC = () => {
   const params = useParams();
@@ -24,6 +25,8 @@ const ProductDetailPage: React.FC = () => {
 
   // Use React Query to fetch course data
   const { data: product, isLoading: loading, error, refetch } = useCourse(slug);
+
+  const { isAuthenticated } = useAuth();
 
   // Check if user has access to the course (only after course data is loaded)
   // This determines whether to show purchase button or "You own this course" message
@@ -70,13 +73,15 @@ const ProductDetailPage: React.FC = () => {
         </Link>
 
         {/* Course Access Status Banner */}
-        <CourseAccessBanner
-          hasAccess={courseAccess.hasAccess}
-          isLoading={accessLoading}
-          error={accessError}
-          courseTitle={product.title}
-          className="mb-8"
-        />
+        {isAuthenticated && (
+          <CourseAccessBanner
+            hasAccess={courseAccess.hasAccess}
+            isLoading={accessLoading}
+            error={accessError}
+            courseTitle={product.title}
+            className="mb-8"
+          />
+        )}
 
         {/* Product Header */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
