@@ -167,6 +167,12 @@ const CourseCreationForm: React.FC = () => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
+    // If switching course type to 'document', preview video becomes optional
+    if (field === "type" && value === "document") {
+      if (errors.previewVideo) {
+        setErrors((prev) => ({ ...prev, previewVideo: "" }));
+      }
+    }
   };
 
   const handleFileUpload = (
@@ -256,7 +262,9 @@ const CourseCreationForm: React.FC = () => {
     }
 
     if (!thumbnailFile) newErrors.thumbnail = "Thumbnail image is required";
-    if (!previewVideoFile) newErrors.previewVideo = "Preview video is required";
+    // Make preview video optional for document type courses
+    if (formData.type !== "document" && !previewVideoFile)
+      newErrors.previewVideo = "Preview video is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
