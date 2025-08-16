@@ -169,33 +169,34 @@ export const ReviewAPI = {
       JSON.stringify(reviewData, null, 2)
     );
 
-    try {
-      const response = await apiRequest(`/courses/${courseId}/reviews`, {
-        method: "POST",
-        body: JSON.stringify(reviewData),
-      });
+    // try {
+    const response = await apiRequest(`/courses/${courseId}/reviews`, {
+      method: "POST",
+      body: JSON.stringify(reviewData),
+    });
 
-      console.log(
-        "✅ [REVIEW API] Create review response:",
-        JSON.stringify(response, null, 2)
-      );
+    console.log(
+      "✅ [REVIEW API] Create review response:",
+      JSON.stringify(response, null, 2)
+    );
 
-      return {
-        success: true,
-        data: response.data,
-        message: response.message,
-      };
-    } catch (error: any) {
-      console.error("❌ [REVIEW API] Create review error:", error);
-      console.error("❌ [REVIEW API] Error response:", error.response?.data);
+    return {
+      success: true,
+      data: response.data,
+      message: response.message,
+    };
 
-      const errorMessage =
-        error.response?.data?.message || "Failed to create review";
-      return {
-        success: false,
-        message: errorMessage,
-      };
-    }
+    // } catch (error: any) {
+    //   console.error("❌ [REVIEW API] Create review error:", error);
+    //   console.error("❌ [REVIEW API] Error response:", error.response?.data);
+
+    //   const errorMessage =
+    //     error.response?.data?.message || "Failed to create review";
+    //   return {
+    //     success: false,
+    //     message: errorMessage,
+    //   };
+    // }
   },
 
   /**

@@ -109,7 +109,7 @@ const CourseReviewsSection: React.FC<Props> = ({ courseId, hasAccess }) => {
                     .join(", ");
                   addToast({
                     type: "error",
-                    message: `Validation failed: ${errorMessages}`,
+                    message: errorMessages,
                   });
                 } else {
                   addToast({
