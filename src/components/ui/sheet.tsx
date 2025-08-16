@@ -27,12 +27,12 @@ export const SheetContent = React.forwardRef<
   };
   return (
     <DialogPrimitive.Portal>
-    <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-300 ease-out" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-300 ease-out" />
       <DialogPrimitive.Content
         ref={ref}
         className={clsx(
           // Base styles
-      "fixed z-50 md:z-50 flex flex-col gap-4 bg-[#0F0B24]/95 text-white p-6 shadow-xl border border-white/10 will-change-transform",
+          "fixed z-50 md:z-50 flex flex-col gap-4 bg-[#0F0B24]/95 text-white p-6 shadow-xl border border-white/10 will-change-transform",
           // Transition (custom instead of shadcn animate utilities not present in config)
           "translate-y-full opacity-0 data-[state=open]:translate-y-0 data-[state=open]:opacity-100 data-[state=closed]:translate-y-full data-[state=closed]:opacity-0 transition-all duration-300 ease-out",
           sideClasses[side],

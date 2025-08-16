@@ -72,7 +72,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -133,7 +134,12 @@
 }
 
 .animate-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
@@ -158,13 +164,15 @@ html {
     border-radius: 1.25rem 1.25rem 0 0 !important;
     transform-origin: bottom center;
     animation: rk-slide-up 260ms ease-out;
-    background: rgba(18,18,26,0.92) !important;
+    background: rgba(18, 18, 26, 0.92) !important;
     backdrop-filter: blur(12px);
-  z-index: 70 !important; /* Above sheet (40/50) */
-  pointer-events: auto;
+    z-index: 70 !important; /* Above sheet (40/50) */
+    pointer-events: auto;
   }
   /* Reduce internal panel split layout to stack if present (handled by hiding second pane below) */
-  [data-rk] [role="dialog"] .rk-modal-content { width: 100%; }
+  [data-rk] [role="dialog"] .rk-modal-content {
+    width: 100%;
+  }
   /* Hide large side-by-side explanation panel if horizontal layout exists */
   [data-rk] [role="dialog"] > div[class*="ju367v14"] > div:last-child {
     display: none !important;
@@ -172,13 +180,19 @@ html {
   /* Ensure overlay covers full screen & darkens a bit more for sheet feel */
   [data-rk] div[class*="overlay"],
   [data-rk] .rk-overlay {
-    background: rgba(0,0,0,0.72) !important;
+    background: rgba(0, 0, 0, 0.72) !important;
     backdrop-filter: blur(4px);
-  z-index: 60 !important; /* Above sheet overlay (40) but below modal (70) */
+    z-index: 60 !important; /* Above sheet overlay (40) but below modal (70) */
   }
   @keyframes rk-slide-up {
-    from { transform: translateY(30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
   }
 }
 
@@ -204,11 +218,11 @@ textarea:focus {
 }
 
 .gradient-border::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   padding: 1px;
-  background: linear-gradient(180deg, #0680FF 0%, #022ED2 88.45%);
+  background: linear-gradient(180deg, #0680ff 0%, #022ed2 88.45%);
   border-radius: inherit;
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
