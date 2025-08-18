@@ -22,8 +22,8 @@ const skillsData = [
   },
   {
     icon: "/images/landing/icon3.png",
-    title: "Refund 72 Hours",
-    subtitle: "Changed your mind? Get your crypto back, hassle-free.",
+    title: "Verify Courses",
+    subtitle: "Only verified courses will be listed marketplace",
   },
 ];
 
