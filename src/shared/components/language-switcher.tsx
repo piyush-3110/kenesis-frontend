@@ -161,6 +161,14 @@ const applyCookie = (lang: string) => {
       if (d.startsWith(".")) cookieStr += `; domain=${d}`;
       if (secure) cookieStr += `; Secure`;
       document.cookie = cookieStr;
+      if (isDebugMode()) {
+        try {
+          console.info("[gtranslate-apply] wrote cookie string:", cookieStr);
+          console.info("[gtranslate-apply] document.cookie after write:", document.cookie);
+        } catch {
+          /* ignore */
+        }
+      }
     } catch {
       /* ignore */
     }
