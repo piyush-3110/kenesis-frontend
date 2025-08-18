@@ -30,11 +30,38 @@ const getLangFromCookie = (val?: string): string | undefined => {
   return sp.length > 2 ? sp[2] : undefined;
 };
 
+const getCookieDomain = (): string | undefined => {
+  if (typeof window === "undefined") return undefined;
+  const host = window.location.hostname;
+  if (!host) return undefined;
+  // don't set domain for localhost or bare IPs
+  if (host === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(host))
+    return undefined;
+  // strip leading www
+  const base = host.replace(/^www\./, "");
+  return `.${base}`;
+};
+
 const applyCookie = (lang: string) => {
-  setCookie(null, COOKIE_NAME, `/auto/${lang}`, {
+  const domain = getCookieDomain();
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:";
+  const opts: Record<string, string | number | boolean> = {
     path: COOKIE_PATH,
     maxAge: COOKIE_MAX_AGE,
-  });
+    sameSite: "lax",
+  };
+  if (domain) opts.domain = domain;
+  if (secure) opts.secure = true;
+
+  // Primary: use nookies to set cookie (server-friendly API)
+  setCookie(null, COOKIE_NAME, `/auto/${lang}`, opts);
+
+  // Also write document.cookie immediately so client-side code (Google script)
+  // can see the updated value before reload. Construct a conservative cookie string.
+  let cookieStr = `${COOKIE_NAME}=/auto/${lang}; path=${COOKIE_PATH}; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
+  if (domain) cookieStr += `; domain=${domain}`;
+  if (secure) cookieStr += `; Secure`;
+  if (typeof document !== "undefined") document.cookie = cookieStr;
 };
 
 const LanguageSwitcher = () => {
@@ -74,8 +101,8 @@ const LanguageSwitcher = () => {
     if (value === currentLanguage) return;
     applyCookie(value);
     setCurrentLanguage(value);
-    // Reload to let Google script re-evaluate cookie (simplest reliable approach here)
-    location.reload();
+    // Give the cookie a moment to propagate (helps on some CDN / proxy / production setups)
+  setTimeout(() => window.location.reload(), 150);
   };
 
   if (!languages.length) return null;
