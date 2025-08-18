@@ -19,7 +19,6 @@ import { useLogout } from "@/features/auth/hooks";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import { LanguageSwitcher } from "@/shared/components/language-switcher";
 
 function Logo() {
   return (
@@ -427,7 +426,6 @@ export default function Navbar() {
           <NavLinks />
           {/* Language Switcher */}
           <div className="hidden md:block">
-            <LanguageSwitcher />
           </div>
           {/* Desktop dropdown */}
           <div className="hidden md:block">
@@ -435,7 +433,6 @@ export default function Navbar() {
           </div>
           {/* Mobile language + sheet trigger */}
           <div className="md:hidden flex items-center gap-2">
-            <LanguageSwitcher />
             <Sheet>
               <SheetTrigger asChild>
                 <button

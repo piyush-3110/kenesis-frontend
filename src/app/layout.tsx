@@ -10,7 +10,7 @@ import { QueryProvider } from "@/lib/query/QueryProvider";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { WalletProvider } from "@/features/wallet/WalletProvider";
 import { WalletGuard } from "@/features/wallet/WalletGuard";
-import Script from "next/script";
+// ...existing code...
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,13 +43,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* Google Translate Config & Loader Scripts */}
-      <Script src="/assets/lang-config.js" strategy="beforeInteractive" />
-      <Script src="/assets/translation.js" strategy="beforeInteractive" />
-      <Script
-        src="//translate.google.com/translate_a/element.js?cb=TranslateInit"
-        strategy="afterInteractive"
-      />
+  {/* Google Translate removed: language switching disabled */}
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${poppins.variable} antialiased bg-[#000526] text-white font-sans`}
       >
