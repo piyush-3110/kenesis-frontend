@@ -10,6 +10,7 @@ import { QueryProvider } from "@/lib/query/QueryProvider";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { WalletProvider } from "@/features/wallet/WalletProvider";
 import { WalletGuard } from "@/features/wallet/WalletGuard";
+import Script from "next/script";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -42,16 +43,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* Google Translate Config & Loader Scripts */}
+      <Script src="/assets/lang-config.js" strategy="beforeInteractive" />
+      <Script src="/assets/translation.js" strategy="beforeInteractive" />
+      <Script
+        src="//translate.google.com/translate_a/element.js?cb=TranslateInit"
+        strategy="afterInteractive"
+      />
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${poppins.variable} antialiased bg-[#000526] text-white font-sans`}
       >
-        {/* Viewport meta for proper mobile scaling (improves wallet modal responsiveness) */}
-        <head>
-          <meta
-            name="viewport"
-            content="width=device-width,initial-scale=1,maximum-scale=1"
-          />
-        </head>
+        {/* Container required by Google Translate (hidden via CSS bar suppression) */}
+        <div id="google_translate_element" className="hidden" />
         <NextTopLoader
           color="#0680FF"
           initialPosition={0.08}
