@@ -43,8 +43,8 @@ const AffiliationsTable: React.FC<AffiliationsTableProps> = ({
     const origin = base.replace(/\/$/, "");
     // New backend format: /products/{slug}?ref={affiliateCode}
     return code
-      ? `${origin}/products/${courseSlug}?ref=${encodeURIComponent(code)}`
-      : `${origin}/products/${courseSlug}`;
+      ? `${origin}/product/${courseSlug}?ref=${encodeURIComponent(code)}`
+      : `${origin}/product/${courseSlug}`;
   };
 
   const onCopyReferral = async (courseSlug: string, affiliateCode?: string) => {
