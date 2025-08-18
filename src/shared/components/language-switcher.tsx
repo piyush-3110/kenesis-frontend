@@ -44,7 +44,8 @@ const getCookieDomain = (): string | undefined => {
 
 const applyCookie = (lang: string) => {
   const domain = getCookieDomain();
-  const secure = typeof window !== "undefined" && window.location.protocol === "https:";
+  const secure =
+    typeof window !== "undefined" && window.location.protocol === "https:";
   const opts: Record<string, string | number | boolean> = {
     path: COOKIE_PATH,
     maxAge: COOKIE_MAX_AGE,
@@ -77,7 +78,28 @@ const LanguageSwitcher = () => {
       const initial =
         cookieLang || global.__GOOGLE_TRANSLATION_CONFIG__.defaultLanguage;
       setCurrentLanguage(initial);
+      // If no cookie present, initialize it
       if (!cookieLang) applyCookie(initial);
+
+      // If a preferred language was stored (from a previous selection), ensure
+      // the cookie matches it. This handles production cases where Google may
+      // asynchronously overwrite the cookie after load.
+      try {
+        const stored =
+          typeof window !== "undefined"
+            ? window.localStorage.getItem("gtranslate_preferred_lang")
+            : null;
+        if (stored && stored !== cookieLang && stored !== initial) {
+          // Re-apply cookie and force a reload to make the Google script pick it up.
+          applyCookie(stored);
+          // Remove the stored flag to avoid reload loops
+          window.localStorage.removeItem("gtranslate_preferred_lang");
+          setCurrentLanguage(stored);
+          setTimeout(() => window.location.reload(), 150);
+        }
+      } catch {
+        /* ignore localStorage errors */
+      }
     }
   }, []);
 
@@ -99,10 +121,18 @@ const LanguageSwitcher = () => {
 
   const onChange = (value: string) => {
     if (value === currentLanguage) return;
+    // Store desired language as a short-lived hint so init can re-apply it if
+    // Google later overwrites the cookie on production.
+    try {
+      if (typeof window !== "undefined")
+        window.localStorage.setItem("gtranslate_preferred_lang", value);
+    } catch {
+      /* ignore */
+    }
     applyCookie(value);
     setCurrentLanguage(value);
     // Give the cookie a moment to propagate (helps on some CDN / proxy / production setups)
-  setTimeout(() => window.location.reload(), 150);
+    setTimeout(() => window.location.reload(), 150);
   };
 
   if (!languages.length) return null;
