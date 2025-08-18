@@ -37,8 +37,7 @@ const getDomainVariants = (): string[] => {
   const host = window.location.hostname;
   if (!host) return [];
   // don't return domain variants for localhost or IP addresses
-  if (host === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(host))
-    return [host];
+  if (host === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(host)) return [host];
 
   const withoutWww = host.replace(/^www\./, "");
   const parts = withoutWww.split(".");
@@ -59,6 +58,51 @@ const getDomainVariants = (): string[] => {
   return Array.from(variants);
 };
 
+const isDebugMode = (): boolean => {
+  try {
+    if (typeof window === "undefined") return false;
+    return (
+      new URLSearchParams(window.location.search).get("gtranslate_debug") ===
+      "1"
+    );
+  } catch {
+    return false;
+  }
+};
+
+const startCookieMonitor = (
+  label = "gtranslate-monitor",
+  duration = 5000,
+  interval = 200
+) => {
+  if (typeof window === "undefined" || !isDebugMode()) return;
+  try {
+    const start = Date.now();
+    let last = document.cookie;
+    console.info(`[${label}] start cookie monitor`, {
+      now: new Date().toISOString(),
+      cookie: last,
+    });
+    const id = setInterval(() => {
+      const cur = document.cookie;
+      if (cur !== last) {
+        console.info(`[${label}] cookie changed`, {
+          at: new Date().toISOString(),
+          previous: last,
+          current: cur,
+        });
+        last = cur;
+      }
+      if (Date.now() - start > duration) {
+        clearInterval(id);
+        console.info(`[${label}] cookie monitor ended`);
+      }
+    }, interval);
+  } catch (e) {
+    console.warn("gtranslate monitor failed", e);
+  }
+};
+
 const applyCookie = (lang: string) => {
   const variants = getDomainVariants();
   const secure =
@@ -71,7 +115,27 @@ const applyCookie = (lang: string) => {
   const cookieValue = `/auto/${lang}`;
 
   // Try to set cookie via nookies + document.cookie for each likely domain variant.
-  variants.forEach((d) => {
+  // Ensure production-specific variants are covered aggressively for kenesis hosts
+  const prodSpecific = [];
+  try {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hostname.endsWith("kenesis.io")
+    ) {
+      prodSpecific.push(
+        "kenesis-frontend.kenesis.io",
+        ".kenesis-frontend.kenesis.io",
+        "kenesis.io",
+        ".kenesis.io"
+      );
+    }
+  } catch {
+    /* ignore */
+  }
+
+  const allVariants = Array.from(new Set([...variants, ...prodSpecific]));
+
+  allVariants.forEach((d) => {
     const opts: Record<string, string | number | boolean> = {
       path: COOKIE_PATH,
       maxAge: COOKIE_MAX_AGE,
@@ -90,7 +154,9 @@ const applyCookie = (lang: string) => {
 
     // Also write a conservative document.cookie (best-effort).
     try {
-      let cookieStr = `${COOKIE_NAME}=${encodeURIComponent(cookieValue)}; path=${COOKIE_PATH}; max-age=${COOKIE_MAX_AGE}; SameSite=${sameSiteVal}`;
+      let cookieStr = `${COOKIE_NAME}=${encodeURIComponent(
+        cookieValue
+      )}; path=${COOKIE_PATH}; max-age=${COOKIE_MAX_AGE}; SameSite=${sameSiteVal}`;
       // Only set domain attribute when variant is not the exact host (document.cookie will ignore invalid domains)
       if (d.startsWith(".")) cookieStr += `; domain=${d}`;
       if (secure) cookieStr += `; Secure`;
@@ -104,7 +170,7 @@ const applyCookie = (lang: string) => {
   // the cookie on the most common variants we can influence. This may not clear cookies
   // set by other domains outside our scope, but will help consolidate where possible.
   try {
-    const toExpire = variants;
+    const toExpire = allVariants;
     toExpire.forEach((d) => {
       try {
         let expire = `${COOKIE_NAME}=; path=${COOKIE_PATH}; max-age=0`;
@@ -118,6 +184,9 @@ const applyCookie = (lang: string) => {
   } catch {
     /* ignore */
   }
+
+  // If debug mode is on, monitor cookies for a few seconds to catch who overwrites them.
+  if (isDebugMode()) startCookieMonitor("gtranslate-apply", 7000, 250);
 };
 
 const LanguageSwitcher = () => {
