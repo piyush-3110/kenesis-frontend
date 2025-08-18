@@ -102,9 +102,8 @@ const CourseCreationForm: React.FC = () => {
   // Current user (to enforce prerequisites: wallet, email, username)
   const me = useCurrentUser();
   const missingWallet = !me.isLoading && !me.data?.walletAddress;
-  const missingEmail = !me.isLoading && !me.data?.email;
   const missingUsername = !me.isLoading && !me.data?.username;
-  const anyIdentityMissing = missingWallet || missingEmail || missingUsername;
+  const anyIdentityMissing = missingWallet || missingUsername;
 
   // Unique chains and tokens derived from config
   const uniqueChains = supportedChains;
@@ -512,22 +511,14 @@ const CourseCreationForm: React.FC = () => {
                 <SiweAuthButton />
               </div>
             )}
-            {(missingEmail || missingUsername) && (
+            {missingUsername && (
               <div className="p-4 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 flex flex-col gap-2">
                 <p className="text-sm font-medium">
-                  {missingEmail &&
-                    missingUsername &&
-                    "Add an email address and username to continue."}
-                  {missingEmail &&
-                    !missingUsername &&
-                    "Add an email address to continue."}
-                  {!missingEmail &&
-                    missingUsername &&
-                    "Add a username to continue."}
+                  {"Add a username to continue."}
                 </p>
                 <p className="text-xs opacity-80">
-                  We require both a verified email and a public username for
-                  instructor identity and communication.
+                  We require a public username for instructor identity and
+                  communication.
                 </p>
                 <div>
                   <Link
@@ -1275,8 +1266,7 @@ const CourseCreationForm: React.FC = () => {
             type="submit"
             disabled={
               apiLoading ||
-              (!!me.data &&
-                (!me.data.walletAddress || !me.data.email || !me.data.username))
+              (!!me.data && (!me.data.walletAddress || !me.data.username))
             }
             className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
