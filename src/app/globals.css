@@ -231,8 +231,11 @@ textarea:focus {
 /* Hide Google Translate top banner & default widget */
 .skiptranslate,
 body > .skiptranslate,
-#google_translate_element { /* Hide default element container (we provide our own switcher) */
+#google_translate_element {
+  /* Hide default element container (we provide our own switcher) */
   display: none !important;
 }
 
-body { top: 0 !important; }
+body {
+  top: 0 !important;
+}

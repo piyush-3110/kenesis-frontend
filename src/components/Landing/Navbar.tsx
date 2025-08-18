@@ -424,11 +424,11 @@ export default function Navbar() {
       >
         <Logo />
         <div className="flex items-center space-x-3 md:space-x-8">
-          {/* Language Switcher */}
-            <div className="hidden md:block">
-              <LanguageSwitcher />
-            </div>
           <NavLinks />
+          {/* Language Switcher */}
+          <div className="hidden md:block">
+            <LanguageSwitcher />
+          </div>
           {/* Desktop dropdown */}
           <div className="hidden md:block">
             <AuthSection />
@@ -471,7 +471,7 @@ export default function Navbar() {
               >
                 <div className="mx-auto h-1 w-12 rounded-full bg-white/20 mt-3 mb-4" />
                 <div className="px-6 flex flex-col gap-4">
-                  <LanguageSwitcher />
+                  {/* <LanguageSwitcher /> */}
                   {/* User / Auth Section inside sheet */}
                   {isClient && isAuthenticated ? (
                     <div className="p-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-4">
