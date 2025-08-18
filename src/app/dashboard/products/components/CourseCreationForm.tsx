@@ -299,15 +299,11 @@ const CourseCreationForm: React.FC = () => {
         });
         return;
       }
-      if (!me.data?.email || !me.data?.username) {
+      if (!me.data?.username) {
         addToast({
           type: "error",
           message:
-            !me.data?.email && !me.data?.username
-              ? "Please add your email and username in Settings before creating a course."
-              : !me.data?.email
-              ? "Please add your email in Settings before creating a course."
-              : "Please add your username in Settings before creating a course.",
+            "Please add your username in Settings before creating a course.",
         });
         return;
       }
