@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useProductCreationStore } from "../store/useProductCreationStore";
 import { useCreateCourse } from "@/hooks/useCourse";
 import { useLogout } from "@/features/auth/hooks";
@@ -98,8 +99,12 @@ const CourseCreationForm: React.FC = () => {
     supportedChains[0]?.chainId ?? 1
   );
 
-  // Current user (to enforce wallet requirement)
+  // Current user (to enforce prerequisites: wallet, email, username)
   const me = useCurrentUser();
+  const missingWallet = !me.isLoading && !me.data?.walletAddress;
+  const missingEmail = !me.isLoading && !me.data?.email;
+  const missingUsername = !me.isLoading && !me.data?.username;
+  const anyIdentityMissing = missingWallet || missingEmail || missingUsername;
 
   // Unique chains and tokens derived from config
   const uniqueChains = supportedChains;
@@ -285,14 +290,27 @@ const CourseCreationForm: React.FC = () => {
       return;
     }
 
-    // Wallet must be linked to account (server-side walletAddress present)
-    if (!me.data?.walletAddress) {
-      addToast({
-        type: "error",
-        message:
-          "Please connect your wallet to your account before creating a course.",
-      });
-      return;
+    // Identity prerequisites: wallet, email, username
+    if (!me.isLoading) {
+      if (!me.data?.walletAddress) {
+        addToast({
+          type: "error",
+          message:
+            "Please connect your wallet to your account before creating a course.",
+        });
+        return;
+      }
+      if (!me.data?.email || !me.data?.username) {
+        addToast({
+          type: "error",
+          message: !me.data?.email && !me.data?.username
+            ? "Please add your email and username in Settings before creating a course."
+            : !me.data?.email
+              ? "Please add your email in Settings before creating a course."
+              : "Please add your username in Settings before creating a course.",
+        });
+        return;
+      }
     }
 
     if (!validateForm()) {
@@ -753,20 +771,44 @@ const CourseCreationForm: React.FC = () => {
             Payment Configuration
           </h3>
 
-          {/* Wallet requirement notice */}
-          {!me.isLoading && !me.data?.walletAddress && (
-            <div className="p-4 rounded-lg bg-red-600/15 border border-red-600/30 text-red-300 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm">
-                  You need to connect a wallet to your account to accept crypto
-                  payments and create courses.
-                </p>
-                <p className="text-xs opacity-80 mt-1">
-                  Use the wallet button at the top-right, or click below to
-                  authorize with your wallet.
-                </p>
-              </div>
-              <SiweAuthButton />
+          {/* Identity prerequisite notices */}
+          {!me.isLoading && anyIdentityMissing && (
+            <div className="space-y-3">
+              {missingWallet && (
+                <div className="p-4 rounded-lg bg-red-600/15 border border-red-600/30 text-red-300 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm">
+                      You need to connect a wallet to your account to accept crypto
+                      payments and create courses.
+                    </p>
+                    <p className="text-xs opacity-80 mt-1">
+                      Use the wallet button at the top-right, or click below to
+                      authorize with your wallet.
+                    </p>
+                  </div>
+                  <SiweAuthButton />
+                </div>
+              )}
+              {(missingEmail || missingUsername) && (
+                <div className="p-4 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 flex flex-col gap-2">
+                  <p className="text-sm font-medium">
+                    {missingEmail && missingUsername && "Add an email address and username to continue."}
+                    {missingEmail && !missingUsername && "Add an email address to continue."}
+                    {!missingEmail && missingUsername && "Add a username to continue."}
+                  </p>
+                  <p className="text-xs opacity-80">
+                    We require both a verified email and a public username for instructor identity and communication.
+                  </p>
+                  <div>
+                    <Link
+                      href="/dashboard/settings"
+                      className="inline-block text-xs px-3 py-1.5 rounded-md bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white hover:opacity-90 transition"
+                    >
+                      Go to Settings
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1224,7 +1266,7 @@ const CourseCreationForm: React.FC = () => {
         <div className="flex justify-end pt-6">
           <button
             type="submit"
-            disabled={apiLoading || (!!me.data && !me.data.walletAddress)}
+            disabled={apiLoading || (!!me.data && (!me.data.walletAddress || !me.data.email || !me.data.username))}
             className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {apiLoading ? (
