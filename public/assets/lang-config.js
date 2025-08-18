@@ -1,8 +1,8 @@
 window.__GOOGLE_TRANSLATION_CONFIG__ = {
   languages: [
-    { title: 'English', name: 'en' },
-    { title: 'Português', name: 'pt' }, // Add Portuguese
-    { title: 'Español', name: 'es' }, // Additional languages can be added
+    { title: 'English', name: 'en', flag: '🇺🇸' },
+    { title: 'Português', name: 'pt', flag: '🇧🇷' },
+    { title: 'Español', name: 'es', flag: '🇪🇸' },
   ],
   defaultLanguage: 'en',
 };
