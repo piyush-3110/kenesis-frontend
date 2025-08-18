@@ -433,8 +433,9 @@ export default function Navbar() {
           <div className="hidden md:block">
             <AuthSection />
           </div>
-          {/* Mobile sheet trigger - avatar / placeholder */}
-          <div className="md:hidden">
+          {/* Mobile language + sheet trigger */}
+          <div className="md:hidden flex items-center gap-2">
+            <LanguageSwitcher />
             <Sheet>
               <SheetTrigger asChild>
                 <button

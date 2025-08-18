@@ -1,76 +1,78 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { parseCookies, setCookie } from 'nookies';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const COOKIE_NAME = 'googtrans';
+const COOKIE_PATH = '/';
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
-interface LanguageDescriptor {
-  name: string;
-  title: string;
-}
+interface LanguageDescriptor { name: string; title: string; }
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __GOOGLE_TRANSLATION_CONFIG__: {
-    languages: LanguageDescriptor[];
-    defaultLanguage: string;
-  } | undefined;
-}
+declare global { var __GOOGLE_TRANSLATION_CONFIG__: { languages: LanguageDescriptor[]; defaultLanguage: string; } | undefined; }
+
+const getLangFromCookie = (val?: string): string | undefined => {
+  if (!val) return undefined;
+  const sp = val.split('/');
+  return sp.length > 2 ? sp[2] : undefined;
+};
+
+const applyCookie = (lang: string) => {
+  setCookie(null, COOKIE_NAME, `/auto/${lang}`, { path: COOKIE_PATH, maxAge: COOKIE_MAX_AGE });
+};
 
 const LanguageSwitcher = () => {
-  const [currentLanguage, setCurrentLanguage] = useState<string>();
-  const [languageConfig, setLanguageConfig] = useState<any>();
+  const [currentLanguage, setCurrentLanguage] = useState<string>('en');
+  const [languages, setLanguages] = useState<LanguageDescriptor[]>([]);
 
+  // Initialize from cookie or config once
   useEffect(() => {
     const cookies = parseCookies();
-    const existingLanguageCookieValue = cookies[COOKIE_NAME];
-    let languageValue: string | undefined;
-
-    if (existingLanguageCookieValue) {
-      const sp = existingLanguageCookieValue.split('/');
-      if (sp.length > 2) {
-        languageValue = sp[2];
-      }
-    }
-
-    if (global.__GOOGLE_TRANSLATION_CONFIG__ && !languageValue) {
-      languageValue = global.__GOOGLE_TRANSLATION_CONFIG__.defaultLanguage;
-    }
-
-    if (languageValue) {
-      setCurrentLanguage(languageValue);
-    }
-
+    const cookieLang = getLangFromCookie(cookies[COOKIE_NAME]);
     if (global.__GOOGLE_TRANSLATION_CONFIG__) {
-      setLanguageConfig(global.__GOOGLE_TRANSLATION_CONFIG__);
+      setLanguages(global.__GOOGLE_TRANSLATION_CONFIG__.languages);
+      const initial = cookieLang || global.__GOOGLE_TRANSLATION_CONFIG__.defaultLanguage;
+      setCurrentLanguage(initial);
+      if (!cookieLang) applyCookie(initial);
     }
   }, []);
 
-  if (!currentLanguage || !languageConfig) {
-    return null;
-  }
+  // Sync on visibility change (avoid constant polling) to catch external modifications
+  useEffect(() => {
+    const handler = () => {
+      const cookies = parseCookies();
+      const cookieLang = getLangFromCookie(cookies[COOKIE_NAME]);
+      if (cookieLang && cookieLang !== currentLanguage) setCurrentLanguage(cookieLang);
+    };
+    document.addEventListener('visibilitychange', handler);
+    const interval = setInterval(handler, 8000);
+    return () => { document.removeEventListener('visibilitychange', handler); clearInterval(interval); };
+  }, [currentLanguage]);
 
-  const switchLanguage = (lang: string) => () => {
-    setCookie(null, COOKIE_NAME, '/auto/' + lang);
-    window.location.reload();
+  const onChange = (value: string) => {
+    if (value === currentLanguage) return;
+    applyCookie(value);
+    setCurrentLanguage(value);
+    // Reload to let Google script re-evaluate cookie (simplest reliable approach here)
+    location.reload();
   };
 
+  if (!languages.length) return null;
+
   return (
-    <div className="text-center notranslate text-xs md:text-sm">
-      {languageConfig.languages.map((ld: LanguageDescriptor) => (
-        <span key={ld.name}>
-          {currentLanguage === ld.name ? (
-            <span className="mx-1 md:mx-3 font-bold">{ld.title}</span>
-          ) : (
-            <button
-              onClick={switchLanguage(ld.name)}
-              className="mx-1 md:mx-3 text-blue-400 hover:text-blue-300 cursor-pointer hover:underline"
-            >
-              {ld.title}
-            </button>
-          )}
-        </span>
-      ))}
+    <div className="notranslate w-28">
+      <Select value={currentLanguage} onValueChange={onChange}>
+        <SelectTrigger className="h-8 bg-white/5 border-white/20 text-white text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="bg-[#0F0B24] text-white border border-white/10">
+          {languages.map(l => (
+            <SelectItem key={l.name} value={l.name} className="text-xs">
+              {l.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };
