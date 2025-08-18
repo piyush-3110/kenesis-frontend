@@ -30,39 +30,94 @@ const getLangFromCookie = (val?: string): string | undefined => {
   return sp.length > 2 ? sp[2] : undefined;
 };
 
-const getCookieDomain = (): string | undefined => {
-  if (typeof window === "undefined") return undefined;
+// ...existing code...
+
+const getDomainVariants = (): string[] => {
+  if (typeof window === "undefined") return [];
   const host = window.location.hostname;
-  if (!host) return undefined;
-  // don't set domain for localhost or bare IPs
+  if (!host) return [];
+  // don't return domain variants for localhost or IP addresses
   if (host === "localhost" || /^\d+\.\d+\.\d+\.\d+$/.test(host))
-    return undefined;
-  // strip leading www
-  const base = host.replace(/^www\./, "");
-  return `.${base}`;
+    return [host];
+
+  const withoutWww = host.replace(/^www\./, "");
+  const parts = withoutWww.split(".");
+
+  // base is the domain without the first label (example.com from sub.example.com)
+  const base = parts.length > 1 ? parts.slice(1).join(".") : withoutWww;
+
+  const variants = new Set<string>();
+  // exact host (no domain attribute)
+  variants.add(host);
+  // dot-prefixed host (sometimes used in existing cookies)
+  variants.add(`.${host}`);
+  // base domain (example.com)
+  variants.add(base);
+  // dot-prefixed base domain (.example.com)
+  variants.add(`.${base}`);
+
+  return Array.from(variants);
 };
 
 const applyCookie = (lang: string) => {
-  const domain = getCookieDomain();
+  const variants = getDomainVariants();
   const secure =
     typeof window !== "undefined" && window.location.protocol === "https:";
-  const opts: Record<string, string | number | boolean> = {
-    path: COOKIE_PATH,
-    maxAge: COOKIE_MAX_AGE,
-    sameSite: "lax",
-  };
-  if (domain) opts.domain = domain;
-  if (secure) opts.secure = true;
 
-  // Primary: use nookies to set cookie (server-friendly API)
-  setCookie(null, COOKIE_NAME, `/auto/${lang}`, opts);
+  // Use SameSite=None when secure to be cross-site friendly; fallback to Lax for insecure contexts.
+  const sameSiteVal = secure ? "None" : "Lax";
 
-  // Also write document.cookie immediately so client-side code (Google script)
-  // can see the updated value before reload. Construct a conservative cookie string.
-  let cookieStr = `${COOKIE_NAME}=/auto/${lang}; path=${COOKIE_PATH}; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
-  if (domain) cookieStr += `; domain=${domain}`;
-  if (secure) cookieStr += `; Secure`;
-  if (typeof document !== "undefined") document.cookie = cookieStr;
+  // Value format expected by Google Translate: '/source/target' or '/auto/target'
+  const cookieValue = `/auto/${lang}`;
+
+  // Try to set cookie via nookies + document.cookie for each likely domain variant.
+  variants.forEach((d) => {
+    const opts: Record<string, string | number | boolean> = {
+      path: COOKIE_PATH,
+      maxAge: COOKIE_MAX_AGE,
+      sameSite: sameSiteVal,
+    };
+    // If the variant looks like a domain (starts with a dot or contains a dot), set domain opt.
+    if (d.includes(".")) opts.domain = d;
+    if (secure) opts.secure = true;
+
+    try {
+      // nookies may throw if domain is not allowed; guard each call
+      setCookie(null, COOKIE_NAME, cookieValue, opts);
+    } catch {
+      /* ignore */
+    }
+
+    // Also write a conservative document.cookie (best-effort).
+    try {
+      let cookieStr = `${COOKIE_NAME}=${encodeURIComponent(cookieValue)}; path=${COOKIE_PATH}; max-age=${COOKIE_MAX_AGE}; SameSite=${sameSiteVal}`;
+      // Only set domain attribute when variant is not the exact host (document.cookie will ignore invalid domains)
+      if (d.startsWith(".")) cookieStr += `; domain=${d}`;
+      if (secure) cookieStr += `; Secure`;
+      document.cookie = cookieStr;
+    } catch {
+      /* ignore */
+    }
+  });
+
+  // Best-effort: try to remove conflicting googtrans cookies scoped differently by expiring
+  // the cookie on the most common variants we can influence. This may not clear cookies
+  // set by other domains outside our scope, but will help consolidate where possible.
+  try {
+    const toExpire = variants;
+    toExpire.forEach((d) => {
+      try {
+        let expire = `${COOKIE_NAME}=; path=${COOKIE_PATH}; max-age=0`;
+        if (d.startsWith(".")) expire += `; domain=${d}`;
+        if (secure) expire += `; Secure`;
+        document.cookie = expire;
+      } catch {
+        /* ignore */
+      }
+    });
+  } catch {
+    /* ignore */
+  }
 };
 
 const LanguageSwitcher = () => {
