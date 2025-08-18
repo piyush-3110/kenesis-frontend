@@ -51,14 +51,31 @@ const LanguageSwitcher = () => {
   }
 
   const switchLanguage = (lang: string) => () => {
-    // Set cookie for the root domain to support subdomain switching
-    setCookie(null, COOKIE_NAME, `/auto/${lang}`, {
+    setCookie(null, "googtrans", `/auto/${lang}`, {
       path: "/",
       domain: DOMAIN,
     });
+
+    // Remove Google Translate script and widget
+    document.getElementById("google_translate_element")?.remove();
+    const gtScripts = Array.from(document.querySelectorAll("script")).filter(
+      (s) => s.src.includes("translate_a/element.js")
+    );
+    gtScripts.forEach((s) => s.remove());
+
+    // Add a timeout to ensure DOM is clean, then reload
     setTimeout(() => {
+      // Optionally, force full reload for safety:
       window.location.reload();
-    }, 100); // small timeout ensures cookie is set before reload
+
+      // If you want to avoid reload (SPAs), you would need to:
+      // 1. Add back <div id="google_translate_element" />
+      // 2. Re-add the script:
+      // const script = document.createElement('script');
+      // script.src = '//translate.google.com/translate_a/element.js?cb=TranslateInit';
+      // document.body.appendChild(script);
+      // NOTE: Reload is simplest and most bulletproof!
+    }, 200);
   };
 
   return (
