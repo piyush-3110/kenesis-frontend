@@ -30,27 +30,79 @@ export interface PaginatedResponse<T> {
 /**
  * Transform backend course data to frontend Product format
  */
-function transformCourseToProduct(course: any): CourseForMarketplacePage {
+// Minimal shape used for transformation to avoid pervasive `any` usage
+interface RawCourseInstructor {
+  id?: string;
+  _id?: string;
+  username?: string;
+  name?: string;
+  avatar?: string;
+}
+interface RawCourseCategory {
+  id?: string;
+  _id?: string;
+  name: string;
+}
+interface RawCourseStats {
+  rating?: number;
+  reviewCount?: number;
+  duration?: number;
+}
+interface RawCourse {
+  id?: string;
+  _id?: string;
+  title?: string;
+  slug?: string;
+  description?: string;
+  shortDescription?: string;
+  instructor?: RawCourseInstructor;
+  price?: number;
+  pricing?: { amount?: number };
+  stats?: RawCourseStats;
+  rating?: number;
+  thumbnail?: string;
+  type?: string;
+  level?: "beginner" | "intermediate" | "advanced";
+  language?: string;
+  isPublished?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  categories?: RawCourseCategory[];
+}
+function transformCourseToProduct(course: RawCourse): CourseForMarketplacePage {
   // Safely handle different course data structures
   try {
     return {
-      id: course.id || course._id,
+      id: (course.id || course._id || "unknown") as string,
       title: course.title || "Untitled Course",
       slug: course.slug || "untitled-course",
-      description: course.description || course.shortDescription || "",
-      instructor:
-        course.instructor?.username ||
-        course.instructor?.name ||
-        "Unknown Author",
-      price: course.pricing?.amount || course.price || 0,
+      description: course.shortDescription || course.description || "",
+      shortDescription: course.shortDescription,
+      instructor: {
+        id: course.instructor?.id || course.instructor?._id || "unknown",
+        username:
+          course.instructor?.username ||
+          course.instructor?.name ||
+          "Unknown Author",
+        avatar: course.instructor?.avatar,
+      },
+      price: course.price ?? course.pricing?.amount ?? 0,
       stats: {
-        rating: course.stats?.rating || course.rating || 0,
-        reviewCount: course.stats?.reviewCount || 0,
-        duration: course.stats?.duration || 0,
+        rating: course.stats?.rating ?? course.rating ?? 0,
+        reviewCount: course.stats?.reviewCount ?? 0,
+        duration: course.stats?.duration ?? 0,
       },
       thumbnail: course.thumbnail || "/images/landing/product.png",
-      type: course.type || "video",
+      type: course.type === "document" ? "document" : "video",
+      level: course.level,
+      language: course.language,
+      isPublished: course.isPublished ?? true,
       createdAt: course.createdAt || new Date().toISOString(),
+      updatedAt: course.updatedAt,
+      categories: course.categories?.map((c: RawCourseCategory) => ({
+        id: (c.id || c._id || "unknown") as string,
+        name: c.name,
+      })),
     };
   } catch (error) {
     console.error("Error transforming course to product:", error, course);
@@ -100,12 +152,17 @@ export async function fetchProducts(
       apiParams.q = filters.searchQuery; // Backend uses 'q' parameter for search
     }
 
+    // Single legacy category (map to categoryIds)
     if (
       filters.category &&
       filters.category !== "all" &&
       filters.category !== ""
     ) {
-      apiParams.category = filters.category;
+      apiParams.categoryIds = filters.category;
+    }
+    // Multi-select categories
+    if (filters.categoryIds && filters.categoryIds.length > 0) {
+      apiParams.categoryIds = filters.categoryIds.join(",");
     }
 
     if (filters.type) {
@@ -274,7 +331,7 @@ export async function fetchPriceRange(): Promise<PriceRange> {
     }
 
     const prices = response.data.courses.map(
-      (course: any) => course.price || 0
+      (course: RawCourse) => course.price || 0
     );
 
     if (prices.length === 0) {
@@ -325,7 +382,7 @@ export async function fetchSearchSuggestions(
     const suggestions = new Set<string>();
 
     // Extract suggestions from course titles and authors
-    response.data.courses.forEach((course: any) => {
+    response.data.courses.forEach((course: RawCourse) => {
       if (course.title) suggestions.add(course.title);
       if (course.instructor?.username)
         suggestions.add(course.instructor.username);
