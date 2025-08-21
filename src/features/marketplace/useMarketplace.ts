@@ -206,25 +206,13 @@ export function useMarketplace() {
   const loadCategories = useCallback(async () => {
     try {
       const res = await MarketplaceAPI.listCategories();
-      const env = res.data as ApiEnvelope<unknown[]>;
-      if (!env?.success)
-        throw new Error(env?.message || "Failed to load categories");
-      const normalized: Category[] = (env.data || []).map((raw) => {
-        const c = raw as Record<string, unknown>;
-        const id = (c["id"] ??
-          c["_id"] ??
-          c["value"] ??
-          String(c["name"] || "unknown")) as string;
-        const name = (c["name"] ?? c["label"] ?? "Unknown") as string;
-        const countRaw = (c["count"] ??
-          c["total"] ??
-          c["totalCourses"] ??
-          c["courseCount"] ??
-          0) as number;
-        const count = Number(countRaw) || 0;
-        return { id, name, count };
-      });
-      setCategories(normalized);
+      const env = res.data.data;
+      if (!env) {
+        setError("Failed to load categories");
+        return;
+      }
+
+      setCategories(env);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load categories"
