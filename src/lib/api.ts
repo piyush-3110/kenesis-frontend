@@ -7,6 +7,7 @@
 
 import { TokenManager } from "@/features/auth/tokenManager";
 import { http } from "./http/axios";
+import { Category } from "@/types/Product";
 
 // Environment configuration
 const API_BASE_URL =
@@ -1579,9 +1580,7 @@ export const CourseAPI = {
    * Get course categories
    * GET /api/courses/categories
    */
-  getCategories: async (): Promise<
-    ApiResponse<Array<{ id: string; name: string; count: number }>>
-  > => {
+  getCategories: async (): Promise<ApiResponse<Array<Category>>> => {
     return http.get("/api/courses/categories");
   },
 
