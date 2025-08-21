@@ -53,7 +53,12 @@ export interface Course {
 export interface Category {
   id: string;
   name: string;
-  count: number;
+  description?: string;
+  parentCategoryId?: string | null;
+  isActive: boolean;
+  courseCount: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface PriceRange {
@@ -68,7 +73,8 @@ export interface SortOptionItem {
 }
 
 export interface MarketplaceFilters {
-  category?: string;
+  category?: string; // legacy single selection
+  categoryIds?: string[]; // new multi-select categories passed to backend as categoryIds
   priceRange?: PriceRange;
   searchQuery?: string;
   sortBy?: string;
@@ -103,10 +109,12 @@ export interface CourseForMarketplacePage {
   id: string;
   title: string;
   slug: string;
-  description: string;
+  description: string; // maps to backend shortDescription for listings
+  shortDescription?: string;
   instructor: {
     id: string;
     username: string;
+    avatar?: string;
   };
   price: number;
   stats: {
@@ -116,7 +124,12 @@ export interface CourseForMarketplacePage {
   };
   thumbnail: string;
   type: "video" | "document";
+  level?: "beginner" | "intermediate" | "advanced";
+  language?: string;
+  isPublished?: boolean;
   createdAt: string;
+  updatedAt?: string;
+  categories?: Array<{ id: string; name: string }>;
 }
 
 // New canonical name for marketplace listing items
