@@ -19,8 +19,18 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
   const { addToast } = useUIStore();
   const siweRunningRef = React.useRef(false);
   const autoRanRef = React.useRef(false);
-  // Track the last address we successfully performed SIWE for so we don't force re-sign every click
-  const lastLinkedAddressRef = React.useRef<string | null>(null);
+
+  // Check if the current address is already authenticated
+  const isCurrentAddressAuthenticated = React.useMemo(() => {
+    if (!isAuthenticated || !address) return false;
+    
+    // Get the last authenticated address from localStorage
+    const lastAuthAddr = typeof window !== "undefined" 
+      ? localStorage.getItem("lastAuthenticatedAddress") 
+      : null;
+    
+    return lastAuthAddr?.toLowerCase() === address.toLowerCase();
+  }, [isAuthenticated, address]);
 
   const prepare = useMutation({
     mutationFn: async (addr?: string) => {
@@ -45,8 +55,10 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
       if (data?.tokens?.accessToken && data?.tokens?.refreshToken) {
         setTokens(data.tokens);
       }
-      // Mark successful link for current address
-      if (address) lastLinkedAddressRef.current = address.toLowerCase();
+      // Mark successful link for current address in localStorage
+      if (address && typeof window !== "undefined") {
+        localStorage.setItem("lastAuthenticatedAddress", address.toLowerCase());
+      }
     },
   });
 
@@ -169,10 +181,10 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
                 openConnectModal?.();
                 return;
               }
-              // If we haven't linked (signed) for this address this session, run SIWE
+              // If we haven't linked (signed) for this address and are not authenticated, run SIWE
               if (
                 address &&
-                lastLinkedAddressRef.current !== address.toLowerCase() &&
+                !isCurrentAddressAuthenticated &&
                 !siweRunningRef.current
               ) {
                 await runSiweFlow();
