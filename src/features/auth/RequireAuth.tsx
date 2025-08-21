@@ -1,27 +1,24 @@
 "use client";
 
 import React, { Suspense } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/AuthProvider";
 
 function RequireAuthInternal({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const search = useSearchParams();
 
   React.useEffect(() => {
     if (!isAuthenticated) {
-      const next =
-        pathname + (search?.toString() ? `?${search.toString()}` : "");
-      router.push(`/auth/login?next=${encodeURIComponent(next)}`);
+      // Redirect directly to home instead of login to avoid double-redirect
+      router.push("/");
     }
-  }, [isAuthenticated, pathname, search, router]);
+  }, [isAuthenticated, router]);
 
   if (!isAuthenticated) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="text-gray-400">Redirecting to sign in…</div>
+        <div className="text-gray-400">Redirecting...</div>
       </div>
     );
   }
