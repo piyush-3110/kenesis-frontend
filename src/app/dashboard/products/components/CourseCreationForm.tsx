@@ -266,9 +266,6 @@ const CourseCreationForm: React.FC = () => {
     }
 
     if (!thumbnailFile) newErrors.thumbnail = "Thumbnail image is required";
-    // Make preview video optional for document type courses
-    if (formData.type !== "document" && !previewVideoFile)
-      newErrors.previewVideo = "Preview video is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -447,12 +444,7 @@ const CourseCreationForm: React.FC = () => {
           createdAt: courseData.createdAt || new Date().toISOString(),
         };
 
-        console.log("📝 Complete course object for store:", updatedCourse);
-        console.log("📝 Course ID to be stored:", updatedCourse.id);
-
         if (!updatedCourse.id) {
-          console.error("❌ No course ID found in response!");
-          console.error("Backend response structure:", result.data);
           addToast({
             type: "error",
             message: "Course created but ID not found. Please try again.",
@@ -462,17 +454,14 @@ const CourseCreationForm: React.FC = () => {
 
         setCurrentCourse(updatedCourse);
 
-        console.log("🔄 Navigating to chapters step");
         setCurrentStep("chapters");
       } else {
-        console.error("Course creation failed:", result.message);
         addToast({
           type: "error",
           message: result.message || "Failed to create course",
         });
       }
-    } catch (error) {
-      console.error("Course creation error:", error);
+    } catch {
       addToast({
         type: "error",
         message: "Something went wrong. Please try again.",
