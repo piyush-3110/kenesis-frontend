@@ -33,12 +33,7 @@ export function WalletGuard() {
 
   // If user disconnects their wallet, always log them out (as per user requirement)
   React.useEffect(() => {
-    if (
-      !isConnected &&
-      isAuthenticated &&
-      user &&
-      !didLogoutRef.current
-    ) {
+    if (!isConnected && isAuthenticated && user && !didLogoutRef.current) {
       didLogoutRef.current = true;
       // Clear the authenticated address since wallet is disconnected
       if (typeof window !== "undefined") {
