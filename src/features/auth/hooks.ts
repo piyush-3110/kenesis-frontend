@@ -6,7 +6,7 @@ import { useAuth } from "./AuthProvider";
 import type { LoginInput, RegisterInput } from "./schemas";
 import type { ApiEnvelope, Tokens, User } from "./types";
 import { useUIStore } from "@/store/useUIStore";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 export function useRegister() {
   const { setTokens } = useAuth();
@@ -274,6 +274,7 @@ export function useLogout() {
   const { clear } = useAuth();
   const { addToast } = useUIStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   return useMutation({
     mutationFn: async () => {
@@ -290,20 +291,28 @@ export function useLogout() {
         if (!data.success) throw new Error(data.message);
       } finally {
         clear();
+        // Clear the authenticated address from localStorage
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("lastAuthenticatedAddress");
+        }
       }
     },
     onSuccess: () => {
-      // Show success toast and redirect
+      // Show success toast
       addToast({
         type: "success",
-        message: "Successfully signed out. Redirecting...",
+        message: "Successfully signed out.",
         duration: 2000,
       });
 
-      // Redirect to home page after a brief delay
-      setTimeout(() => {
-        router.push("/");
-      }, 500);
+      // Only redirect to home from specific pages (not marketplace/product pages)
+      if (pathname && (pathname.startsWith("/dashboard") || pathname.startsWith("/auth"))) {
+        // Redirect to home page after a brief delay for dashboard/auth pages
+        setTimeout(() => {
+          router.push("/");
+        }, 500);
+      }
+      // For marketplace/product pages, stay on the same page
     },
     onError: (error: Error) => {
       addToast({
