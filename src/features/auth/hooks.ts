@@ -306,7 +306,10 @@ export function useLogout() {
       });
 
       // Only redirect to home from specific pages (not marketplace/product pages)
-      if (pathname && (pathname.startsWith("/dashboard") || pathname.startsWith("/auth"))) {
+      if (
+        pathname &&
+        (pathname.startsWith("/dashboard") || pathname.startsWith("/auth"))
+      ) {
         // Redirect to home page after a brief delay for dashboard/auth pages
         setTimeout(() => {
           router.push("/");
