@@ -6,10 +6,8 @@ import Link from "next/link";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
 import {
-  Wallet,
   LogOut,
   User,
-  ChevronDown,
   ShoppingBag,
   LayoutDashboard,
 } from "lucide-react";
@@ -93,7 +91,7 @@ function AuthSection() {
         type: "error",
         message: "Please log in to access the dashboard",
       });
-      router.push("/auth/login");
+      router.push("/");
       return;
     }
     if (user?.email && !user.emailVerified) {
@@ -128,25 +126,6 @@ function AuthSection() {
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center gap-4">
-        <Link
-          href="/auth/login"
-          className="flex items-center space-x-2 text-white font-semibold text-sm md:text-lg px-4 md:px-6 py-2 md:py-3 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg"
-          style={{
-            background:
-              "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",
-            boxShadow: "0 4px 20px rgba(70, 72, 255, 0.4)",
-          }}
-        >
-          <Wallet size={20} />
-          <span>Login</span>
-        </Link>
-      </div>
-    );
-  }
-
   const avatarLetter = (
     user?.username ||
     user?.email ||
@@ -168,166 +147,164 @@ function AuthSection() {
     : "User";
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        className="flex items-center space-x-2 md:space-x-3 text-white font-medium text-sm md:text-lg px-4 md:px-6 py-2 md:py-3 rounded-full transition-all duration-300 hover:scale-105 h-10 md:h-12"
-        style={{
-          background:
-            "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",
-          boxShadow: "0 4px 20px rgba(70, 72, 255, 0.3)",
-        }}
-      >
-        {user?.avatar ? (
-          <div className="w-7 h-7 md:w-9 md:h-9 rounded-full overflow-hidden shadow-lg">
-            <Image
-              src={user.avatar}
-              alt={displayName}
-              width={36}
-              height={36}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="w-7 h-7 md:w-9 md:h-9 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base shadow-lg">
-            {avatarLetter}
-          </div>
-        )}
-        <span className="hidden sm:inline max-w-28 md:max-w-36 truncate font-semibold">
-          {displayName}
-        </span>
-        <ChevronDown
-          size={16}
-          className={clsx(
-            "transition-all duration-300 md:w-5 md:h-5",
-            isDropdownOpen && "rotate-180 text-blue-200"
-          )}
-        />
-      </button>
+    <div className="flex items-center gap-3">
+      {/* Always show wallet button */}
+      <SiweAuthButton variant="default" />
+      
+      {/* Show profile icon if authenticated */}
+      {isAuthenticated && (
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-full transition-all duration-300 hover:scale-105 ring-2 ring-white/20 hover:ring-white/40"
+            style={{
+              background:
+                "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",
+              boxShadow: "0 4px 20px rgba(70, 72, 255, 0.3)",
+            }}
+          >
+            {user?.avatar ? (
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden shadow-lg">
+                <Image
+                  src={user.avatar}
+                  alt={displayName}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-base shadow-lg">
+                {avatarLetter}
+              </div>
+            )}
+          </button>
 
-      {isDropdownOpen && (
-        <div className="absolute right-0 mt-3 w-64 md:w-72 bg-gradient-to-b from-[#0F0B24] to-[#1A1235] border border-blue-400/30 rounded-2xl shadow-2xl z-50 backdrop-blur-sm">
-          <div className="py-3">
-            <div className="px-5 py-4 border-b border-gray-700/40">
-              <div className="flex items-center space-x-3">
-                {user?.avatar ? (
-                  <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
-                    <Image
-                      src={user.avatar}
-                      alt={displayName}
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-cover"
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-3 w-64 md:w-72 bg-gradient-to-b from-[#0F0B24] to-[#1A1235] border border-blue-400/30 rounded-2xl shadow-2xl z-50 backdrop-blur-sm">
+              <div className="py-3">
+                <div className="px-5 py-4 border-b border-gray-700/40">
+                  <div className="flex items-center space-x-3">
+                    {user?.avatar ? (
+                      <div className="w-12 h-12 rounded-full overflow-hidden shadow-lg">
+                        <Image
+                          src={user.avatar}
+                          alt={displayName}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        {avatarLetter}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      {/* Primary line: preferred display */}
+                      <p className="text-white font-semibold text-base md:text-lg truncate">
+                        {displayName}
+                      </p>
+                      {/* Secondary lines: show all available identifiers (username/email/wallet) */}
+                      <div className="flex flex-col gap-0.5 mt-0.5">
+                        {user?.email && (
+                          <p className="text-gray-400 text-sm md:text-base truncate">
+                            {user.email}
+                          </p>
+                        )}
+                        {user?.walletAddress && (
+                          <p className="text-gray-500 text-xs truncate">
+                            {user.walletAddress}
+                          </p>
+                        )}
+                      </div>
+                      {user?.email && !user.emailVerified && (
+                        <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                          Email Not Verified
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="md:hidden border-b border-gray-700/40 py-1">
+                  <Link
+                    href="/presale"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
+                  >
+                    <span className="font-medium text-lg">Presale</span>
+                  </Link>
+
+                  <Link
+                    href="https://kenesis.gitbook.io/whitepaper"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-orange-500/20 transition-all duration-300 group"
+                  >
+                    <span className="font-medium text-lg">Whitepaper</span>
+                  </Link>
+                </div>
+
+                <div className="py-1">
+                  <Link
+                    href="/marketplace"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-blue-500/20 transition-all duration-300 group"
+                  >
+                    <ShoppingBag
+                      size={20}
+                      className="text-blue-400 group-hover:text-blue-300 transition-colors"
                     />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                    {avatarLetter}
-                  </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  {/* Primary line: preferred display */}
-                  <p className="text-white font-semibold text-base md:text-lg truncate">
-                    {displayName}
-                  </p>
-                  {/* Secondary lines: show all available identifiers (username/email/wallet) */}
-                  <div className="flex flex-col gap-0.5 mt-0.5">
-                    {user?.email && (
-                      <p className="text-gray-400 text-sm md:text-base truncate">
-                        {user.email}
-                      </p>
-                    )}
-                    {user?.walletAddress && (
-                      <p className="text-gray-500 text-xs truncate">
-                        {user.walletAddress}
-                      </p>
-                    )}
-                  </div>
-                  {user?.email && !user.emailVerified && (
-                    <span className="inline-block mt-2 px-3 py-1 text-xs font-medium bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
-                      Email Not Verified
+                    <span className="font-medium text-lg">Marketplace</span>
+                  </Link>
+
+                  <button
+                    onClick={(e) => {
+                      setIsDropdownOpen(false);
+                      handleDashboardClick(e);
+                    }}
+                    className="w-full flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-purple-500/20 transition-all duration-300 group"
+                  >
+                    <LayoutDashboard
+                      size={20}
+                      className="text-purple-400 group-hover:text-purple-300 transition-colors"
+                    />
+                    <span className="font-medium text-lg">Dashboard</span>
+                  </button>
+
+                  <Link
+                    href="/dashboard/profile"
+                    onClick={() => setIsDropdownOpen(false)}
+                    className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
+                  >
+                    <User
+                      size={20}
+                      className="text-green-400 group-hover:text-green-300 transition-colors"
+                    />
+                    <span className="font-medium text-lg">Profile</span>
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    disabled={isLoggingOut || logout.isPending}
+                    className="w-full flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-red-300 hover:bg-red-500/20 transition-all duration-300 disabled:opacity-50 group"
+                  >
+                    <LogOut
+                      size={20}
+                      className="text-red-400 group-hover:text-red-300 transition-colors"
+                    />
+                    <span className="font-medium text-lg">
+                      {isLoggingOut || logout.isPending
+                        ? "Logging out..."
+                        : "Logout"}
                     </span>
-                  )}
+                  </button>
                 </div>
               </div>
             </div>
-
-            <div className="md:hidden border-b border-gray-700/40 py-1">
-              <Link
-                href="/presale"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
-              >
-                <span className="font-medium text-lg">Presale</span>
-              </Link>
-
-              <Link
-                href="https://kenesis.gitbook.io/whitepaper"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-orange-500/20 transition-all duration-300 group"
-              >
-                <span className="font-medium text-lg">Whitepaper</span>
-              </Link>
-            </div>
-
-            <div className="py-1">
-              <Link
-                href="/marketplace"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-blue-500/20 transition-all duration-300 group"
-              >
-                <ShoppingBag
-                  size={20}
-                  className="text-blue-400 group-hover:text-blue-300 transition-colors"
-                />
-                <span className="font-medium text-lg">Marketplace</span>
-              </Link>
-
-              <button
-                onClick={(e) => {
-                  setIsDropdownOpen(false);
-                  handleDashboardClick(e);
-                }}
-                className="w-full flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-purple-500/20 transition-all duration-300 group"
-              >
-                <LayoutDashboard
-                  size={20}
-                  className="text-purple-400 group-hover:text-purple-300 transition-colors"
-                />
-                <span className="font-medium text-lg">Dashboard</span>
-              </button>
-
-              <Link
-                href="/dashboard/profile"
-                onClick={() => setIsDropdownOpen(false)}
-                className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
-              >
-                <User
-                  size={20}
-                  className="text-green-400 group-hover:text-green-300 transition-colors"
-                />
-                <span className="font-medium text-lg">Profile</span>
-              </Link>
-
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut || logout.isPending}
-                className="w-full flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-red-300 hover:bg-red-500/20 transition-all duration-300 disabled:opacity-50 group"
-              >
-                <LogOut
-                  size={20}
-                  className="text-red-400 group-hover:text-red-300 transition-colors"
-                />
-                <span className="font-medium text-lg">
-                  {isLoggingOut || logout.isPending
-                    ? "Logging out..."
-                    : "Logout"}
-                </span>
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
@@ -354,7 +331,7 @@ export default function Navbar() {
         type: "error",
         message: "Please log in to access the dashboard",
       });
-      router.push("/auth/login");
+      router.push("/");
       return;
     }
     if (user?.email && !user.emailVerified) {
