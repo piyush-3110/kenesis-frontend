@@ -25,6 +25,7 @@ export function useMarketplaceQuery() {
       "marketplace-products",
       {
         ...filters,
+        categoryIds: filters.categoryIds || [],
         searchQuery: debouncedSearchQuery,
       },
     ],
@@ -112,7 +113,11 @@ export function useMarketplaceQuery() {
   // Filter update handlers
   const handleCategoryChange = useCallback(
     (categoryId?: string) => {
-      updateFilters({ category: categoryId || "all" });
+      if (!categoryId) {
+        updateFilters({ category: "all", categoryIds: [] });
+      } else {
+        updateFilters({ category: categoryId }); // store will handle toggle & categoryIds array
+      }
     },
     [updateFilters]
   );
