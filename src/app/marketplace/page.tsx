@@ -27,6 +27,22 @@ const MarketplacePage: React.FC = () => {
     handleSortChange,
   } = useMarketplaceQuery();
 
+  // Build a user-friendly label for selected categories (show names, not ids)
+  const selectedCategoryLabel = (() => {
+    const ids = filters.categoryIds;
+    if (ids && ids.length > 0 && categories && categories.length > 0) {
+      const names = ids
+        .map(
+          (id) =>
+            categories.find((c: { id: string; name: string }) => c.id === id)
+              ?.name || id
+        )
+        .filter(Boolean);
+      return names.join(", ");
+    }
+    return filters.category || "All Categories";
+  })();
+
   if (error) {
     return (
       <div className="min-h-screen bg-[#0A071A]">
@@ -70,7 +86,7 @@ const MarketplacePage: React.FC = () => {
         <SearchFilterBar
           searchQuery={filters.searchQuery}
           sortBy={filters.sortBy}
-          selectedCategory={filters.category}
+          selectedCategory={selectedCategoryLabel}
           resultCount={totalCount}
           sortOptions={SORT_OPTIONS.map((option) => ({
             value: option.value,
@@ -84,7 +100,7 @@ const MarketplacePage: React.FC = () => {
           {/* Sidebar */}
           <Sidebar
             categories={categories}
-            selectedCategory={filters.category}
+            selectedCategoryIds={filters.categoryIds}
             priceRange={
               filters.priceRange
                 ? {
