@@ -23,12 +23,13 @@ export function SiweAuthButton({ variant = "default" }: { variant?: Variant }) {
   // Check if the current address is already authenticated
   const isCurrentAddressAuthenticated = React.useMemo(() => {
     if (!isAuthenticated || !address) return false;
-    
+
     // Get the last authenticated address from localStorage
-    const lastAuthAddr = typeof window !== "undefined" 
-      ? localStorage.getItem("lastAuthenticatedAddress") 
-      : null;
-    
+    const lastAuthAddr =
+      typeof window !== "undefined"
+        ? localStorage.getItem("lastAuthenticatedAddress")
+        : null;
+
     return lastAuthAddr?.toLowerCase() === address.toLowerCase();
   }, [isAuthenticated, address]);
 
