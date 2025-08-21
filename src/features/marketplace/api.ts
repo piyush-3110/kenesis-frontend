@@ -4,8 +4,8 @@ import type {
   CoursesListData,
   CoursesListEnvelope,
   CoursesQuery,
-  CourseCategory,
 } from "./types";
+import { Category } from "@/types/Product";
 
 export const MarketplaceAPI = {
   // GET /api/courses
@@ -14,7 +14,7 @@ export const MarketplaceAPI = {
 
   // GET /api/courses/categories
   listCategories: () =>
-    http.get<ApiEnvelope<CourseCategory[]>>("/api/courses/categories"),
+    http.get<ApiEnvelope<Category[]>>("/api/courses/categories"),
 };
 
 export type { CoursesListEnvelope };
