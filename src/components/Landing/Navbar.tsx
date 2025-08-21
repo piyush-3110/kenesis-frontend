@@ -5,12 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
-import {
-  LogOut,
-  User,
-  ShoppingBag,
-  LayoutDashboard,
-} from "lucide-react";
+import { LogOut, User, ShoppingBag, LayoutDashboard } from "lucide-react";
 import { useUIStore } from "@/store/useUIStore";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useLogout } from "@/features/auth/hooks";
@@ -150,7 +145,7 @@ function AuthSection() {
     <div className="flex items-center gap-3">
       {/* Always show wallet button */}
       <SiweAuthButton variant="default" />
-      
+
       {/* Show profile icon if authenticated */}
       {isAuthenticated && (
         <div className="relative" ref={dropdownRef}>
@@ -402,8 +397,7 @@ export default function Navbar() {
         <div className="flex items-center space-x-3 md:space-x-8">
           <NavLinks />
           {/* Language Switcher */}
-          <div className="hidden md:block">
-          </div>
+          <div className="hidden md:block"></div>
           {/* Desktop dropdown */}
           <div className="hidden md:block">
             <AuthSection />
