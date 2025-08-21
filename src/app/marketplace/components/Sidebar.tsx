@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { X, Filter, DollarSign, ChevronUp } from 'lucide-react';
-import { Category, PriceRange } from '@/types/Product';
-import PriceRangeSlider from '@/components/ui/PriceRangeSlider';
+import { useState, useEffect } from "react";
+import { X, Filter, DollarSign, ChevronUp } from "lucide-react";
+import { Category, PriceRange } from "@/types/Product";
+import PriceRangeSlider from "@/components/ui/PriceRangeSlider";
 
 interface SidebarProps {
   categories: Category[];
-  selectedCategory?: string;
+  selectedCategoryIds?: string[]; // multi-select
   priceRange?: PriceRange;
-  onCategoryChange: (categoryId?: string) => void;
+  onCategoryChange: (categoryId?: string) => void; // toggles category id
   onPriceRangeChange: (range: PriceRange) => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
@@ -17,18 +17,23 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({
   categories,
-  selectedCategory,
+  selectedCategoryIds = [],
   priceRange,
   onCategoryChange,
   onPriceRangeChange,
   isMobileOpen = false,
   onMobileClose,
 }) => {
-  const [sliderValues, setSliderValues] = useState<[number, number]>([priceRange?.min || 0, priceRange?.max || 1000]);
+  const [sliderValues, setSliderValues] = useState<[number, number]>([
+    priceRange?.min || 0,
+    priceRange?.max || 1000,
+  ]);
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   // Show only first 6 categories initially
-  const visibleCategories = showAllCategories ? categories : categories.slice(0, 6);
+  const visibleCategories = showAllCategories
+    ? categories
+    : categories.slice(0, 6);
 
   // Update price inputs when priceRange prop changes
   useEffect(() => {
@@ -38,17 +43,18 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [priceRange]);
 
   const handleCategoryClick = (categoryId: string) => {
-    if (selectedCategory === categoryId) {
-      onCategoryChange(undefined);
-    } else {
-      onCategoryChange(categoryId);
-    }
+    // Pass categoryId to toggle; upstream store handles multi-select logic
+    onCategoryChange(categoryId);
     // Close mobile sidebar on category selection
     if (onMobileClose) onMobileClose();
   };
 
   const handlePriceChange = () => {
-    onPriceRangeChange({ min: sliderValues[0], max: sliderValues[1], currency: 'USD' });
+    onPriceRangeChange({
+      min: sliderValues[0],
+      max: sliderValues[1],
+      currency: "USD",
+    });
     // Close mobile sidebar on price filter apply
     if (onMobileClose) onMobileClose();
   };
@@ -61,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const resetMin = priceRange?.min || 0;
     const resetMax = priceRange?.max || 1000;
     setSliderValues([resetMin, resetMax]);
-    onPriceRangeChange({ min: resetMin, max: resetMax, currency: 'USD' });
+    onPriceRangeChange({ min: resetMin, max: resetMax, currency: "USD" });
   };
 
   // Format category name for display
@@ -77,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           <Filter size={20} className="text-blue-400" />
           <span>Filters</span>
         </h1>
-        <button 
+        <button
           onClick={onMobileClose}
           className="text-gray-400 hover:text-white transition-colors p-1"
         >
@@ -87,22 +93,25 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="p-4 lg:p-6 space-y-6 lg:space-y-8">
         {/* Categories Section */}
-        <div 
+        <div
           className="pt-6"
           style={{
-            borderTop: '1px solid',
-            borderImageSource: 'linear-gradient(90deg, #0A071A 0%, #0036F6 48%, #0A071A 100%)',
-            borderImageSlice: 1
+            borderTop: "1px solid",
+            borderImageSource:
+              "linear-gradient(90deg, #0A071A 0%, #0036F6 48%, #0A071A 100%)",
+            borderImageSlice: 1,
           }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-white text-lg lg:text-xl font-semibold">Categories</h2>
+            <h2 className="text-white text-lg lg:text-xl font-semibold">
+              Categories
+            </h2>
             <ChevronUp size={20} className="text-gray-400" />
           </div>
-          
+
           <div className="space-y-3">
             {visibleCategories.map((category) => (
-              <div 
+              <div
                 key={category.id}
                 className="flex items-center gap-3 group cursor-pointer p-2 rounded-lg hover:bg-gray-800/50 transition-colors"
                 onClick={() => handleCategoryClick(category.id)}
@@ -111,26 +120,34 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <div className="relative flex-shrink-0">
                   <input
                     type="checkbox"
-                    checked={selectedCategory === category.id}
-                    onChange={() => {}} // Handled by parent onClick
+                    checked={selectedCategoryIds.includes(category.id)}
+                    onChange={() => {}}
                     className="w-4 h-4 rounded border-2 border-gray-600 bg-transparent checked:bg-blue-600 checked:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all duration-200"
                   />
-                  {selectedCategory === category.id && (
+                  {selectedCategoryIds.includes(category.id) && (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </div>
                   )}
                 </div>
-                
+
                 {/* Category Info */}
                 <div className="flex-1 flex items-center justify-between min-w-0">
                   <span className="text-gray-300 group-hover:text-white transition-colors font-medium text-sm lg:text-base truncate">
                     {formatCategoryName(category.name)}
                   </span>
                   <span className="text-gray-500 text-sm flex-shrink-0 ml-2">
-                    ({category.count.toLocaleString()})
+                    ({category.courseCount.toLocaleString()})
                   </span>
                 </div>
               </div>
@@ -143,7 +160,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onClick={() => setShowAllCategories(!showAllCategories)}
               className="mt-4 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors border border-gray-600 rounded-full px-4 py-2 hover:border-blue-500 w-full lg:w-auto"
             >
-              {showAllCategories ? 'See less' : 'See more'}
+              {showAllCategories ? "See less" : "See more"}
             </button>
           )}
         </div>
@@ -154,7 +171,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <DollarSign size={18} className="text-blue-400" />
             <span>Price Range</span>
           </h3>
-          
+
           <div className="space-y-6">
             {/* Modern Slider */}
             <PriceRangeSlider
@@ -164,7 +181,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               onChange={handleSliderChange}
               step={1}
             />
-            
+
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handlePriceChange}
@@ -189,17 +206,19 @@ const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Mobile Backdrop */}
       {isMobileOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={onMobileClose}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`
+      <div
+        className={`
         fixed inset-y-0 left-0 w-80 sm:w-96 z-50 transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none lg:w-80 xl:w-96 lg:flex-shrink-0
-        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+      `}
+      >
         {sidebarContent}
       </div>
     </>
