@@ -1,6 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useCourse } from "@/hooks/useCourseQuery";
@@ -28,6 +29,9 @@ const ProductDetailPage: React.FC = () => {
 
   const { isAuthenticated } = useAuth();
 
+  // Track previous authentication status to detect changes
+  const prevIsAuthenticatedRef = useRef(isAuthenticated);
+
   // Check if user has access to the course (only after course data is loaded)
   // This determines whether to show purchase button or "You own this course" message
   const {
@@ -36,6 +40,21 @@ const ProductDetailPage: React.FC = () => {
     error: accessError,
     refetchAccess,
   } = useCourseAccess(product?.id || null, !!product?.id);
+
+  // Watch for authentication status changes and refetch course access
+  useEffect(() => {
+    const wasAuthenticated = prevIsAuthenticatedRef.current;
+    const isNowAuthenticated = isAuthenticated;
+
+    // If user just became authenticated (was false, now true) and we have a product
+    if (!wasAuthenticated && isNowAuthenticated && product?.id) {
+      console.log("🔑 User authenticated, refetching course access...");
+      refetchAccess();
+    }
+
+    // Update the ref for next render
+    prevIsAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated, product?.id, refetchAccess]);
 
   // Custom hooks for business logic
   // const productActions = useProductActions(refetch);
