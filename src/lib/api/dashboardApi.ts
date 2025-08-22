@@ -20,6 +20,8 @@ export interface DashboardTransaction {
 
 export interface UserDashboardAnalytics {
   today: { revenue: number; orders: number; visitors: null };
+  totalRevenue: number;
+  totalOrders: number;
   salesAnalytics: {
     daily: TimeSeriesPoint[];
     weekly: TimeSeriesPoint[];
