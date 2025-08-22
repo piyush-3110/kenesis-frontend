@@ -1,329 +1,422 @@
-import { AffiliateProduct, FilterType } from '../types';
+// Mock API for affiliate showcase development
+// This will be replaced with real backend API calls
 
-// Base API configuration
-// Note: These will be used when integrating with real backend
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const API_ENDPOINTS = {
-  AFFILIATE_PRODUCTS: '/affiliate/products',
-  AFFILIATE_PRODUCTS_BY_TYPE: '/affiliate/products/type',
-  NON_AFFILIATED_PRODUCTS: '/affiliate/products/non-affiliated',
-  CREATE_AFFILIATE_LINK: '/affiliate/links',
-} as const;
+import type {
+  Course,
+  Category,
+  AvailableCoursesResponse,
+  CourseFilters,
+} from "../types";
 
-// API request headers
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const getHeaders = () => ({
-  'Content-Type': 'application/json',
-  // Add authentication headers here when available
-  // 'Authorization': `Bearer ${getAuthToken()}`,
-});
-
-// Types for API responses
-export interface GetProductsParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  type?: FilterType;
-  category?: string;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-export interface CreateAffiliateLinkRequest {
-  productId: string;
-  userId: string;
-}
-
-export interface CreateAffiliateLinkResponse {
-  affiliateLink: string;
-  affiliateId: string;
-  commission: number;
-}
-
-// Mock data for development
-const MOCK_PRODUCTS: AffiliateProduct[] = [
+// Mock course data matching the new Course interface
+const mockCourses: Course[] = [
   {
-    id: '1',
-    title: 'Complete Digital Marketing Mastery',
-    author: 'Alex Vargas',
-    rating: 4.6,
-    reviewCount: 11254,
-    price: 52.00,
-    commission: 30,
-    category: 'Health, Wellness and Beauty',
-    type: 'video',
-    thumbnail: '/images/landing/product.png',
-    description: 'Master digital marketing strategies that convert'
+    id: "1",
+    title: "Complete React Development Bootcamp",
+    slug: "complete-react-development-bootcamp",
+    thumbnail:
+      "https://via.placeholder.com/400x200/0680FF/white?text=React+Bootcamp",
+    price: 149.99,
+    type: "video",
+    level: "intermediate",
+    averageRating: 4.8,
+    reviewCount: 1245,
+    soldCount: 3200,
+    affiliatePercentage: 40,
+    instructor: {
+      id: "inst_1",
+      username: "sarah_johnson",
+      avatar: "https://via.placeholder.com/64x64/22C55E/white?text=SJ",
+    },
+    categories: [
+      {
+        id: "cat_1",
+        name: "Programming",
+        isActive: true,
+        courseCount: 15,
+        createdAt: new Date("2023-01-01"),
+        updatedAt: new Date("2024-08-01"),
+      },
+      {
+        id: "cat_2",
+        name: "React",
+        isActive: true,
+        courseCount: 8,
+        createdAt: new Date("2023-02-01"),
+        updatedAt: new Date("2024-07-15"),
+      },
+    ],
   },
   {
-    id: '2',
-    title: 'Advanced UI/UX Design Course',
-    author: 'Sarah Chen',
-    rating: 4.8,
-    reviewCount: 8932,
-    price: 89.00,
-    commission: 35,
-    category: 'Design & Technology',
-    type: 'video',
-    thumbnail: '/images/landing/product.png',
-    description: 'Learn modern UI/UX design principles'
+    id: "2",
+    title: "Digital Marketing Mastery 2024",
+    slug: "digital-marketing-mastery-2024",
+    thumbnail:
+      "https://via.placeholder.com/400x200/8B5CF6/white?text=Digital+Marketing",
+    price: 199.99,
+    type: "video",
+    level: "beginner",
+    averageRating: 4.6,
+    reviewCount: 892,
+    soldCount: 2100,
+    affiliatePercentage: 45,
+    instructor: {
+      id: "inst_2",
+      username: "mike_chen",
+      avatar: "https://via.placeholder.com/64x64/F59E0B/white?text=MC",
+    },
+    categories: [
+      {
+        id: "cat_3",
+        name: "Marketing",
+        isActive: true,
+        courseCount: 12,
+        createdAt: new Date("2023-01-15"),
+        updatedAt: new Date("2024-08-10"),
+      },
+      {
+        id: "cat_4",
+        name: "Business",
+        isActive: true,
+        courseCount: 20,
+        createdAt: new Date("2023-01-01"),
+        updatedAt: new Date("2024-08-05"),
+      },
+    ],
   },
   {
-    id: '3',
-    title: 'Cryptocurrency Investment Guide',
-    author: 'Mike Rodriguez',
-    rating: 4.7,
-    reviewCount: 15643,
-    price: 127.00,
-    commission: 25,
-    category: 'Finance & Investment',
-    type: 'document',
-    thumbnail: '/images/landing/product.png',
-    description: 'Complete guide to crypto investment strategies'
+    id: "3",
+    title: "Python for Data Science",
+    slug: "python-for-data-science",
+    thumbnail:
+      "https://via.placeholder.com/400x200/EF4444/white?text=Python+Data+Science",
+    price: 179.99,
+    type: "video",
+    level: "intermediate",
+    averageRating: 4.9,
+    reviewCount: 2100,
+    soldCount: 4500,
+    affiliatePercentage: 35,
+    instructor: {
+      id: "inst_3",
+      username: "emily_rodriguez",
+      avatar: "https://via.placeholder.com/64x64/06B6D4/white?text=ER",
+    },
+    categories: [
+      {
+        id: "cat_1",
+        name: "Programming",
+        isActive: true,
+        courseCount: 15,
+        createdAt: new Date("2023-01-01"),
+        updatedAt: new Date("2024-08-01"),
+      },
+      {
+        id: "cat_5",
+        name: "Data Science",
+        isActive: true,
+        courseCount: 10,
+        createdAt: new Date("2023-03-01"),
+        updatedAt: new Date("2024-07-20"),
+      },
+    ],
   },
   {
-    id: '4',
-    title: 'Personal Fitness & Nutrition Plan',
-    author: 'Emma Johnson',
-    rating: 4.9,
-    reviewCount: 7234,
-    price: 67.00,
-    commission: 40,
-    category: 'Health, Wellness and Beauty',
-    type: 'document',
-    thumbnail: '/images/landing/product.png',
-    description: 'Comprehensive fitness and nutrition program'
+    id: "4",
+    title: "UI/UX Design Fundamentals",
+    slug: "ui-ux-design-fundamentals",
+    thumbnail:
+      "https://via.placeholder.com/400x200/EC4899/white?text=UI%2FUX+Design",
+    price: 129.99,
+    type: "document",
+    level: "beginner",
+    averageRating: 4.7,
+    reviewCount: 756,
+    soldCount: 1800,
+    affiliatePercentage: 42,
+    instructor: {
+      id: "inst_4",
+      username: "alex_thompson",
+      avatar: "https://via.placeholder.com/64x64/8B5CF6/white?text=AT",
+    },
+    categories: [
+      {
+        id: "cat_6",
+        name: "Design",
+        isActive: true,
+        courseCount: 14,
+        createdAt: new Date("2023-02-15"),
+        updatedAt: new Date("2024-08-12"),
+      },
+      {
+        id: "cat_7",
+        name: "User Experience",
+        isActive: true,
+        courseCount: 9,
+        createdAt: new Date("2023-04-01"),
+        updatedAt: new Date("2024-07-25"),
+      },
+    ],
   },
   {
-    id: '5',
-    title: 'E-commerce Business Blueprint',
-    author: 'David Kim',
-    rating: 4.5,
-    reviewCount: 9876,
-    price: 199.00,
-    commission: 45,
-    category: 'Business & Entrepreneurship',
-    type: 'video',
-    thumbnail: '/images/landing/product.png',
-    description: 'Build a successful e-commerce business from scratch'
-  },
-  {
-    id: '6',
-    title: 'Mindfulness & Meditation Mastery',
-    author: 'Lisa Parker',
-    rating: 4.8,
-    reviewCount: 5432,
-    price: 45.00,
-    commission: 35,
-    category: 'Health, Wellness and Beauty',
-    type: 'video',
-    thumbnail: '/images/landing/product.png',
-    description: 'Transform your life through mindfulness practices'
+    id: "5",
+    title: "Advanced JavaScript Concepts",
+    slug: "advanced-javascript-concepts",
+    thumbnail:
+      "https://via.placeholder.com/400x200/F59E0B/white?text=Advanced+JavaScript",
+    price: 119.99,
+    type: "video",
+    level: "advanced",
+    averageRating: 4.8,
+    reviewCount: 1100,
+    soldCount: 2800,
+    affiliatePercentage: 38,
+    instructor: {
+      id: "inst_5",
+      username: "james_wilson",
+      avatar: "https://via.placeholder.com/64x64/10B981/white?text=JW",
+    },
+    categories: [
+      {
+        id: "cat_1",
+        name: "Programming",
+        isActive: true,
+        courseCount: 15,
+        createdAt: new Date("2023-01-01"),
+        updatedAt: new Date("2024-08-01"),
+      },
+      {
+        id: "cat_8",
+        name: "JavaScript",
+        isActive: true,
+        courseCount: 18,
+        createdAt: new Date("2023-01-10"),
+        updatedAt: new Date("2024-08-15"),
+      },
+    ],
   },
 ];
 
-// Simulate API delay
-const simulateDelay = (ms: number = 500) => 
-  new Promise(resolve => setTimeout(resolve, ms));
+// Mock categories
+const mockCategories: Category[] = [
+  {
+    id: "cat_1",
+    name: "Programming",
+    isActive: true,
+    courseCount: 15,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2024-08-01"),
+  },
+  {
+    id: "cat_2",
+    name: "React",
+    isActive: true,
+    courseCount: 8,
+    createdAt: new Date("2023-02-01"),
+    updatedAt: new Date("2024-07-15"),
+  },
+  {
+    id: "cat_3",
+    name: "Marketing",
+    isActive: true,
+    courseCount: 12,
+    createdAt: new Date("2023-01-15"),
+    updatedAt: new Date("2024-08-10"),
+  },
+  {
+    id: "cat_4",
+    name: "Business",
+    isActive: true,
+    courseCount: 20,
+    createdAt: new Date("2023-01-01"),
+    updatedAt: new Date("2024-08-05"),
+  },
+  {
+    id: "cat_5",
+    name: "Data Science",
+    isActive: true,
+    courseCount: 10,
+    createdAt: new Date("2023-03-01"),
+    updatedAt: new Date("2024-07-20"),
+  },
+  {
+    id: "cat_6",
+    name: "Design",
+    isActive: true,
+    courseCount: 14,
+    createdAt: new Date("2023-02-15"),
+    updatedAt: new Date("2024-08-12"),
+  },
+  {
+    id: "cat_7",
+    name: "User Experience",
+    isActive: true,
+    courseCount: 9,
+    createdAt: new Date("2023-04-01"),
+    updatedAt: new Date("2024-07-25"),
+  },
+  {
+    id: "cat_8",
+    name: "JavaScript",
+    isActive: true,
+    courseCount: 18,
+    createdAt: new Date("2023-01-10"),
+    updatedAt: new Date("2024-08-15"),
+  },
+];
 
-// Mock API functions - replace these with actual API calls later
-
-/**
- * Get all non-affiliated products (products user hasn't created affiliate links for)
- * This is the main endpoint you'll use for the affiliate showcase
- */
-export const getNonAffiliatedProducts = async (
-  params: GetProductsParams = {}
-): Promise<ApiResponse<AffiliateProduct[]>> => {
-  await simulateDelay();
-  
-  const { page = 1, limit = 20, search = '', type = 'all', category } = params;
-  
-  let filtered = [...MOCK_PRODUCTS];
-  
-  // Filter by type
-  if (type !== 'all') {
-    filtered = filtered.filter(product => product.type === type);
-  }
-  
-  // Filter by category
-  if (category) {
-    filtered = filtered.filter(product => 
-      product.category.toLowerCase().includes(category.toLowerCase())
+// Mock API functions
+export const mockAffiliateAPI = {
+  async getCourses(
+    params: CourseFilters = {}
+  ): Promise<{
+    success: boolean;
+    data: AvailableCoursesResponse;
+    message?: string;
+  }> {
+    // Simulate API delay
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.random() * 500 + 200)
     );
-  }
-  
-  // Filter by search
-  if (search) {
-    const searchLower = search.toLowerCase();
-    filtered = filtered.filter(product =>
-      product.title.toLowerCase().includes(searchLower) ||
-      product.author.toLowerCase().includes(searchLower) ||
-      product.category.toLowerCase().includes(searchLower)
-    );
-  }
-  
-  // Pagination
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  const paginatedProducts = filtered.slice(startIndex, endIndex);
-  
-  return {
-    success: true,
-    data: paginatedProducts,
-    pagination: {
-      page,
-      limit,
-      total: filtered.length,
-      totalPages: Math.ceil(filtered.length / limit),
-    },
-  };
-};
 
-/**
- * Get products by type (video or document)
- */
-export const getProductsByType = async (
-  type: 'video' | 'document',
-  params: Omit<GetProductsParams, 'type'> = {}
-): Promise<ApiResponse<AffiliateProduct[]>> => {
-  return getNonAffiliatedProducts({ ...params, type });
-};
+    let filteredCourses = [...mockCourses];
 
-/**
- * Search products
- */
-export const searchProducts = async (
-  query: string,
-  params: Omit<GetProductsParams, 'search'> = {}
-): Promise<ApiResponse<AffiliateProduct[]>> => {
-  return getNonAffiliatedProducts({ ...params, search: query });
-};
-
-/**
- * Create affiliate link for a product
- * This will be called when user clicks "Promote this product"
- */
-export const createAffiliateLink = async (
-  request: CreateAffiliateLinkRequest
-): Promise<ApiResponse<CreateAffiliateLinkResponse>> => {
-  await simulateDelay(1000);
-  
-  // Mock successful affiliate link creation
-  const mockResponse: CreateAffiliateLinkResponse = {
-    affiliateLink: `https://affiliate.kenesis.com/link/${request.productId}?ref=${request.userId}`,
-    affiliateId: `AFF_${request.productId}_${request.userId}`,
-    commission: MOCK_PRODUCTS.find(p => p.id === request.productId)?.commission || 30,
-  };
-  
-  return {
-    success: true,
-    data: mockResponse,
-    message: 'Affiliate link created successfully',
-  };
-};
-
-/**
- * Get product categories
- */
-export const getProductCategories = async (): Promise<ApiResponse<string[]>> => {
-  await simulateDelay(200);
-  
-  const categories = Array.from(
-    new Set(MOCK_PRODUCTS.map(product => product.category))
-  );
-  
-  return {
-    success: true,
-    data: categories,
-  };
-};
-
-// Real API functions - uncomment and modify these when integrating with backend
-
-/*
-export const getNonAffiliatedProducts = async (
-  params: GetProductsParams = {}
-): Promise<ApiResponse<AffiliateProduct[]>> => {
-  const queryParams = new URLSearchParams();
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined) {
-      queryParams.append(key, value.toString());
+    // Apply filters
+    if (params.q) {
+      const query = params.q.toLowerCase();
+      filteredCourses = filteredCourses.filter((course) =>
+        course.title.toLowerCase().includes(query)
+      );
     }
-  });
-  
-  const response = await fetch(
-    `${API_BASE_URL}${API_ENDPOINTS.NON_AFFILIATED_PRODUCTS}?${queryParams}`,
-    {
-      method: 'GET',
-      headers: getHeaders(),
-    }
-  );
-  
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-  }
-  
-  return response.json();
-};
 
-export const getProductsByType = async (
-  type: 'video' | 'document',
-  params: Omit<GetProductsParams, 'type'> = {}
-): Promise<ApiResponse<AffiliateProduct[]>> => {
-  const queryParams = new URLSearchParams();
-  queryParams.append('type', type);
-  
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined) {
-      queryParams.append(key, value.toString());
+    if (params.type) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.type === params.type
+      );
     }
-  });
-  
-  const response = await fetch(
-    `${API_BASE_URL}${API_ENDPOINTS.AFFILIATE_PRODUCTS_BY_TYPE}?${queryParams}`,
-    {
-      method: 'GET',
-      headers: getHeaders(),
-    }
-  );
-  
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-  }
-  
-  return response.json();
-};
 
-export const createAffiliateLink = async (
-  request: CreateAffiliateLinkRequest
-): Promise<ApiResponse<CreateAffiliateLinkResponse>> => {
-  const response = await fetch(
-    `${API_BASE_URL}${API_ENDPOINTS.CREATE_AFFILIATE_LINK}`,
-    {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(request),
+    if (params.level) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.level === params.level
+      );
     }
-  );
-  
-  if (!response.ok) {
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-  }
-  
-  return response.json();
+
+    if (params.minPrice !== undefined && params.minPrice !== null) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.price >= params.minPrice!
+      );
+    }
+
+    if (params.maxPrice !== undefined && params.maxPrice !== null) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.price <= params.maxPrice!
+      );
+    }
+
+    if (params.minRating !== undefined && params.minRating !== null) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.averageRating >= params.minRating!
+      );
+    }
+
+    if (params.maxRating !== undefined && params.maxRating !== null) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.averageRating <= params.maxRating!
+      );
+    }
+
+    if (params.minCommission !== undefined && params.minCommission !== null) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.affiliatePercentage >= params.minCommission!
+      );
+    }
+
+    if (params.maxCommission !== undefined && params.maxCommission !== null) {
+      filteredCourses = filteredCourses.filter(
+        (course) => course.affiliatePercentage <= params.maxCommission!
+      );
+    }
+
+    if (params.categoryIds) {
+      const categoryIds = params.categoryIds.split(",");
+      filteredCourses = filteredCourses.filter((course) =>
+        course.categories.some((cat) => categoryIds.includes(cat.id))
+      );
+    }
+
+    // Apply sorting
+    if (params.sortBy) {
+      filteredCourses.sort((a, b) => {
+        let aValue: string | number, bValue: string | number;
+
+        switch (params.sortBy) {
+          case "createdAt":
+            // Since we don't have createdAt in Course interface, use ID as proxy for creation order
+            aValue = a.id;
+            bValue = b.id;
+            break;
+          case "affiliatePercentage":
+            aValue = a.affiliatePercentage;
+            bValue = b.affiliatePercentage;
+            break;
+          case "price":
+            aValue = a.price;
+            bValue = b.price;
+            break;
+          case "averageRating":
+            aValue = a.averageRating;
+            bValue = b.averageRating;
+            break;
+          case "soldCount":
+            aValue = a.soldCount;
+            bValue = b.soldCount;
+            break;
+          case "reviewCount":
+            aValue = a.reviewCount;
+            bValue = b.reviewCount;
+            break;
+          default:
+            aValue = a.id;
+            bValue = b.id;
+        }
+
+        if (params.sortOrder === "asc") {
+          return aValue > bValue ? 1 : -1;
+        } else {
+          return aValue < bValue ? 1 : -1;
+        }
+      });
+    }
+
+    // Apply pagination
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedCourses = filteredCourses.slice(startIndex, endIndex);
+
+    return {
+      success: true,
+      data: {
+        courses: paginatedCourses,
+        total: filteredCourses.length,
+        page: page,
+        totalPages: Math.ceil(filteredCourses.length / limit),
+      },
+    };
+  },
+
+  async getCategories(): Promise<{
+    success: boolean;
+    data: Category[];
+    message?: string;
+  }> {
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    return {
+      success: true,
+      data: mockCategories,
+    };
+  },
 };
-*/
