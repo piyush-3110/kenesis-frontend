@@ -4,60 +4,48 @@ import React from "react";
 import { useAffiliateShowcaseStore } from "../store/useAffiliateShowcaseStore";
 import ProductCard from "./ProductCard";
 import ErrorState from "./ErrorState";
+import LoadingState from "./LoadingState";
+import Pagination from "./Pagination";
+import SortControls from "./SortControls";
 import { AFFILIATE_COLORS } from "../constants";
-import { useAvailableAffiliateCourses } from "@/features/affiliate/hooks";
+import type { Course, PaginationData } from "../types";
+
+interface ProductGridProps {
+  courses: Course[];
+  pagination: PaginationData;
+  isLoading: boolean;
+  error: string | null;
+}
 
 /**
  * ProductGrid Component
  * Grid layout for displaying affiliate products with error handling
  */
-const ProductGrid: React.FC = () => {
-  const { searchQuery, activeFilter, error, clearError } =
-    useAffiliateShowcaseStore();
-  const { data, isLoading, isError, refetch } = useAvailableAffiliateCourses({
-    q: searchQuery || undefined,
-    // Backend supports sortBy, sortOrder; here we default to createdAt desc
-    sortBy: "createdAt",
-    sortOrder: "desc",
-    page: 1,
-    limit: 50,
-  });
-
-  type MaybeTyped = { type?: "video" | "document" };
-  const filteredProducts = (data?.courses || []).filter((c: MaybeTyped) => {
-    if (activeFilter === "all") return true;
-    // Honor backend type when present; otherwise allow all
-    return c.type ? c.type === activeFilter : true;
-  });
+const ProductGrid: React.FC<ProductGridProps> = ({
+  courses,
+  pagination,
+  isLoading,
+  error,
+}) => {
+  const { filters } = useAffiliateShowcaseStore();
 
   const handleRetry = () => {
-    clearError();
-    refetch();
+    // Since we're using React Query, we can just trigger a refetch by resetting filters
+    window.location.reload();
   };
 
   // Show error state if there's an error
-  if (error || isError) {
-    return (
-      <ErrorState
-        error={error || "Failed to load affiliate courses"}
-        onRetry={handleRetry}
-      />
-    );
+  if (error) {
+    return <ErrorState error={error} onRetry={handleRetry} />;
   }
 
+  // Show loading state
   if (isLoading) {
-    return (
-      <div
-        className="py-12 text-center"
-        style={{ color: AFFILIATE_COLORS.TEXT_SECONDARY }}
-      >
-        Loading courses...
-      </div>
-    );
+    return <LoadingState />;
   }
 
   // Show message when no products match filters
-  if (filteredProducts.length === 0) {
+  if (courses.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <div className="text-center">
@@ -72,7 +60,7 @@ const ProductGrid: React.FC = () => {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={1.5}
-                d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-3-8v8m0 0V4m0 8a4 4 0 100 8 4 4 0 000-8z"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"
               />
             </svg>
           </div>
@@ -85,7 +73,7 @@ const ProductGrid: React.FC = () => {
               fontWeight: 500,
             }}
           >
-            No products found
+            No courses found
           </h3>
           <p
             style={{
@@ -95,13 +83,9 @@ const ProductGrid: React.FC = () => {
               fontWeight: 450,
             }}
           >
-            {searchQuery
-              ? `No products match "${searchQuery}" in the ${
-                  activeFilter === "all" ? "all categories" : activeFilter
-                } section.`
-              : `No ${
-                  activeFilter === "all" ? "" : activeFilter + " "
-                }products available at the moment.`}
+            {filters.search
+              ? `No courses match your search "${filters.search}"`
+              : "No courses available with the current filters"}
           </p>
           <p
             className="mt-2"
@@ -112,7 +96,7 @@ const ProductGrid: React.FC = () => {
               fontWeight: 450,
             }}
           >
-            Try adjusting your search or filters.
+            Try adjusting your search or filters to find more courses.
           </p>
         </div>
       </div>
@@ -120,50 +104,82 @@ const ProductGrid: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Results count */}
-      <div className="flex items-center justify-between">
-        <p
-          style={{
-            color: AFFILIATE_COLORS.TEXT_SECONDARY,
-            fontFamily: "CircularXX, Inter, sans-serif",
-            fontSize: "16px",
-            fontWeight: 450,
-          }}
-        >
-          Showing {filteredProducts.length} product
-          {filteredProducts.length !== 1 ? "s" : ""}
-          {searchQuery && (
-            <span className="ml-1">for &quot;{searchQuery}&quot;</span>
-          )}
-          {activeFilter !== "all" && (
-            <span className="ml-1">in {activeFilter} category</span>
-          )}
-        </p>
+    <div className="space-y-6">
+      {/* Results header with count and sort controls */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div>
+          <p
+            style={{
+              color: AFFILIATE_COLORS.TEXT_SECONDARY,
+              fontFamily: "CircularXX, Inter, sans-serif",
+              fontSize: "16px",
+              fontWeight: 450,
+            }}
+          >
+            Showing {courses.length} of {pagination.total} course
+            {pagination.total !== 1 ? "s" : ""}
+            {filters.search && (
+              <span className="ml-1">for &quot;{filters.search}&quot;</span>
+            )}
+          </p>
+          {/* Active filters summary */}
+          <div className="flex flex-wrap gap-2 mt-2">
+            {filters.type && (
+              <span className="px-2 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                Type: {filters.type}
+              </span>
+            )}
+            {filters.level && (
+              <span className="px-2 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                Level: {filters.level}
+              </span>
+            )}
+            {filters.selectedCategories.length > 0 && (
+              <span className="px-2 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                {filters.selectedCategories.length} categories selected
+              </span>
+            )}
+            {filters.minPrice > 0 && (
+              <span className="px-2 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                Min price: ${filters.minPrice}
+              </span>
+            )}
+            {filters.maxPrice < 1000 && (
+              <span className="px-2 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                Max price: ${filters.maxPrice}
+              </span>
+            )}
+            {filters.minCommission > 0 && (
+              <span className="px-2 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                Min commission: {filters.minCommission}%
+              </span>
+            )}
+            {filters.minRating > 0 && (
+              <span className="px-2 py-1 text-xs bg-blue-600/20 text-blue-400 rounded-full">
+                Min rating: {filters.minRating}★
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Sort controls */}
+        <SortControls />
       </div>
 
       {/* Product Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredProducts.map((product) => (
-          <ProductCard
-            key={product.id}
-            // Adapt ProductCard props by mapping AvailableCourse to expected shape
-            product={{
-              id: product.id,
-              title: product.title,
-              author: product.instructor?.username || "Unknown",
-              rating: product.averageRating ?? 0,
-              reviewCount: product.reviewCount ?? 0,
-              price: product.price,
-              commission: product.affiliatePercentage,
-              category: "",
-              type: (product as unknown as MaybeTyped).type ?? "video",
-              thumbnail: product.thumbnail || "/images/landing/product.png",
-              description: undefined,
-            }}
-          />
+        {courses.map((course) => (
+          <ProductCard key={course.id} product={course} />
         ))}
       </div>
+
+      {/* Pagination */}
+      <Pagination
+        currentPage={pagination.page}
+        totalPages={pagination.totalPages}
+        total={pagination.total}
+        pageSize={filters.limit}
+      />
     </div>
   );
 };
