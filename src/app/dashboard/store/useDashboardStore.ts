@@ -125,8 +125,14 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
 
   // Combined actions
   initializeDashboard: async (authUser?: User | null) => {
-    const { setLoading, setError, setUser, setMetrics, setTransactions, setAnalytics } =
-      get();
+    const {
+      setLoading,
+      setError,
+      setUser,
+      setMetrics,
+      setTransactions,
+      setAnalytics,
+    } = get();
 
     try {
       setLoading(true);
@@ -150,11 +156,11 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
       }
 
       const analytics: UserDashboardAnalytics = analyticsRes.data;
-      
+
       // Store the full analytics data
       setAnalytics(analytics);
 
-      // Map today's metrics
+      // Map today's metrics and totals
       const metrics: DashboardMetric[] = [
         {
           id: "revenue",
@@ -172,12 +178,23 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
           trend: analytics.salesAnalytics.daily.slice(-7).map((p) => p.orders),
         },
         {
-          id: "visitors",
-          title: "Today's Visitors",
-          value:
-            analytics.today.visitors == null ? "N/A" : analytics.today.visitors,
-
-          trend: [],
+          id: "totalRevenue",
+          title: "Total Revenue",
+          value: `$${analytics.totalRevenue.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}`,
+          trend: analytics.salesAnalytics.monthly
+            .slice(-6)
+            .map((p) => p.revenue),
+        },
+        {
+          id: "totalOrders",
+          title: "Total Orders",
+          value: analytics.totalOrders.toLocaleString(),
+          trend: analytics.salesAnalytics.monthly
+            .slice(-6)
+            .map((p) => p.orders),
         },
       ];
 
