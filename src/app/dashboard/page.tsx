@@ -43,7 +43,7 @@ const DashboardPage: React.FC = () => {
       >
         <div className="p-4 sm:p-6 space-y-6">
           {/* KPI Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
             {metrics.map((metric) => (
               <KPICard
                 key={metric.id}
@@ -57,10 +57,7 @@ const DashboardPage: React.FC = () => {
 
           {/* Charts Row: Sales Analytics full width */}
           <div className="w-full">
-            <SalesAnalytics 
-              analytics={analytics}
-              isLoading={isLoading}
-            />
+            <SalesAnalytics analytics={analytics} isLoading={isLoading} />
           </div>
 
           {/* Transactions: Full width below analytics */}
