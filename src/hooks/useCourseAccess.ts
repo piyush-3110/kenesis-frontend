@@ -5,14 +5,15 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { checkCourseAccess } from "@/lib/api/courseApi";
+import { useAuth } from "@/features/auth/AuthProvider";
 
 /**
  * Query keys for course access queries
  */
 export const courseAccessKeys = {
   all: ["courseAccess"] as const,
-  access: (courseId: string) =>
-    [...courseAccessKeys.all, "access", courseId] as const,
+  access: (courseId: string, isAuthenticated: boolean) =>
+    [...courseAccessKeys.all, "access", courseId, isAuthenticated] as const,
 };
 
 /**
@@ -26,8 +27,10 @@ export const useCourseAccess = (
   courseId: string | null,
   enabled: boolean = true
 ) => {
+  const { isAuthenticated } = useAuth();
+
   const query = useQuery({
-    queryKey: courseAccessKeys.access(courseId || ""),
+    queryKey: courseAccessKeys.access(courseId || "", isAuthenticated),
     queryFn: () => checkCourseAccess(courseId!),
     enabled: enabled && !!courseId,
     staleTime: 2 * 60 * 1000, // 2 minutes - access status doesn't change frequently
