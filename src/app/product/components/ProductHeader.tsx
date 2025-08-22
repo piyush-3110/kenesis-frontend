@@ -1,5 +1,6 @@
 import React from "react";
 import { Star } from "lucide-react";
+import Link from "next/link";
 
 interface ProductHeaderProps {
   title: string;
@@ -36,7 +37,9 @@ const ProductHeader: React.FC<ProductHeaderProps> = ({
         {title}
       </h1>
 
-      <p className="text-gray-400 text-lg mb-4">by {author}</p>
+      <Link href={`/seller/${author}`} className="text-blue-400 text-lg mb-4">
+        by {author}
+      </Link>
 
       {/* Rating */}
       <div className="flex items-center gap-3 mb-6">

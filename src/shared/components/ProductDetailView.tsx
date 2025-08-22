@@ -259,7 +259,12 @@ const ProductDetailView: React.FC<ProductDetailViewProps> = ({
                 {product.title}
               </h1>
 
-              <p className="text-gray-400 text-lg mb-4">by {product.author}</p>
+              <Link
+                href={`/seller/${product.author}`}
+                className="text-blue-400 text-lg mb-4"
+              >
+                by {product.author}
+              </Link>
 
               {isAffiliate && affiliateMeta?.shortDescription && (
                 <p className="text-gray-300 leading-relaxed mb-4">

@@ -99,7 +99,11 @@ const ProductDetailPage: React.FC = () => {
           {/* Product Info */}
           <ProductInfo
             title={product.title}
-            author={product.instructor.username}
+            author={
+              product.instructor.username
+                ? product.instructor.username
+                : product.instructor.walletAddress!
+            }
             rating={product.stats.rating}
             totalRatings={product.stats.reviewCount}
             price={product.price}
