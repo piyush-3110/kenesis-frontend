@@ -216,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden"
           onClick={onMobileClose}
         />
       )}
@@ -224,10 +224,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-full z-50 transition-all duration-300",
+          "fixed left-0 top-0 h-full z-40 transition-all duration-300",
           "border-r",
           // Desktop styles
-          "lg:relative lg:translate-x-0",
+          "lg:relative lg:translate-x-0 lg:z-10",
           // Mobile styles
           "lg:block",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
