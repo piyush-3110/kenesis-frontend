@@ -8,7 +8,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   Award,
   CheckCircle,
-  LogIn,
   Loader2,
   ShoppingCart,
   ExternalLink,
@@ -323,18 +322,14 @@ function BlockchainPurchaseSectionContent({
     switch (purchaseButtonState) {
       case "login":
         return (
-          <button
-            onClick={() => router.push("/auth/login")}
-            className="w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-3"
-            style={{
-              background:
-                "linear-gradient(107.31deg, #10B981 -30.5%, #059669 54.41%, #047857 100%)",
-              color: "white",
-            }}
-          >
-            <LogIn size={20} />
-            Sign In to Purchase
-          </button>
+          <div className="space-y-3">
+            <div className="p-4 rounded-lg bg-blue-600/20 border border-blue-600/30">
+              <p className="text-blue-400 text-sm mb-3">
+                Connect your wallet to purchase this course
+              </p>
+              <SiweAuthButton />
+            </div>
+          </div>
         );
 
       case "wallet":
