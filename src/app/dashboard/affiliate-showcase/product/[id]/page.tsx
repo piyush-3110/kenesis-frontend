@@ -39,7 +39,10 @@ const AffiliateProductDetailPage: React.FC = () => {
           const extendedProduct: ExtendedProduct = {
             id: course.id,
             title: course.title,
-            author: course.instructor?.username || "Unknown",
+            author:
+              course.instructor?.username ||
+              course.instructor?.id ||
+              "Anonymous User",
             price: course.price,
             currency: "USD",
             rating: course.stats?.averageRating ?? 0,

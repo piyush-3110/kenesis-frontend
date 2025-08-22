@@ -44,13 +44,14 @@ const MyAffiliationProductDetailPage: React.FC = () => {
             const d = await getMyAffiliateCourseDetail(targetCourseId, {
               includeStats: true,
             });
+
             setDetail(d);
             const c = d.course;
             const extendedProduct: ExtendedProduct = {
               id: c.id,
               title: c.title,
               description: `Affiliate program for ${c.title}`,
-              author: d.seller?.username || "",
+              author: d.seller?.username || d.seller?.id || "Anonymous User",
               price: c.price,
               currency: "USD",
               rating: 0,
