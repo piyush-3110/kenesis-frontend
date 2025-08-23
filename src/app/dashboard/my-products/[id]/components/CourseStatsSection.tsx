@@ -24,9 +24,53 @@ const CourseStatsSection: React.FC<CourseStatsSectionProps> = ({ course }) => {
   };
 
   const formatDuration = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    if (!seconds || seconds === 0) return "0m";
+    
+    const totalMinutes = Math.ceil(seconds / 60); // Convert seconds to minutes, round up
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    }
+    return `${totalMinutes}m`;
+  };
+
+  // Calculate total duration from chapters/modules if available (matching overview logic)
+  // Note: This matches the logic used in CourseOverviewSection components for consistency
+  const calculateTotalDuration = (): number => {
+    if (course.chapters && Array.isArray(course.chapters)) {
+      return course.chapters.reduce((total: number, chapter: any) => {
+        if (chapter.modules && Array.isArray(chapter.modules)) {
+          return total + chapter.modules.reduce((chapterTotal: number, module: any) => {
+            return chapterTotal + (module.duration || 0);
+          }, 0);
+        }
+        return total + (chapter.totalDuration || 0);
+      }, 0);
+    }
+    return course.stats?.duration || 0;
+  };
+
+  // Calculate total chapters and modules from backend data (matching overview logic) 
+  // Note: These calculations ensure consistency with the overview sections
+  const calculateChapterCount = (): number => {
+    if (course.chapters && Array.isArray(course.chapters)) {
+      return course.chapters.length;
+    }
+    return course.stats?.chapterCount || 0;
+  };
+
+  const calculateModuleCount = (): number => {
+    if (course.chapters && Array.isArray(course.chapters)) {
+      return course.chapters.reduce((total: number, chapter: any) => {
+        if (chapter.modules && Array.isArray(chapter.modules)) {
+          return total + chapter.modules.length;
+        }
+        return total + (chapter.moduleCount || 0);
+      }, 0);
+    }
+    return course.stats?.moduleCount || 0;
   };
 
   const getStatusColor = (status: string): string => {
@@ -72,7 +116,7 @@ const CourseStatsSection: React.FC<CourseStatsSectionProps> = ({ course }) => {
     },
     {
       title: 'Total Duration',
-      value: course.stats?.duration ? formatDuration(course.stats.duration) : 'N/A',
+      value: formatDuration(calculateTotalDuration()),
       icon: Clock,
       color: 'text-purple-400',
       bgColor: 'bg-purple-500/20',
@@ -80,12 +124,12 @@ const CourseStatsSection: React.FC<CourseStatsSectionProps> = ({ course }) => {
     },
     {
       title: 'Course Content',
-      value: `${course.stats?.chapterCount || 0} chapters`,
+      value: `${calculateChapterCount()} chapters`,
       icon: BookOpen,
       color: 'text-indigo-400',
       bgColor: 'bg-indigo-500/20',
       change: null,
-      subtitle: `${course.stats?.moduleCount || 0} modules`,
+      subtitle: `${calculateModuleCount()} modules`,
     },
     {
       title: 'Potential Earnings',
