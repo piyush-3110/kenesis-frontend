@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 /**
  * ChapterCreationForm Component
@@ -30,6 +31,7 @@ const ChapterCreationForm: React.FC = () => {
     updateChapter,
     deleteChapter,
     setCurrentStep,
+    markStepCompleted,
   } = useProductCreationStore();
 
   const {
@@ -48,6 +50,8 @@ const ChapterCreationForm: React.FC = () => {
 
   const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingSubmission, setPendingSubmission] = useState(false);
 
   // Debug effect to monitor store changes
   useEffect(() => {
@@ -114,9 +118,6 @@ const ChapterCreationForm: React.FC = () => {
       return;
     }
 
-    // Clear any existing API errors
-    clearError();
-
     if (editingChapterId) {
       // Local update for editing existing chapters
       updateChapter(editingChapterId, formData);
@@ -124,87 +125,106 @@ const ChapterCreationForm: React.FC = () => {
       setFormData({ title: "", description: "" });
       addToast({ type: "success", message: "Chapter updated successfully!" });
     } else {
-      // API call for creating new chapters
-      try {
-        console.log("📤 Creating chapter for course ID:", currentCourse.id);
-        console.log("📤 Chapter data:", formData);
-        console.log(
-          "📤 API URL will be: /api/courses/" + currentCourse.id + "/chapters"
-        );
+      // Show confirmation modal for new chapter creation
+      setShowConfirmationModal(true);
+    }
+  };
 
-        const result = await createChapterAPI(currentCourse.id, formData);
+  const handleConfirmSubmission = async () => {
+    setPendingSubmission(true);
+    
+    // Clear any existing API errors
+    clearError();
 
-        if (result.success && result.data) {
-          // Add chapter to local state with both local and backend IDs
-          const newChapter = {
-            ...formData,
-            modules: [],
-            backendId: result.data.id, // Store backend ID for future API calls
-          };
+    if (!currentCourse?.id) {
+      setPendingSubmission(false);
+      return;
+    }
 
-          addChapter(newChapter);
+    try {
+      console.log("📤 Creating chapter for course ID:", currentCourse.id);
+      console.log("📤 Chapter data:", formData);
 
-          console.log("✅ Chapter created with backend ID:", result.data.id);
+      const result = await createChapterAPI(currentCourse.id, formData);
 
-          setFormData({ title: "", description: "" });
-          addToast({
-            type: "success",
-            message: result.message || "Chapter created successfully!",
-          });
-        } else {
-          // Handle specific error scenarios
-          console.error("❌ Chapter creation failed:", result);
+      if (result.success && result.data) {
+        // Add chapter to local state with both local and backend IDs
+        const newChapter = {
+          ...formData,
+          modules: [],
+          backendId: result.data.id, // Store backend ID for future API calls
+        };
 
-          if (result.isUnauthorized) {
-            logout.mutate();
-            addToast({
-              type: "error",
-              message: "Session expired. Please log in again.",
-            });
-            router.push("/");
-            return;
-          }
+        addChapter(newChapter);
 
-          if (result.isForbidden) {
-            addToast({
-              type: "error",
-              message: "You are not authorized to add chapters to this course.",
-            });
-            return;
-          }
+        console.log("✅ Chapter created with backend ID:", result.data.id);
 
-          if (result.isNotFound) {
-            addToast({
-              type: "error",
-              message:
-                "Course not found. Please ensure the course was saved properly.",
-            });
-            setCurrentStep("course");
-            return;
-          }
+        setFormData({ title: "", description: "" });
+        setShowConfirmationModal(false);
+        setPendingSubmission(false);
+        addToast({
+          type: "success",
+          message: result.message || "Chapter created successfully!",
+        });
+      } else {
+        // Handle specific error scenarios
+        console.error("❌ Chapter creation failed:", result);
 
-          if (result.isRateLimit) {
-            addToast({ type: "error", message: result.message });
-            return;
-          }
-
-          if (result.isValidationError) {
-            addToast({ type: "error", message: result.message });
-            return;
-          }
-
+        if (result.isUnauthorized) {
+          logout.mutate();
           addToast({
             type: "error",
-            message: result.message || "Failed to create chapter",
+            message: "Session expired. Please log in again.",
           });
+          router.push("/");
+          return;
         }
-      } catch (error) {
-        console.error("Chapter creation error:", error);
+
+        if (result.isForbidden) {
+          addToast({
+            type: "error",
+            message: "You are not authorized to add chapters to this course.",
+          });
+          setPendingSubmission(false);
+          return;
+        }
+
+        if (result.isNotFound) {
+          addToast({
+            type: "error",
+            message:
+              "Course not found. Please ensure the course was saved properly.",
+          });
+          setCurrentStep("course");
+          setPendingSubmission(false);
+          return;
+        }
+
+        if (result.isRateLimit) {
+          addToast({ type: "error", message: result.message });
+          setPendingSubmission(false);
+          return;
+        }
+
+        if (result.isValidationError) {
+          addToast({ type: "error", message: result.message });
+          setPendingSubmission(false);
+          return;
+        }
+
         addToast({
           type: "error",
-          message: "Something went wrong while creating the chapter.",
+          message: result.message || "Failed to create chapter",
         });
+        setPendingSubmission(false);
       }
+    } catch (error) {
+      console.error("Chapter creation error:", error);
+      addToast({
+        type: "error",
+        message: "Something went wrong while creating the chapter.",
+      });
+      setPendingSubmission(false);
     }
   };
 
@@ -231,15 +251,16 @@ const ChapterCreationForm: React.FC = () => {
     }
   };
 
-  const handleContinue = () => {
+  const handleContinueToModules = () => {
     if (!currentCourse?.chapters.length) {
-      setErrors({
-        general: "Please add at least one chapter before continuing",
+      addToast({
+        type: "error",
+        message: "Please add at least one chapter before continuing.",
       });
       return;
     }
 
-    // Check if all chapters have backend IDs (were successfully created via API)
+    // Check if all chapters have backend IDs (have been saved)
     const chaptersWithoutBackendId = currentCourse.chapters.filter(
       (ch) => !ch.backendId
     );
@@ -250,6 +271,8 @@ const ChapterCreationForm: React.FC = () => {
       return;
     }
 
+    // Mark chapters step as completed
+    markStepCompleted("chapters");
     setCurrentStep("modules");
   };
 
@@ -282,7 +305,6 @@ const ChapterCreationForm: React.FC = () => {
           <p>
             Current course in store: {currentCourse ? "Found" : "Not found"}
           </p>
-          <p>Store state: {JSON.stringify({ currentCourse }, null, 2)}</p>
         </div>
       </div>
     );
@@ -290,23 +312,26 @@ const ChapterCreationForm: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      {/* Course Info */}
+      {/* Course Info Header */}
       <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-lg p-6 border border-gray-700">
-        <div className="flex items-start justify-between">
+        <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-xl font-semibold text-white mb-2">
-              {currentCourse.title}
-            </h3>
-            <p className="text-gray-400">{currentCourse.shortDescription}</p>
+            <h2 className="text-xl font-semibold text-white mb-2">
+              Course: {currentCourse.title}
+            </h2>
+            <p className="text-gray-400">
+              Add chapters to organize your course content
+            </p>
           </div>
           <div className="text-right">
-            {currentCourse.id && !currentCourse.id.includes("-") ? (
-              <span className="text-green-400 bg-green-400/10 px-3 py-1 rounded text-sm">
-                ✓ Course Saved
-              </span>
-            ) : (
+            <div className="text-sm text-gray-400">Course Status</div>
+            {currentCourse.id?.includes("-") ? (
               <span className="text-orange-400 bg-orange-400/10 px-3 py-1 rounded text-sm">
                 ⚠ Save course first
+              </span>
+            ) : (
+              <span className="text-green-400 bg-green-400/10 px-3 py-1 rounded text-sm">
+                ✅ Course saved
               </span>
             )}
           </div>
@@ -361,16 +386,25 @@ const ChapterCreationForm: React.FC = () => {
           </div>
 
           {/* Form Actions */}
-          <div className="flex gap-3">
+          <div className="flex justify-end gap-3">
+            {editingChapterId && (
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 transition-colors"
+              >
+                Cancel
+              </button>
+            )}
             <button
               type="submit"
-              disabled={apiLoading}
+              disabled={apiLoading || pendingSubmission}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {apiLoading && !editingChapterId ? (
+              {apiLoading || pendingSubmission ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating...
+                  {editingChapterId ? "Updating..." : "Creating..."}
                 </>
               ) : (
                 <>
@@ -379,18 +413,14 @@ const ChapterCreationForm: React.FC = () => {
                 </>
               )}
             </button>
-
-            {editingChapterId && (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                disabled={apiLoading}
-                className="px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
-            )}
           </div>
+
+          {/* General errors */}
+          {errors.general && (
+            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-sm">{errors.general}</p>
+            </div>
+          )}
 
           {/* Display API errors */}
           {apiError && (
@@ -401,112 +431,71 @@ const ChapterCreationForm: React.FC = () => {
         </form>
       </div>
 
-      {/* Chapters List */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-white">
-          Chapters ({currentCourse.chapters.length})
-        </h3>
+      {/* Existing Chapters */}
+      {currentCourse.chapters.length > 0 && (
+        <div className="bg-gradient-to-r from-gray-900/30 to-gray-800/30 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-lg font-semibold text-white mb-6">
+            Course Chapters ({currentCourse.chapters.length})
+          </h3>
 
-        {currentCourse.chapters.length === 0 ? (
-          <div className="text-center py-12 bg-gradient-to-r from-gray-900/20 to-gray-800/20 rounded-lg border border-gray-700">
-            <p className="text-gray-400">
-              No chapters added yet. Create your first chapter above.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {currentCourse.chapters.map((chapter, index) => (
               <div
                 key={chapter.id}
-                className="bg-gradient-to-r from-gray-900/40 to-gray-800/40 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors"
+                className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="flex items-center gap-2 mt-1">
-                      <GripVertical className="w-4 h-4 text-gray-500" />
-                      <span className="text-sm font-medium text-[#0680FF] bg-[#0680FF]/10 px-2 py-1 rounded">
-                        #{index + 1}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-white mb-1 truncate">
-                        {chapter.title}
-                      </h4>
-                      <p
-                        className="text-gray-400 text-sm break-words overflow-hidden"
-                        style={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical" as const,
-                          maxHeight: "2.5rem",
-                        }}
-                      >
-                        {chapter.description}
-                      </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                        <span>{chapter.modules.length} modules</span>
-                        <span>Order: {chapter.order}</span>
-                        {chapter.backendId ? (
-                          <span className="text-green-400 bg-green-400/10 px-2 py-1 rounded text-xs">
-                            ✓ Saved
-                          </span>
-                        ) : (
-                          <span className="text-orange-400 bg-orange-400/10 px-2 py-1 rounded text-xs">
-                            ⚠ Local only
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEdit(chapter.id)}
-                      className="p-2 text-gray-400 hover:text-[#0680FF] transition-colors"
-                      title="Edit chapter"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(chapter.id)}
-                      className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Delete chapter"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                <div className="flex items-center gap-3">
+                  <GripVertical className="w-5 h-5 text-gray-500" />
+                  <span className="text-[#0680FF] font-medium text-lg">
+                    {index + 1}
+                  </span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-white font-medium">{chapter.title}</h4>
+                  <p className="text-gray-400 text-sm">{chapter.description}</p>
+                  <div className="mt-2 text-xs text-gray-500">
+                    {chapter.modules?.length || 0} modules
+                    {chapter.backendId ? (
+                      <span className="ml-2 text-green-400">✓ Saved</span>
+                    ) : (
+                      <span className="ml-2 text-orange-400">⚠ Local only</span>
+                    )}
                   </div>
                 </div>
+                {/* Edit/Delete buttons removed - only available in My Products section after creation */}
               </div>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Error Message */}
-      {errors.general && (
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
-          <p className="text-red-400">{errors.general}</p>
         </div>
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between pt-6">
+      <div className="flex justify-end">
         <button
-          onClick={() => setCurrentStep("course")}
-          className="flex items-center gap-2 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Course Details
-        </button>
-
-        <button
-          onClick={handleContinue}
-          className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
+          onClick={handleContinueToModules}
+          disabled={!currentCourse.chapters.length}
+          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue to Modules
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+          setPendingSubmission(false);
+        }}
+        onConfirm={handleConfirmSubmission}
+        title="Create Chapter"
+        message="Once you create this chapter, you'll be able to add modules to it. After creation, chapter details can only be edited from the My Products section. Do you want to proceed?"
+        type="info"
+        confirmText="Create Chapter"
+        cancelText="Review Again"
+        isLoading={pendingSubmission}
+      />
     </div>
   );
 };
