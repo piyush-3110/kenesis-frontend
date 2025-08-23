@@ -8,7 +8,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import CourseOverviewSection from './components/CourseOverviewSection';
 import CourseEditModal from './components/CourseEditModal';
 import ChapterManagementSection from './components/ChapterManagementSection';
-import ModuleManagementSection from './components/ModuleManagementSection';
+import ModuleManagementSection from '../components/ModuleManagementSectionNew';
 import CourseStatsSection from './components/CourseStatsSection';
 import SubmitForReviewModal from './components/SubmitForReviewModal';
 import { DASHBOARD_COLORS } from '../../constants';
@@ -91,7 +91,7 @@ const CourseManagementPage: React.FC = () => {
 
     } catch (err: any) {
       console.error('Failed to load course data:', err);
-      setError(err.message || 'Failed to load course data');
+      setError(err.message || 'Network error occurred while loading course data');
       console.error('Failed to load course data');
     } finally {
       setLoading(false);
@@ -132,11 +132,12 @@ const CourseManagementPage: React.FC = () => {
           loadCourseData();
         }
       } else {
-        throw new Error(response.message);
+        // Use the actual backend error message
+        alert(response.message);
       }
     } catch (err: any) {
       console.error('Failed to update course:', err);
-      alert(err.message || 'Failed to update course');
+      alert(err.message || 'Network error occurred while updating course');
     }
   };
 
@@ -148,11 +149,12 @@ const CourseManagementPage: React.FC = () => {
         loadCourseData(); // Reload to get updated status
         setIsSubmitModalOpen(false);
       } else {
-        throw new Error(response.message);
+        // Use the actual backend error message
+        alert(response.message);
       }
     } catch (err: any) {
       console.error('Failed to submit course:', err);
-      alert(err.message || 'Failed to submit course');
+      alert(err.message || 'Network error occurred while submitting course');
     }
   };
 
@@ -167,11 +169,12 @@ const CourseManagementPage: React.FC = () => {
         console.log('Course deleted successfully');
         router.push('/dashboard/my-products');
       } else {
-        throw new Error(response.message);
+        // Use the actual backend error message
+        alert(response.message);
       }
     } catch (err: any) {
       console.error('Failed to delete course:', err);
-      alert(err.message || 'Failed to delete course');
+      alert(err.message || 'Network error occurred while deleting course');
     }
   };
 
