@@ -114,6 +114,7 @@ const PurchasedProductsPage: React.FC = () => {
       console.log("📚 [PURCHASES] API endpoint: getMyPurchases");
 
       const response = await CourseAPI.getMyPurchases(requestParams);
+    
 
       console.log(
         "📚 [PURCHASES] Raw response received:",
