@@ -13,6 +13,12 @@ interface ProductCreationStore extends ProductCreationState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   
+  // Navigation control
+  canNavigateToStep: (step: CreateCourseStep) => boolean;
+  markStepCompleted: (step: CreateCourseStep) => void;
+  getCompletedSteps: () => CreateCourseStep[];
+  resetNavigationState: () => void;
+  
   // Course actions
   createCourse: (courseData: Partial<Course>) => void;
   updateCourse: (updates: Partial<Course>) => void;
@@ -49,9 +55,22 @@ export const useProductCreationStore = create<ProductCreationStore>((set, get) =
   selectedChapterId: null,
   isLoading: false,
   error: null,
+  completedSteps: [],
 
   // Basic setters
-  setCurrentStep: (step) => set({ currentStep: step }),
+  setCurrentStep: (step) => {
+    const { canNavigateToStep, currentStep } = get();
+    const stepOrder: CreateCourseStep[] = ['course', 'chapters', 'modules', 'review'];
+    const currentStepIndex = stepOrder.indexOf(currentStep);
+    const targetStepIndex = stepOrder.indexOf(step);
+    
+    // Only allow forward navigation, never backward
+    if (targetStepIndex >= currentStepIndex && canNavigateToStep(step)) {
+      set({ currentStep: step });
+    } else {
+      console.warn(`Navigation blocked: Cannot go from ${currentStep} to ${step}`);
+    }
+  },
   setCurrentCourse: (course) => {
     console.log('🏪 Store - Setting current course:', course);
     set({ currentCourse: course });
@@ -290,6 +309,37 @@ export const useProductCreationStore = create<ProductCreationStore>((set, get) =
     return { success: true, message: 'Course submission handled by component' };
   },
 
+  // Navigation control functions
+  canNavigateToStep: (step) => {
+    const { completedSteps, currentStep } = get();
+    const stepOrder: CreateCourseStep[] = ['course', 'chapters', 'modules', 'review'];
+    const currentStepIndex = stepOrder.indexOf(currentStep);
+    const targetStepIndex = stepOrder.indexOf(step);
+    
+    // Can only go forward, never backward
+    if (targetStepIndex < currentStepIndex) {
+      return false;
+    }
+    
+    // Can go forward only to the next step or current step
+    return targetStepIndex <= currentStepIndex + 1;
+  },
+
+  markStepCompleted: (step) => {
+    const { completedSteps } = get();
+    if (!completedSteps.includes(step)) {
+      set({ completedSteps: [...completedSteps, step] });
+    }
+  },
+
+  getCompletedSteps: () => {
+    return get().completedSteps;
+  },
+
+  resetNavigationState: () => {
+    set({ completedSteps: [] });
+  },
+
   // Utility actions
   resetCreation: () =>
     set({
@@ -298,6 +348,7 @@ export const useProductCreationStore = create<ProductCreationStore>((set, get) =
       selectedChapterId: null,
       isLoading: false,
       error: null,
+      completedSteps: [],
     }),
 
   generateId,
