@@ -21,6 +21,10 @@ import Image from "next/image";
 import { getCurrentChainConfigs } from "@/lib/contracts/chainConfig";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { MarketplaceAPI } from "@/features/marketplace/api";
+import { CategoriesAPI } from "@/lib/api";
+import type { Category } from "@/types/Product";
 
 /**
  * CourseCreationForm Component
@@ -28,7 +32,7 @@ import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
  */
 const CourseCreationForm: React.FC = () => {
   const router = useRouter();
-  const { currentCourse, setCurrentStep, setCurrentCourse } =
+  const { currentCourse, setCurrentStep, setCurrentCourse, markStepCompleted } =
     useProductCreationStore();
   const {
     createCourse: createCourseAPI,
@@ -56,13 +60,45 @@ const CourseCreationForm: React.FC = () => {
       learningOutcomes: ["", "", ""], // Start with 3 empty learning outcomes
       targetAudience: [],
     },
+    // initialize categoryIds from currentCourse if available
+    categoryIds: (currentCourse as any)?.categoryIds || [],
   });
+
+  // Categories for multi-select
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Load available categories on mount
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const res = await CategoriesAPI.getCategories({ active: true });
+        if (!mounted) return;
+        
+        if (res.success && res.data) {
+          setCategories(res.data);
+        } else {
+          console.error("Failed to load categories:", res.message);
+        }
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const logoutMutation = useLogout();
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [previewVideoFile, setPreviewVideoFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingSubmission, setPendingSubmission] = useState(false);
 
   // UI-only token type used for selection inside the form
   type SelectedToken = {
@@ -235,6 +271,20 @@ const CourseCreationForm: React.FC = () => {
     });
   };
 
+  const handleCategoryToggle = (categoryId: string) => {
+    setFormData((prev) => {
+      const current = prev.categoryIds || [];
+      const exists = current.includes(categoryId);
+      const updated = exists
+        ? current.filter((c) => c !== categoryId)
+        : [...current, categoryId];
+      return { ...prev, categoryIds: updated };
+    });
+    if (errors.categoryIds) {
+      setErrors((prev) => ({ ...prev, categoryIds: "" }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -265,7 +315,15 @@ const CourseCreationForm: React.FC = () => {
         "At least 3 non-empty learning outcomes are required";
     }
 
+    // Category validation: allow up to 5 categories
+    if (formData.categoryIds && formData.categoryIds.length > 5) {
+      newErrors.categoryIds = "Select up to 5 categories";
+    }
+
     if (!thumbnailFile) newErrors.thumbnail = "Thumbnail image is required";
+
+    // Preview video is optional for all course types
+    // No validation required for preview video
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -314,6 +372,12 @@ const CourseCreationForm: React.FC = () => {
       return;
     }
 
+    // Show confirmation modal instead of proceeding directly
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmSubmission = async () => {
+    setPendingSubmission(true);
     clearError();
 
     try {
@@ -334,6 +398,10 @@ const CourseCreationForm: React.FC = () => {
       tokenStrings.forEach((tok) =>
         courseFormData.append("tokenToPayWith", tok)
       );
+
+      // Append selected categories as repeated fields 'categoryIds'
+      const categoryIds = formData.categoryIds || [];
+      categoryIds.forEach((cid) => courseFormData.append("categoryIds", cid));
       courseFormData.append(
         "accessDuration",
         formData.accessDuration.toString()
@@ -453,6 +521,16 @@ const CourseCreationForm: React.FC = () => {
         }
 
         setCurrentCourse(updatedCourse);
+        setShowConfirmationModal(false);
+        setPendingSubmission(false);
+
+        // Mark course step as completed
+        markStepCompleted("course");
+
+        addToast({
+          type: "success",
+          message: "Course created successfully! You can now add chapters.",
+        });
 
         setCurrentStep("chapters");
       } else {
@@ -460,12 +538,14 @@ const CourseCreationForm: React.FC = () => {
           type: "error",
           message: result.message || "Failed to create course",
         });
+        setPendingSubmission(false);
       }
     } catch {
       addToast({
         type: "error",
         message: "Something went wrong. Please try again.",
       });
+      setPendingSubmission(false);
     }
   };
 
@@ -564,6 +644,41 @@ const CourseCreationForm: React.FC = () => {
           )}
         </div>
 
+        {/* Categories (multi-select) - placed directly below Course Type */}
+        <div>
+          <label className="block text-white font-medium mb-3">
+            Categories
+            <span className="text-sm text-gray-400 ml-2">
+              (Select up to 5)
+            </span>
+          </label>
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {categories.map((cat) => {
+                const isSelected = (formData.categoryIds || []).includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => handleCategoryToggle(cat.id)}
+                    className={cn(
+                      "px-3 py-2 rounded-lg text-sm text-left border transition-all duration-200",
+                      isSelected
+                        ? "bg-gradient-to-r from-[#0680FF] to-[#022ED2] border-[#0680FF] text-white"
+                        : "bg-[#010519] border-gray-600 text-gray-300 hover:border-[#0680FF] hover:text-white"
+                    )}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {errors.categoryIds && (
+            <p className="text-red-400 text-sm mt-2">{errors.categoryIds}</p>
+          )}
+        </div>
+
         {/* Short Description */}
         <div>
           <label className="block text-white font-medium mb-3">
@@ -575,7 +690,7 @@ const CourseCreationForm: React.FC = () => {
               onChange={(e) =>
                 handleInputChange("shortDescription", e.target.value)
               }
-              placeholder="Brief course overview (2-3 sentences)"
+              placeholder="Brief course overview (Upto 200 Characters)"
               rows={3}
               className={cn(inputClass, "resize-none")}
             />
@@ -932,6 +1047,7 @@ const CourseCreationForm: React.FC = () => {
           <div>
             <label className="block text-white font-medium mb-3">
               Preview Video
+              <span className="text-xs text-gray-400 ml-2">(Optional)</span>
             </label>
             <div className={cn(gradientBorderClass, "h-40")}>
               <div className="h-full bg-[#010519] rounded-lg flex flex-col items-center justify-center relative overflow-hidden">
@@ -960,10 +1076,10 @@ const CourseCreationForm: React.FC = () => {
                   <>
                     <Upload className="w-8 h-8 text-gray-400 mb-2" />
                     <p className="text-gray-400 text-sm text-center">
-                      Upload preview video
+                      Upload preview video (optional)
                     </p>
                     <p className="text-gray-500 text-xs mt-1">
-                      Max 500MB, MP4/WEBM
+                      Max 500MB, MP4/WEBM. Helps attract students to your course.
                     </p>
                   </>
                 )}
@@ -1251,11 +1367,12 @@ const CourseCreationForm: React.FC = () => {
             type="submit"
             disabled={
               apiLoading ||
+              pendingSubmission ||
               (!!me.data && (!me.data.walletAddress || !me.data.username))
             }
             className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {apiLoading ? (
+            {apiLoading || pendingSubmission ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
                 Creating Course...
@@ -1276,6 +1393,22 @@ const CourseCreationForm: React.FC = () => {
           </div>
         )}
       </form>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+          setPendingSubmission(false);
+        }}
+        onConfirm={handleConfirmSubmission}
+        title="Create Course"
+        message="Once you create this course, you'll be able to add chapters and modules. After creation, course details can only be edited from the My Products section in your dashboard. Do you want to proceed?"
+        type="info"
+        confirmText="Create Course"
+        cancelText="Review Again"
+        isLoading={pendingSubmission}
+      />
     </div>
   );
 };
