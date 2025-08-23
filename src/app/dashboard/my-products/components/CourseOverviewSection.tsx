@@ -28,9 +28,51 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
   const formatPrice = (price: number): string => `$${price.toFixed(2)}`;
 
   const formatDuration = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    if (!seconds || seconds === 0) return "0m";
+    
+    const totalMinutes = Math.ceil(seconds / 60); // Convert seconds to minutes, round up
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    if (hours > 0) {
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    }
+    return `${totalMinutes}m`;
+  };
+
+  // Calculate total duration from chapters/modules if available
+  const calculateTotalDuration = (): number => {
+    if (course.chapters && Array.isArray(course.chapters)) {
+      return course.chapters.reduce((total: number, chapter: any) => {
+        if (chapter.modules && Array.isArray(chapter.modules)) {
+          return total + chapter.modules.reduce((chapterTotal: number, module: any) => {
+            return chapterTotal + (module.duration || 0);
+          }, 0);
+        }
+        return total + (chapter.totalDuration || 0);
+      }, 0);
+    }
+    return course.stats?.duration || 0;
+  };
+
+  // Calculate total chapters and modules from backend data
+  const calculateChapterCount = (): number => {
+    if (course.chapters && Array.isArray(course.chapters)) {
+      return course.chapters.length;
+    }
+    return course.stats?.chapterCount || 0;
+  };
+
+  const calculateModuleCount = (): number => {
+    if (course.chapters && Array.isArray(course.chapters)) {
+      return course.chapters.reduce((total: number, chapter: any) => {
+        if (chapter.modules && Array.isArray(chapter.modules)) {
+          return total + chapter.modules.length;
+        }
+        return total + (chapter.moduleCount || 0);
+      }, 0);
+    }
+    return course.stats?.moduleCount || 0;
   };
 
   const formatDate = (dateString: string): string => {
@@ -146,9 +188,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
             <div>
               <p className="text-gray-400 text-sm">Duration</p>
               <p className="text-white text-lg font-semibold">
-                {course.stats?.duration
-                  ? formatDuration(course.stats.duration)
-                  : "N/A"}
+                {formatDuration(calculateTotalDuration())}
               </p>
             </div>
           </div>
@@ -162,8 +202,8 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
             <div>
               <p className="text-gray-400 text-sm">Content</p>
               <p className="text-white text-lg font-semibold">
-                {course.stats?.chapterCount || 0} chapters,{" "}
-                {course.stats?.moduleCount || 0} modules
+                {calculateChapterCount()} chapters,{" "}
+                {calculateModuleCount()} modules
               </p>
             </div>
           </div>
