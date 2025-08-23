@@ -17,6 +17,7 @@ interface ModuleEditModalProps {
 interface ModuleFormData {
   title: string;
   description: string;
+  type: "video" | "document";
   duration: number;
   order: number;
   isRequired: boolean;
@@ -30,6 +31,16 @@ interface ModuleFormData {
       content: string;
     }>;
   };
+  // Additional fields from the API response
+  videoUrl?: string;
+  documentUrl?: string;
+  attachments?: Array<{
+    name: string;
+    url: string;
+    fileSize: number;
+    mimeType: string;
+  }>;
+  isPreview: boolean;
 }
 
 const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
@@ -54,6 +65,7 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
   const [formData, setFormData] = useState<ModuleFormData>({
     title: '',
     description: '',
+    type: 'video',
     duration: 0,
     order: 1,
     isRequired: false,
@@ -63,7 +75,8 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
     content: {
       text: '',
       sections: []
-    }
+    },
+    isPreview: false
   });
   
   const [loadingContent, setLoadingContent] = useState(false);
@@ -104,18 +117,14 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
       console.log('📊 Loading module content for editing...');
       console.log('📋 Module object:', module);
       console.log('📋 Course ID:', courseId);
+      console.log('📋 Module ID:', module.id);
       
-      // Extract chapterId from module object
-      const chapterId = module.chapterId || module.chapter?.id;
-      if (!chapterId) {
-        console.error('❌ No chapterId found in module object:', module);
-        throw new Error('Chapter ID is required to load module content');
-      }
-      
-      console.log('📋 Using chapterId:', chapterId);
-      
-      // Updated to use new API endpoint format with chapterId
-      const response = await CourseAPI.getModuleContent(courseId, chapterId, module.id);
+      // Updated to use new API endpoint format with proper parameters
+      const response = await CourseAPI.getModuleContentById(courseId, module.id, {
+        format: "json",
+        trackProgress: false, // We don't need progress tracking for editing
+        generateSignedUrls: true // Get signed URLs for secure content access
+      });
       
       console.log('📥 Module content response:', response);
       
@@ -129,39 +138,49 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
         moduleData = module;
       }
 
-      // Create normalized data structure
+      // Create normalized data structure with all API fields
       const normalizedData: ModuleFormData = {
         title: moduleData.title || module.title || '',
         description: moduleData.description || module.description || '',
+        type: moduleData.type || module.type || 'video',
         duration: moduleData.duration || module.duration || 0,
-        order: (moduleData as any).order || (module as any).order || 1,
+        order: moduleData.order || (module as any).order || 1,
         isRequired: (moduleData as any).isRequired || (module as any).isRequired || false,
         learningObjectives: (moduleData as any).learningObjectives || [],
         prerequisites: (moduleData as any).prerequisites || [],
         resources: (moduleData as any).resources || [],
         content: (moduleData as any).content?.text 
           ? (moduleData as any).content 
-          : { text: '', sections: [] }
+          : { text: '', sections: [] },
+        // Additional API fields from the documentation
+        videoUrl: moduleData.videoUrl,
+        documentUrl: moduleData.documentUrl,
+        attachments: moduleData.attachments || [],
+        isPreview: moduleData.isPreview || false
       };
+
+      console.log('📝 Normalized module data for editing:', normalizedData);
 
       // Set both form data and original data
       setFormData(normalizedData);
       setOriginalData(normalizedData);
     } catch (error) {
       console.error('Failed to load module data:', error);
-      setError('Failed to load module data');
+      setError('Failed to load module data. Please try again.');
       
       // Set fallback data even on error
       const fallbackData: ModuleFormData = {
         title: module.title || '',
         description: module.description || '',
+        type: module.type || 'video',
         duration: module.duration || 0,
         order: (module as any).order || 1,
         isRequired: (module as any).isRequired || false,
         learningObjectives: [],
         prerequisites: [],
         resources: [],
-        content: { text: '', sections: [] }
+        content: { text: '', sections: [] },
+        isPreview: false
       };
       
       setFormData(fallbackData);
@@ -532,7 +551,8 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
           {loadingContent && (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading module data...</p>
+              <p className="text-gray-400">Loading module content...</p>
+              <p className="text-gray-500 text-sm mt-2">Fetching module details, attachments, and content data</p>
             </div>
           )}
 
@@ -602,6 +622,99 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
                 />
               </div>
 
+              {/* Module Type and Content Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-white font-medium mb-2">Module Type</label>
+                  <div className="flex items-center gap-4">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      formData.type === 'video' 
+                        ? 'bg-blue-500/20 text-blue-400' 
+                        : 'bg-green-500/20 text-green-400'
+                    }`}>
+                      {formData.type === 'video' ? (
+                        <>
+                          <Video className="inline w-4 h-4 mr-1" />
+                          Video Module
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="inline w-4 h-4 mr-1" />
+                          Document Module
+                        </>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-white font-medium mb-2">Preview Status</label>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      formData.isPreview 
+                        ? 'bg-green-500/20 text-green-400' 
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {formData.isPreview ? 'Preview Available' : 'Premium Content'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content URLs and Attachments */}
+              {(formData.videoUrl || formData.documentUrl || (formData.attachments && formData.attachments.length > 0)) && (
+                <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+                  <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+                    <FileText size={18} />
+                    Module Content
+                  </h4>
+                  
+                  {/* Video URL */}
+                  {formData.videoUrl && (
+                    <div className="mb-3">
+                      <label className="block text-gray-300 text-sm font-medium mb-1">Video Content</label>
+                      <div className="flex items-center gap-2 p-2 bg-gray-700 rounded text-sm">
+                        <Video className="text-blue-400" size={16} />
+                        <span className="text-gray-300 truncate flex-1">{formData.videoUrl}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Document URL */}
+                  {formData.documentUrl && (
+                    <div className="mb-3">
+                      <label className="block text-gray-300 text-sm font-medium mb-1">Document Content</label>
+                      <div className="flex items-center gap-2 p-2 bg-gray-700 rounded text-sm">
+                        <FileText className="text-green-400" size={16} />
+                        <span className="text-gray-300 truncate flex-1">{formData.documentUrl}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Attachments */}
+                  {formData.attachments && formData.attachments.length > 0 && (
+                    <div>
+                      <label className="block text-gray-300 text-sm font-medium mb-2">
+                        Attachments ({formData.attachments.length})
+                      </label>
+                      <div className="space-y-2">
+                        {formData.attachments.map((attachment, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 bg-gray-700 rounded text-sm">
+                            <FileText className="text-purple-400" size={16} />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-gray-300 truncate">{attachment.name}</div>
+                              <div className="text-gray-500 text-xs">
+                                {attachment.mimeType} • {(attachment.fileSize / 1024 / 1024).toFixed(2)} MB
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Settings */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -628,189 +741,9 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
                 </div>
               </div>
 
-              {/* Content Text */}
-              <div>
-                <label className="block text-white font-medium mb-2">Content Text</label>
-                <textarea
-                  value={formData.content.text}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    content: { ...prev.content, text: e.target.value }
-                  }))}
-                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
-                  rows={4}
-                  placeholder="Enter main content text"
-                />
-              </div>
-
-              {/* Content Sections */}
-              <div>
-                <label className="block text-white font-medium mb-2">Content Sections</label>
-                
-                {/* Existing Sections */}
-                {formData.content.sections.map((section, index) => (
-                  <div key={index} className="mb-3 p-4 bg-gray-800 rounded-lg border border-gray-700">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-white font-medium">{section.title}</h4>
-                      <button
-                        type="button"
-                        onClick={() => handleSectionRemove(index)}
-                        className="p-1 text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    <p className="text-gray-400 text-sm">{section.content}</p>
-                  </div>
-                ))}
-
-                {/* Add New Section */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
-                  <input
-                    type="text"
-                    value={newSectionTitle}
-                    onChange={(e) => setNewSectionTitle(e.target.value)}
-                    className="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Section title"
-                  />
-                  <input
-                    type="text"
-                    value={newSectionContent}
-                    onChange={(e) => setNewSectionContent(e.target.value)}
-                    className="px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Section content"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSectionAdd}
-                  className="flex items-center gap-2 px-3 py-1 text-blue-400 hover:text-blue-300 text-sm"
-                >
-                  <Plus size={16} />
-                  Add Section
-                </button>
-              </div>
-
+             
               {/* Learning Objectives */}
-              <div>
-                <label className="block text-white font-medium mb-2">Learning Objectives</label>
-                
-                {/* Existing Objectives */}
-                {formData.learningObjectives.map((objective, index) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
-                    <span className="flex-1 px-3 py-2 bg-gray-800 rounded text-white text-sm">
-                      {objective}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleArrayRemove('learningObjectives', index)}
-                      className="p-2 text-red-400 hover:text-red-300"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add New Objective */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newObjective}
-                    onChange={(e) => setNewObjective(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Add learning objective"
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleArrayAdd('learningObjectives', newObjective))}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleArrayAdd('learningObjectives', newObjective)}
-                    className="p-2 text-blue-400 hover:text-blue-300"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Prerequisites */}
-              <div>
-                <label className="block text-white font-medium mb-2">Prerequisites</label>
-                
-                {/* Existing Prerequisites */}
-                {formData.prerequisites.map((prerequisite, index) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
-                    <span className="flex-1 px-3 py-2 bg-gray-800 rounded text-white text-sm">
-                      {prerequisite}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleArrayRemove('prerequisites', index)}
-                      className="p-2 text-red-400 hover:text-red-300"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add New Prerequisite */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newPrerequisite}
-                    onChange={(e) => setNewPrerequisite(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Add prerequisite"
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleArrayAdd('prerequisites', newPrerequisite))}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleArrayAdd('prerequisites', newPrerequisite)}
-                    className="p-2 text-blue-400 hover:text-blue-300"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Resources */}
-              <div>
-                <label className="block text-white font-medium mb-2">Resources</label>
-                
-                {/* Existing Resources */}
-                {formData.resources.map((resource, index) => (
-                  <div key={index} className="flex items-center gap-2 mb-2">
-                    <span className="flex-1 px-3 py-2 bg-gray-800 rounded text-white text-sm">
-                      {resource}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleArrayRemove('resources', index)}
-                      className="p-2 text-red-400 hover:text-red-300"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Add New Resource */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newResource}
-                    onChange={(e) => setNewResource(e.target.value)}
-                    className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:border-blue-500 focus:outline-none"
-                    placeholder="Add resource (URL or description)"
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleArrayAdd('resources', newResource))}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleArrayAdd('resources', newResource)}
-                    className="p-2 text-blue-400 hover:text-blue-300"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-              </div>
-
+              
               {/* File Uploads */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Main File */}
@@ -868,7 +801,7 @@ const ModuleEditModal: React.FC<ModuleEditModalProps> = ({
                     className="hidden"
                     multiple
                     onChange={(e) => setAttachments(Array.from(e.target.files || []))}
-                    accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.txt"
+                    accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*"
                   />
                 </div>
               </div>
