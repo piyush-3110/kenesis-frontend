@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useUIStore } from "@/store/useUIStore";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Purchase {
   id: string;
@@ -660,7 +661,7 @@ const PurchasedCoursesContent: React.FC<{
 }> = ({
   purchases,
   filter,
-  onCourseClick,
+  // onCourseClick,
   onBrowseMarketplace,
   formatDate,
   getRemainingDaysText,
@@ -709,10 +710,10 @@ const PurchasedCoursesContent: React.FC<{
             className="rounded-2xl p-[1px] transition-all duration-300 group-hover:scale-[1.02]"
             style={{ background: DASHBOARD_COLORS.PRIMARY_BORDER }}
           >
-            <div
-              className="rounded-2xl overflow-hidden cursor-pointer"
+            <Link
+              href={`/learn/${purchase.courseId}`}
+              className="rounded-2xl overflow-hidden cursor-pointer block"
               style={{ background: DASHBOARD_COLORS.CARD_BG }}
-              onClick={() => onCourseClick(purchase)}
             >
               {/* Course Thumbnail */}
               <div className="relative">
@@ -779,16 +780,9 @@ const PurchasedCoursesContent: React.FC<{
                     </span>
                   </div>
                 </div>
-
                 {/* Action Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCourseClick(purchase);
-                  }}
-                  disabled={
-                    !purchase.hasAccess || loadingCourseId === purchase.courseId
-                  }
+                <Link
+                  href={`/learn/${purchase.courseId}`}
                   className={`w-full py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 ${
                     purchase.hasAccess && loadingCourseId !== purchase.courseId
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800"
@@ -807,9 +801,9 @@ const PurchasedCoursesContent: React.FC<{
                         : "Access Expired"}
                     </span>
                   )}
-                </button>
+                </Link>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       ))}
