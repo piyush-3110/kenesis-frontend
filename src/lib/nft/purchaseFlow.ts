@@ -1,6 +1,6 @@
 /**
- * Complete Purchase Flow with NFT URI Generation
- * Handles course purchase and NFT metadata creation via Pinata
+ * Complete Purchase Flow with NFT URI Generation (Updated for new auth flow)
+ * Handles course purchase with backend authorization and NFT metadata creation via Pinata
  */
 
 import {
@@ -8,6 +8,10 @@ import {
   validateCourseForNFT,
   type NFTCreationInput,
 } from "./nftService";
+import {
+  requestPurchaseAuthorization,
+  type PurchaseAuthorizationRequest,
+} from "@/lib/purchase/purchaseAuthService";
 import type { CourseResponse } from "@/lib/api/courseApi";
 
 export interface PurchaseWithNFTParams {
@@ -29,11 +33,13 @@ export interface PurchaseWithNFTResult {
   steps: PurchaseStep[];
   nftMetadataUri?: string;
   nftThumbnailHash?: string;
+  authorizationData?: Record<string, unknown>;
   error?: string;
 }
 
 /**
- * Complete course purchase with NFT URI generation
+ * Complete course purchase preparation with NFT URI generation and backend authorization
+ * This prepares everything needed for the smart contract call but doesn't execute it
  */
 export const purchaseCourseWithNFT = async (
   params: PurchaseWithNFTParams
@@ -52,9 +58,9 @@ export const purchaseCourseWithNFT = async (
       status: "pending",
     },
     {
-      id: "course-access",
-      name: "Course Access",
-      description: "Granting access to the course",
+      id: "authorization",
+      name: "Authorization",
+      description: "Getting purchase authorization from backend",
       status: "pending",
     },
   ];
@@ -116,33 +122,50 @@ export const purchaseCourseWithNFT = async (
 
     steps[1].status = "completed";
 
-    // Step 3: Grant course access (placeholder - would integrate with your backend)
+    // Step 3: Get backend authorization
     steps[2].status = "in-progress";
 
     try {
-      // TODO: Call your backend API to grant course access
-      // This would typically involve:
-      // 1. Store the NFT metadata URI for later minting
-      // 2. Update user's course access in your database
-      // 3. Send confirmation emails, etc.
+      const authRequest: PurchaseAuthorizationRequest = {
+        courseId: params.course.id,
+        tokenToPayWith: params.selectedToken,
+        courseURI: nftResult.metadataUri,
+        affiliateAddress: undefined, // Can be extended later
+      };
 
-      // Placeholder for now
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const authResponse = await requestPurchaseAuthorization(authRequest);
+
+      if (!authResponse.success || !authResponse.data) {
+        steps[2].status = "failed";
+        steps[2].error = authResponse.message || "Failed to get authorization";
+        return {
+          success: false,
+          steps,
+          error: `Authorization failed: ${authResponse.message}`,
+        };
+      }
 
       steps[2].status = "completed";
+
+      return {
+        success: true,
+        steps,
+        nftMetadataUri: nftResult.metadataUri,
+        nftThumbnailHash: nftResult.thumbnailHash,
+        authorizationData: authResponse.data as unknown as Record<
+          string,
+          unknown
+        >,
+      };
     } catch (error) {
       steps[2].status = "failed";
       steps[2].error = error instanceof Error ? error.message : "Unknown error";
-      // Note: NFT metadata was created successfully, but course access failed
-      // This is a recoverable state - the NFT URI can be used later for minting
+      return {
+        success: false,
+        steps,
+        error: error instanceof Error ? error.message : "Authorization failed",
+      };
     }
-
-    return {
-      success: true,
-      steps,
-      nftMetadataUri: nftResult.metadataUri,
-      nftThumbnailHash: nftResult.thumbnailHash,
-    };
   } catch (error) {
     // Mark current step as failed
     const currentStep = steps.find((step) => step.status === "in-progress");
