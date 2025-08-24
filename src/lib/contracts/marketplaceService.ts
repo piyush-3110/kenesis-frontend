@@ -378,7 +378,7 @@ export const usePurchaseCourse = () => {
 
       // Convert parameters to the correct types for the smart contract
       const seller = contractParams.seller as `0x${string}`;
-      const priceInUSD = BigInt(Math.floor(contractParams.priceInUSD * 100)); // Convert to cents/wei
+      const priceInUSD = parseEther(contractParams.priceInUSD.toString()); // Convert to cents/wei
       const courseId = contractParams.courseId;
       const courseURI = contractParams.courseURI;
       const courseDuration = BigInt(contractParams.courseDuration);
