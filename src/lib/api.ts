@@ -154,6 +154,7 @@ export interface UpdateCourseRequest {
   description?: string; // 50–5000 chars, trimmed
   level?: "beginner" | "intermediate" | "advanced";
   language?: string; // Format: ^[a-z]{2}(-[A-Z]{2})?$ (e.g., "en", "en-US")
+  categoryIds?: string[]; // Array of category IDs (max 5)
   metadata?: {
     requirements?: string[]; // max 10, each 1–200 chars
     learningOutcomes?: string[]; // max 15, each 1–200 chars
@@ -1155,9 +1156,48 @@ export const CourseAPI = {
   },
 
   /**
-   * Get published courses (public endpoint)
+   * Get user's purchased courses
+   * GET /api/courses/purchases/my-purchases
+   */
+  getMyPurchases: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: "active" | "expired" | "all";
+  }): Promise<ApiResponse<any>> => {
+    console.log("🛒 [API] Starting getMyPurchases request...");
+    console.log("🛒 [API] Request params:", JSON.stringify(params, null, 2));
+    console.log("🛒 [API] API endpoint: /api/courses/purchases/my-purchases");
+
+    const response = await apiClient.getWithQuery(
+      "/api/courses/purchases/my-purchases",
+      params
+    );
+
+    console.log(
+      "🛒 [API] getMyPurchases response received:",
+      JSON.stringify(response, null, 2)
+    );
+
+    if (response.success) {
+      console.log("✅ [API] User purchases fetched successfully");
+      console.log(
+        "✅ [API] Purchases data:",
+        JSON.stringify(response.data, null, 2)
+      );
+    } else {
+      console.error("❌ [API] Failed to fetch purchases:", response.message);
+      console.error(
+        "❌ [API] Full error response:",
+        JSON.stringify(response, null, 2)
+      );
+    }
+
+    return response;
+  },
+
+  /**
+   * Get published courses
    * GET /api/courses
-   * No authentication required
    * Supports filtering, search, sorting, and pagination
    */
   getPublishedCourses: async (
@@ -1356,7 +1396,32 @@ export const CourseAPI = {
     courseId: string,
     chapterId: string
   ): Promise<ApiResponse<any>> => {
-    return http.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
+    console.log("🗑️ [API] Starting deleteChapter request...");
+    console.log("🗑️ [API] Course ID:", courseId);
+    console.log("🗑️ [API] Chapter ID:", chapterId);
+    console.log("🗑️ [API] API endpoint: /api/courses/" + courseId + "/chapters/" + chapterId);
+
+    const response = await http.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
+
+    console.log(
+      "🗑️ [API] deleteChapter response received:",
+      JSON.stringify(response, null, 2)
+    );
+
+    // Extract the actual API response from axios response.data
+    const apiResponse = response.data;
+
+    if (apiResponse.success) {
+      console.log("✅ [API] Chapter deleted successfully");
+    } else {
+      console.error("❌ [API] Failed to delete chapter:", apiResponse.message);
+      console.error(
+        "❌ [API] Full error response:",
+        JSON.stringify(apiResponse, null, 2)
+      );
+    }
+
+    return apiResponse;
   },
 
   /**
@@ -1429,40 +1494,125 @@ export const CourseAPI = {
       chapterId: string; // Required by backend
       status?: "draft" | "published";
       type?: "video" | "document";
+      page?: number;
+      limit?: number;
+      sortBy?: "createdAt" | "updatedAt" | "title" | "order";
+      sortOrder?: "asc" | "desc";
+      includeStats?: boolean;
     }
   ): Promise<
     ApiResponse<{
-      modules: any[];
-      stats: {
+      modules: Array<{
+        id: string;
+        chapterId: string;
+        title: string;
+        description?: string;
+        type: "video" | "document";
+        order: number;
+        duration?: number;
+        isPreview: boolean;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+      };
+      stats?: {
         totalModules: number;
-        videoModules: number;
-        documentModules: number;
-        previewModules: number;
+        modulesByType: {
+          video: number;
+          document: number;
+        };
         totalDuration: number;
+        previewModules: number;
       };
     }>
   > => {
-    return apiClient.getWithQuery(`/api/courses/${courseId}/modules`, params);
+    console.log("📚 [API] Starting getModules request...");
+    console.log("📚 [API] Course ID:", courseId);
+    console.log("📚 [API] Params:", JSON.stringify(params, null, 2));
+    console.log("📚 [API] API endpoint: /api/courses/" + courseId + "/modules");
+
+    const response = await apiClient.getWithQuery(`/api/courses/${courseId}/modules`, params);
+
+    console.log(
+      "📚 [API] getModules response received:",
+      JSON.stringify(response, null, 2)
+    );
+
+    if (response.success) {
+      console.log("✅ [API] Modules fetched successfully");
+      console.log(
+        "✅ [API] Modules data:",
+        JSON.stringify(response.data, null, 2)
+      );
+    } else {
+      console.error("❌ [API] Failed to fetch modules:", response.message);
+      console.error(
+        "❌ [API] Full error response:",
+        JSON.stringify(response, null, 2)
+      );
+    }
+
+    return response as ApiResponse<{
+      modules: Array<{
+        id: string;
+        chapterId: string;
+        title: string;
+        description?: string;
+        type: "video" | "document";
+        order: number;
+        duration?: number;
+        isPreview: boolean;
+        createdAt: string;
+        updatedAt: string;
+      }>;
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+      };
+      stats?: {
+        totalModules: number;
+        modulesByType: {
+          video: number;
+          document: number;
+        };
+        totalDuration: number;
+        previewModules: number;
+      };
+    }>;
   },
 
   /**
-   * Get module content
-   * GET /api/courses/{courseId}/chapters/{chapterId}/modules/{moduleId}/content
-   * Updated to new endpoint format requiring chapterId
+   * Get module content by module ID (new backend format)
+   * GET /api/courses/{courseId}/modules/{moduleId}/content
    */
-  getModuleContent: async (
+  getModuleContentById: async (
     courseId: string,
-    chapterId: string,
-    moduleId: string
+    moduleId: string,
+    params?: {
+      format?: "json" | "html" | "markdown";
+      trackProgress?: boolean;
+      generateSignedUrls?: boolean;
+    }
   ): Promise<
     ApiResponse<{
       id: string;
       chapterId: string;
       title: string;
-      description: string;
+      description?: string;
       type: "video" | "document";
       order: number;
-      duration: number;
+      duration?: number;
       videoUrl?: string;
       documentUrl?: string;
       attachments?: Array<{
@@ -1472,34 +1622,110 @@ export const CourseAPI = {
         mimeType: string;
       }>;
       isPreview: boolean;
+      createdAt: string;
+      updatedAt: string;
+      signedUrls?: {
+        videoUrl?: string;
+        attachments?: Array<{
+          name: string;
+          signedUrl: string;
+        }>;
+      };
+      progress?: {
+        progressPercentage: number;
+        timeSpent: number;
+        lastAccessedAt: string;
+      };
       metadata?: {
         accessedAt: string;
         hasAccess: boolean;
       };
-      createdAt: string;
-      updatedAt: string;
     }>
   > => {
-    console.log("🎥 [API] Starting getModuleContent request...");
+    console.log("🎥 [API] Starting getModuleContentById request...");
     console.log("🎥 [API] Course ID:", courseId);
-    console.log("🎥 [API] Chapter ID:", chapterId);
     console.log("🎥 [API] Module ID:", moduleId);
-    console.log(
-      "🎥 [API] API endpoint: /api/courses/" +
-        courseId +
-        "/chapters/" +
-        chapterId +
-        "/modules/" +
-        moduleId +
-        "/content"
-    );
+    console.log("🎥 [API] Params:", JSON.stringify(params, null, 2));
+    console.log("🎥 [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId + "/content");
 
-    const response = await http.get(
-      `/api/courses/${courseId}/modules/${moduleId}/content`
+    const response = await apiClient.getWithQuery(
+      `/api/courses/${courseId}/modules/${moduleId}/content`,
+      params
     );
 
     console.log(
-      "🎥 [API] getModuleContent response received:",
+      "🎥 [API] getModuleContentById response received:",
+      JSON.stringify(response, null, 2)
+    );
+
+    if (response.success) {
+      console.log("✅ [API] Module content fetched successfully");
+      console.log(
+        "✅ [API] Module content data:",
+        JSON.stringify(response.data, null, 2)
+      );
+    } else {
+      console.error(
+        "❌ [API] Failed to fetch module content:",
+        response.message
+      );
+      console.error(
+        "❌ [API] Full error response:",
+        JSON.stringify(response, null, 2)
+      );
+    }
+
+    return response as ApiResponse<{
+      id: string;
+      chapterId: string;
+      title: string;
+      description?: string;
+      type: "video" | "document";
+      order: number;
+      duration?: number;
+      videoUrl?: string;
+      documentUrl?: string;
+      attachments?: Array<{
+        name: string;
+        url: string;
+        fileSize: number;
+        mimeType: string;
+      }>;
+      isPreview: boolean;
+      createdAt: string;
+      updatedAt: string;
+      signedUrls?: {
+        videoUrl?: string;
+        attachments?: Array<{
+          name: string;
+          signedUrl: string;
+        }>;
+      };
+      progress?: {
+        progressPercentage: number;
+        timeSpent: number;
+        lastAccessedAt: string;
+      };
+      metadata?: {
+        accessedAt: string;
+        hasAccess: boolean;
+      };
+    }>;
+  },
+
+  /**
+   * Delete a course
+   * DELETE /api/courses/{courseId}
+   */
+  deleteCourse: async (courseId: string): Promise<ApiResponse<{ message: string }>> => {
+    console.log("🗑️ [API] Starting deleteCourse request...");
+    console.log("🗑️ [API] Course ID:", courseId);
+    console.log("🗑️ [API] API endpoint: /api/courses/" + courseId);
+
+    const response = await http.delete(`/api/courses/${courseId}`);
+
+    console.log(
+      "🗑️ [API] deleteCourse response received:",
       JSON.stringify(response, null, 2)
     );
 
@@ -1507,16 +1733,9 @@ export const CourseAPI = {
     const apiResponse = response.data;
 
     if (apiResponse.success) {
-      console.log("✅ [API] Module content fetched successfully");
-      console.log(
-        "✅ [API] Module content data:",
-        JSON.stringify(apiResponse.data, null, 2)
-      );
+      console.log("✅ [API] Course deleted successfully");
     } else {
-      console.error(
-        "❌ [API] Failed to fetch module content:",
-        apiResponse.message
-      );
+      console.error("❌ [API] Failed to delete course:", apiResponse.message);
       console.error(
         "❌ [API] Full error response:",
         JSON.stringify(apiResponse, null, 2)
@@ -1527,120 +1746,27 @@ export const CourseAPI = {
   },
 
   /**
-   * Update module details
+   * Update a module
    * PUT /api/courses/{courseId}/modules/{moduleId}
-   * New endpoint format as per backend API documentation
    */
   updateModule: async (
     courseId: string,
     moduleId: string,
     moduleData: FormData
-  ): Promise<ApiResponse<UpdateModuleResponse>> => {
-    console.log("🔧 API updateModule called with NEW ENDPOINT:", {
-      courseId,
-      moduleId,
+  ): Promise<ApiResponse<{ message: string; module?: any }>> => {
+    console.log("📝 [API] Starting updateModule request...");
+    console.log("📝 [API] Course ID:", courseId);
+    console.log("📝 [API] Module ID:", moduleId);
+    console.log("📝 [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId);
+
+    const response = await http.put(`/api/courses/${courseId}/modules/${moduleId}`, moduleData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
-    console.log(
-      "🔧 CourseId type:",
-      typeof courseId,
-      "ModuleId type:",
-      typeof moduleId
-    );
-    console.log("🔧 FormData entries:", Array.from(moduleData.entries()));
-
-    return apiClient.updateModuleWithProperTypes<UpdateModuleResponse>(
-      `/api/courses/${courseId}/modules/${moduleId}`,
-      moduleData
-    );
-  },
-
-  /**
-   * Delete module
-   * DELETE /api/courses/{courseId}/chapters/{chapterId}/modules/{moduleId}
-   */
-  deleteModule: async (
-    courseId: string,
-    chapterId: string,
-    moduleId: string
-  ): Promise<ApiResponse<any>> => {
-    return http.delete(
-      `/api/courses/${courseId}/chapters/${chapterId}/modules/${moduleId}`
-    );
-  },
-
-  /**
-   * Delete entire course
-   * DELETE /api/courses/{courseId}
-   */
-  deleteCourse: async (courseId: string): Promise<ApiResponse<any>> => {
-    return http.delete(`/api/courses/${courseId}`);
-  },
-
-  /**
-   * Get course categories
-   * GET /api/courses/categories
-   */
-  getCategories: async (): Promise<ApiResponse<Array<Category>>> => {
-    return http.get("/api/courses/categories");
-  },
-
-  /**
-   * Get user's purchased courses
-   * GET /api/courses/purchases/my-purchases
-   */
-  getMyPurchases: async (params?: {
-    page?: number;
-    limit?: number;
-    status?: "active" | "expired" | "all";
-  }): Promise<ApiResponse<any>> => {
-    console.log("🛒 [API] Starting getMyPurchases request...");
-    console.log("🛒 [API] Request params:", JSON.stringify(params, null, 2));
-    console.log("🛒 [API] API endpoint: /api/courses/purchases/my-purchases");
-
-    const response = await apiClient.getWithQuery(
-      "/api/courses/purchases/my-purchases",
-      params
-    );
 
     console.log(
-      "🛒 [API] getMyPurchases response received:",
-      JSON.stringify(response, null, 2)
-    );
-
-    if (response.success) {
-      console.log("✅ [API] User purchases fetched successfully");
-      console.log(
-        "✅ [API] Purchases data:",
-        JSON.stringify(response.data, null, 2)
-      );
-    } else {
-      console.error("❌ [API] Failed to fetch purchases:", response.message);
-      console.error(
-        "❌ [API] Full error response:",
-        JSON.stringify(response, null, 2)
-      );
-    }
-
-    return response;
-  },
-
-  /**
-   * Check course access for a specific course
-   * GET /api/courses/purchases/access/{courseId}
-   */
-  checkCourseAccess: async (courseId: string): Promise<ApiResponse<any>> => {
-    console.log("🔐 [API] Starting checkCourseAccess request...");
-    console.log("🔐 [API] Course ID:", courseId);
-    console.log(
-      "🔐 [API] API endpoint: /api/courses/purchases/access/" + courseId
-    );
-
-    const response = await http.get(
-      `/api/courses/purchases/access/${courseId}`
-    );
-
-    console.log(
-      "🔐 [API] checkCourseAccess response received:",
+      "📝 [API] updateModule response received:",
       JSON.stringify(response, null, 2)
     );
 
@@ -1648,16 +1774,167 @@ export const CourseAPI = {
     const apiResponse = response.data;
 
     if (apiResponse.success) {
-      console.log("✅ [API] Course access checked successfully");
+      console.log("✅ [API] Module updated successfully");
+    } else {
+      console.error("❌ [API] Failed to update module:", apiResponse.message);
+      console.error(
+        "❌ [API] Full error response:",
+        JSON.stringify(apiResponse, null, 2)
+      );
+    }
+
+    return apiResponse;
+  },
+
+  /**
+   * Delete a module
+   * DELETE /api/courses/{courseId}/modules/{moduleId}
+   * Following the new API specification with force parameter support
+   */
+  deleteModule: async (
+    courseId: string,
+    moduleId: string,
+    force: boolean = false
+  ): Promise<ApiResponse<{
+    moduleId: string;
+    deletedAt: string;
+    force: boolean;
+  }>> => {
+    console.log("🗑️ [API] Starting deleteModule request...");
+    console.log("🗑️ [API] Course ID:", courseId);
+    console.log("🗑️ [API] Module ID:", moduleId);
+    console.log("🗑️ [API] Force delete:", force);
+    console.log("🗑️ [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId);
+
+    // Frontend validation
+    const validationErrors: string[] = [];
+    if (!courseId || courseId.trim().length === 0) {
+      validationErrors.push('Course ID is required');
+    }
+    if (!moduleId || moduleId.trim().length === 0) {
+      validationErrors.push('Module ID is required');
+    }
+    
+    if (validationErrors.length > 0) {
+      console.error("❌ [API] Frontend validation failed:", validationErrors);
+      return {
+        success: false,
+        message: validationErrors.join(', '),
+      };
+    }
+
+    try {
+      const params = force ? { force: 'true' } : {};
+      console.log("🗑️ [API] Request params:", params);
+      console.log("🗑️ [API] Making DELETE request...");
+      
+      const response = await http.delete(`/api/courses/${courseId}/modules/${moduleId}`, {
+        params,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      console.log("🗑️ [API] Raw axios response:");
+      console.log("  Status:", response.status);
+      console.log("  Headers:", response.headers);
+      console.log("  Data:", JSON.stringify(response.data, null, 2));
+
+      // Extract the actual API response from axios response.data
+      const apiResponse = response.data;
+
+      if (apiResponse.success) {
+        console.log("✅ [API] Module deleted successfully");
+        console.log("✅ [API] Deleted module ID:", apiResponse.data?.moduleId);
+        console.log("✅ [API] Deleted at:", apiResponse.data?.deletedAt);
+        console.log("✅ [API] Force delete:", apiResponse.data?.force);
+      } else {
+        console.error("❌ [API] Failed to delete module:", apiResponse.message);
+        console.error("❌ [API] Full error response:", JSON.stringify(apiResponse, null, 2));
+      }
+
+      return apiResponse;
+    } catch (error: any) {
+      console.error("💥 [API] Network/Request error in deleteModule:");
+      console.error("  Error name:", error.name);
+      console.error("  Error message:", error.message);
+      console.error("  Response status:", error.response?.status);
+      console.error("  Response data:", JSON.stringify(error.response?.data, null, 2));
+      console.error("  Full error:", error);
+
+      // Extract meaningful error message from the backend response
+      let errorMessage = 'Failed to delete module';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Cannot delete module: Invalid request or module is in use';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You don\'t have permission to delete this module.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Module not found or already deleted';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Too many requests. Please wait and try again.';
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (error.message && !error.message.includes('Request failed with status code')) {
+        errorMessage = error.message;
+      }
+
+      return {
+        success: false,
+        message: errorMessage,
+        retryAfter: error.response?.data?.retryAfter,
+      };
+    }
+  },
+};
+
+
+/**
+ * Categories API
+ * All category-related API calls
+ */
+export const CategoriesAPI = {
+  /**
+   * Get all categories
+   * GET /api/courses/categories
+   */
+  getCategories: async (params?: {
+    active?: boolean;
+  }): Promise<ApiResponse<Category[]>> => {
+    console.log("📂 [API] Starting getCategories request...");
+    console.log("📂 [API] Params:", JSON.stringify(params, null, 2));
+    console.log("📂 [API] API endpoint: /api/courses/categories");
+
+    const queryParams = new URLSearchParams();
+    if (params?.active !== undefined) {
+      queryParams.append('active', params.active.toString());
+    }
+
+    const url = `/api/courses/categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await http.get(url);
+
+    console.log(
+      "📂 [API] getCategories response received:",
+      JSON.stringify(response, null, 2)
+    );
+
+    // Extract the actual API response from axios response.data
+    const apiResponse = response.data;
+
+    if (apiResponse.success) {
+      console.log("✅ [API] Categories fetched successfully");
       console.log(
-        "✅ [API] Access data:",
+        "✅ [API] Categories data:",
         JSON.stringify(apiResponse.data, null, 2)
       );
     } else {
-      console.error(
-        "❌ [API] Failed to check course access:",
-        apiResponse.message
-      );
+      console.error("❌ [API] Failed to fetch categories:", apiResponse.message);
       console.error(
         "❌ [API] Full error response:",
         JSON.stringify(apiResponse, null, 2)

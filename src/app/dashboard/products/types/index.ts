@@ -87,6 +87,8 @@ export interface CourseFormData {
   affiliatePercentage: number;
   availableQuantity: number;
   metadata?: CourseMetadata;
+  // Multi-select categories as 24-char Mongo IDs (optional)
+  categoryIds?: string[];
 }
 
 export interface ChapterFormData {
@@ -112,4 +114,5 @@ export interface ProductCreationState {
   selectedChapterId: string | null;
   isLoading: boolean;
   error: string | null;
+  completedSteps: CreateCourseStep[];
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { X, Save, AlertCircle, Plus, Trash2, Loader2 } from 'lucide-react';
-import { CourseAPI } from '@/lib/api';
+import { CourseAPI, CategoriesAPI } from '@/lib/api';
+import type { Category } from '@/types/Product';
 import { DASHBOARD_COLORS } from '../../../constants';
 import { useUIStore } from '@/store/useUIStore';
 import { useLoading } from '@/hooks/useLoading';
@@ -22,6 +23,7 @@ interface UpdateCourseRequest {
   description?: string;
   level?: 'beginner' | 'intermediate' | 'advanced';
   language?: string;
+  categoryIds?: string[]; // Added categories support
   metadata?: {
     requirements?: string[];
     learningOutcomes?: string[];
@@ -92,11 +94,15 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
     description: '',
     level: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
     language: 'en',
+    categoryIds: [] as string[], // Added categories support
     requirements: [] as string[],
     learningOutcomes: [] as string[],
     targetAudience: [] as string[],
     price: 0
   });
+
+  // Categories state
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const [error, setError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
@@ -117,6 +123,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
         description: course.description || '',
         level: course.level || 'beginner',
         language: course.language || 'en',
+        categoryIds: course.categoryIds || [], // Added categories support
         requirements: course.metadata?.requirements || [],
         learningOutcomes: course.metadata?.learningOutcomes || [],
         targetAudience: course.metadata?.targetAudience || [],
@@ -131,32 +138,83 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
     }
   }, [isOpen, course]);
 
-  // Track form changes
+  // Load categories on mount
   useEffect(() => {
-    if (course) {
-      const hasFormChanges = 
-        formData.title !== (course.title || '') ||
-        formData.shortDescription !== (course.shortDescription || '') ||
-        formData.description !== (course.description || '') ||
-        formData.level !== (course.level || 'beginner') ||
-        formData.language !== (course.language || 'en') ||
-        JSON.stringify(formData.requirements) !== JSON.stringify(course.metadata?.requirements || []) ||
-        JSON.stringify(formData.learningOutcomes) !== JSON.stringify(course.metadata?.learningOutcomes || []) ||
-        JSON.stringify(formData.targetAudience) !== JSON.stringify(course.metadata?.targetAudience || []) ||
-        formData.price !== (course.price || 0);
-      
-      setHasChanges(hasFormChanges);
+    let mounted = true;
+    async function loadCategories() {
+      try {
+        const response = await CategoriesAPI.getCategories({ active: true });
+        if (!mounted) return;
+        
+        if (response.success && response.data) {
+          setCategories(response.data);
+        } else {
+          console.error("Failed to load categories:", response.message);
+        }
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+      }
     }
+    loadCategories();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Track form changes with useMemo to prevent excessive re-renders
+  const hasFormChanges = React.useMemo(() => {
+    if (!course) return false;
+    
+    return (
+      formData.title !== (course.title || '') ||
+      formData.shortDescription !== (course.shortDescription || '') ||
+      formData.description !== (course.description || '') ||
+      formData.level !== (course.level || 'beginner') ||
+      formData.language !== (course.language || 'en') ||
+      JSON.stringify(formData.categoryIds) !== JSON.stringify(course.categoryIds || []) ||
+      JSON.stringify(formData.requirements) !== JSON.stringify(course.metadata?.requirements || []) ||
+      JSON.stringify(formData.learningOutcomes) !== JSON.stringify(course.metadata?.learningOutcomes || []) ||
+      JSON.stringify(formData.targetAudience) !== JSON.stringify(course.metadata?.targetAudience || []) ||
+      formData.price !== (course.price || 0)
+    );
   }, [formData, course]);
 
-  const handleInputChange = (field: string, value: string | number | string[]) => {
+  // Update hasChanges state only when the computed value changes
+  useEffect(() => {
+    setHasChanges(hasFormChanges);
+  }, [hasFormChanges]);
+
+  const handleInputChange = useCallback((field: string, value: string | number | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error when user starts typing
     if (error) {
       setError(null);
     }
-  };
+  }, [error]);
+
+  // Category toggle handler
+  const handleCategoryToggle = useCallback((categoryId: string) => {
+    setFormData(prev => {
+      const current = prev.categoryIds || [];
+      const exists = current.includes(categoryId);
+      const updated = exists
+        ? current.filter((c) => c !== categoryId)
+        : [...current, categoryId];
+      
+      // Limit to 5 categories
+      if (updated.length > 5) {
+        return prev; // Don't update if it would exceed limit
+      }
+      
+      return { ...prev, categoryIds: updated };
+    });
+    
+    // Clear error when user makes changes
+    if (error) {
+      setError(null);
+    }
+  }, [error]);
 
   // Helper functions for array fields
   const addArrayItem = (field: 'requirements' | 'learningOutcomes' | 'targetAudience', value: string) => {
@@ -287,6 +345,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
         description: formData.description.trim(),
         level: formData.level,
         language: formData.language,
+        categoryIds: formData.categoryIds, // Include categories in update request
         metadata: {
           requirements: formData.requirements.filter(req => req.trim().length > 0),
           learningOutcomes: formData.learningOutcomes.filter(outcome => outcome.trim().length > 0),
@@ -329,7 +388,7 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
     }
   };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (hasChanges && !loading) {
       const confirmClose = window.confirm(
         'You have unsaved changes. Are you sure you want to close?'
@@ -339,113 +398,122 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
       }
     }
     onClose();
-  };
+  }, [hasChanges, loading, onClose]);
 
   if (!isOpen) return null;
 
-  // Component for dynamic array inputs
-  const ArrayInputSection: React.FC<{
-    label: string;
-    items: string[];
-    newItemValue: string;
-    onNewItemChange: (value: string) => void;
-    onAddItem: () => void;
-    onRemoveItem: (index: number) => void;
-    onUpdateItem: (index: number, value: string) => void;
-    placeholder: string;
-    maxItems: number;
-    maxLength: number;
-    required?: boolean;
-  }> = ({
-    label,
-    items,
-    newItemValue,
-    onNewItemChange,
-    onAddItem,
-    onRemoveItem,
-    onUpdateItem,
-    placeholder,
-    maxItems,
-    maxLength,
-    required = false
-  }) => {
-    const handleAddClick = () => {
-      if (newItemValue.trim() && items.length < maxItems) {
-        onAddItem();
-        onNewItemChange('');
-      }
-    };
+  // Memoized ArrayInputSection moved outside CourseEditModal to prevent input focus loss
+  const ArrayInputSection = React.memo(
+    ({
+      label,
+      items,
+      newItemValue,
+      onNewItemChange,
+      onAddItem,
+      onRemoveItem,
+      onUpdateItem,
+      placeholder,
+      maxItems,
+      maxLength,
+      required = false
+    }: {
+      label: string;
+      items: string[];
+      newItemValue: string;
+      onNewItemChange: (value: string) => void;
+      onAddItem: () => void;
+      onRemoveItem: (index: number) => void;
+      onUpdateItem: (index: number, value: string) => void;
+      placeholder: string;
+      maxItems: number;
+      maxLength: number;
+      required?: boolean;
+    }) => {
+      const handleAddClick = () => {
+        if (newItemValue.trim() && items.length < maxItems) {
+          onAddItem();
+          onNewItemChange('');
+        }
+      };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        handleAddClick();
-      }
-    };
+      const handleKeyPress = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleAddClick();
+        }
+      };
 
-    return (
-      <div>
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          {label} {required && <span className="text-red-400">*</span>}
-        </label>
-        
-        {/* Existing items */}
-        <div className="space-y-2 mb-3">
-          {items.map((item, index) => (
-            <div key={index} className="flex items-center gap-2">
+      return (
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-2">
+            {label} {required && <span className="text-red-400">*</span>}
+          </label>
+          {/* Existing items */}
+          <div className="space-y-2 mb-3">
+            {items.map((item, index) => (
+              <div key={item + index} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={item}
+                  onChange={(e) => onUpdateItem(index, e.target.value)}
+                  className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors disabled:opacity-50"
+                  maxLength={maxLength}
+                />
+                <button
+                  type="button"
+                  onClick={() => onRemoveItem(index)}
+                  className="p-2 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+          {/* Add new item */}
+          {items.length < maxItems && (
+            <div className="flex items-center gap-2">
               <input
                 type="text"
-                value={item}
-                onChange={(e) => onUpdateItem(index, e.target.value)}
-                disabled={loading}
+                value={newItemValue}
+                onChange={(e) => onNewItemChange(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors disabled:opacity-50"
+                placeholder={placeholder}
                 maxLength={maxLength}
               />
               <button
                 type="button"
-                onClick={() => onRemoveItem(index)}
-                disabled={loading}
-                className="p-2 text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                onClick={handleAddClick}
+                disabled={!newItemValue.trim()}
+                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Trash2 size={16} />
+                <Plus size={16} />
               </button>
             </div>
-          ))}
-        </div>
-
-        {/* Add new item */}
-        {items.length < maxItems && (
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={newItemValue}
-              onChange={(e) => onNewItemChange(e.target.value)}
-              onKeyPress={handleKeyPress}
-              disabled={loading}
-              className="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors disabled:opacity-50"
-              placeholder={placeholder}
-              maxLength={maxLength}
-            />
-            <button
-              type="button"
-              onClick={handleAddClick}
-              disabled={loading || !newItemValue.trim()}
-              className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Plus size={16} />
-            </button>
-          </div>
-        )}
-        
-        <p className="text-xs text-gray-500 mt-1">
-          {items.length}/{maxItems} items • {maxLength} characters max each
-          {required && items.length < 3 && (
-            <span className="text-yellow-400 ml-2">Minimum 3 required</span>
           )}
-        </p>
-      </div>
-    );
-  };
+          <p className="text-xs text-gray-500 mt-1">
+            {items.length}/{maxItems} items • {maxLength} characters max each
+            {required && items.length < 3 && (
+              <span className="text-yellow-400 ml-2">Minimum 3 required</span>
+            )}
+          </p>
+        </div>
+      );
+    }
+  );
+
+  // Memoize handlers for array fields to prevent re-renders
+  const addRequirement = React.useCallback(() => addArrayItem('requirements', newRequirement), [newRequirement, formData.requirements]);
+  const addLearningOutcome = React.useCallback(() => addArrayItem('learningOutcomes', newLearningOutcome), [newLearningOutcome, formData.learningOutcomes]);
+  const addTargetAudience = React.useCallback(() => addArrayItem('targetAudience', newTargetAudience), [newTargetAudience, formData.targetAudience]);
+
+  const removeRequirement = React.useCallback((index: number) => removeArrayItem('requirements', index), [formData.requirements]);
+  const removeLearningOutcome = React.useCallback((index: number) => removeArrayItem('learningOutcomes', index), [formData.learningOutcomes]);
+  const removeTargetAudience = React.useCallback((index: number) => removeArrayItem('targetAudience', index), [formData.targetAudience]);
+
+  const updateRequirement = React.useCallback((index: number, value: string) => updateArrayItem('requirements', index, value), [formData.requirements]);
+  const updateLearningOutcome = React.useCallback((index: number, value: string) => updateArrayItem('learningOutcomes', index, value), [formData.learningOutcomes]);
+  const updateTargetAudience = React.useCallback((index: number, value: string) => updateArrayItem('targetAudience', index, value), [formData.targetAudience]);
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -620,6 +688,37 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
                   Course price in USD (minimum $0.00)
                 </p>
               </div>
+
+              {/* Categories */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Categories
+                  <span className="text-xs text-gray-500 ml-2">(Select up to 5)</span>
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {categories.map((category) => {
+                    const isSelected = formData.categoryIds.includes(category.id);
+                    return (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => handleCategoryToggle(category.id)}
+                        disabled={loading || (!isSelected && formData.categoryIds.length >= 5)}
+                        className={`px-3 py-2 rounded-lg text-sm text-left border transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          isSelected
+                            ? "bg-gradient-to-r from-blue-600 to-blue-700 border-blue-500 text-white"
+                            : "bg-gray-800 border-gray-600 text-gray-300 hover:border-blue-500 hover:text-white"
+                        }`}
+                      >
+                        {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  {formData.categoryIds.length}/5 categories selected
+                </p>
+              </div>
             </div>
 
             {/* Course Metadata Section */}
@@ -632,9 +731,9 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
                 items={formData.requirements}
                 newItemValue={newRequirement}
                 onNewItemChange={setNewRequirement}
-                onAddItem={() => addArrayItem('requirements', newRequirement)}
-                onRemoveItem={(index) => removeArrayItem('requirements', index)}
-                onUpdateItem={(index, value) => updateArrayItem('requirements', index, value)}
+                onAddItem={addRequirement}
+                onRemoveItem={removeRequirement}
+                onUpdateItem={updateRequirement}
                 placeholder="Add a requirement (e.g., Basic computer knowledge)"
                 maxItems={10}
                 maxLength={200}
@@ -646,9 +745,9 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
                 items={formData.learningOutcomes}
                 newItemValue={newLearningOutcome}
                 onNewItemChange={setNewLearningOutcome}
-                onAddItem={() => addArrayItem('learningOutcomes', newLearningOutcome)}
-                onRemoveItem={(index) => removeArrayItem('learningOutcomes', index)}
-                onUpdateItem={(index, value) => updateArrayItem('learningOutcomes', index, value)}
+                onAddItem={addLearningOutcome}
+                onRemoveItem={removeLearningOutcome}
+                onUpdateItem={updateLearningOutcome}
                 placeholder="Add a learning outcome (e.g., Build web applications)"
                 maxItems={15}
                 maxLength={200}
@@ -661,9 +760,9 @@ const CourseEditModal: React.FC<CourseEditModalProps> = ({
                 items={formData.targetAudience}
                 newItemValue={newTargetAudience}
                 onNewItemChange={setNewTargetAudience}
-                onAddItem={() => addArrayItem('targetAudience', newTargetAudience)}
-                onRemoveItem={(index) => removeArrayItem('targetAudience', index)}
-                onUpdateItem={(index, value) => updateArrayItem('targetAudience', index, value)}
+                onAddItem={addTargetAudience}
+                onRemoveItem={removeTargetAudience}
+                onUpdateItem={updateTargetAudience}
                 placeholder="Add target audience (e.g., Beginner developers)"
                 maxItems={10}
                 maxLength={100}

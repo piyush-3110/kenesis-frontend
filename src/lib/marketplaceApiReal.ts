@@ -1,6 +1,7 @@
 /**
- * Real Marketplace API - Connects to Kenesis Backend
- * Replaces mock data with actual API calls to https://kenesis-backend.onrender.com
+ * Consolidated Marketplace API
+ * Single source of truth for all marketplace-related API calls
+ * Connects to the Kenesis Backend with proper error handling and caching
  */
 
 import {
@@ -11,26 +12,18 @@ import {
   CourseForMarketplacePage,
 } from "@/types/Product";
 import { CourseAPI } from "./api";
+import { MarketplaceAPI } from "@/features/marketplace/api";
 
-/**
- * API Response interface for pagination
- */
-export interface PaginatedResponse<T> {
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-  };
-}
+// Cache for reducing API calls
+let priceRangeCache: { data: PriceRange; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-/**
- * Transform backend course data to frontend Product format
- */
-// Minimal shape used for transformation to avoid pervasive `any` usage
+// Helper function to check if cache is valid
+const isCacheValid = (timestamp: number): boolean => {
+  return Date.now() - timestamp < CACHE_DURATION;
+};
+
+// Backend course type definitions for safe transformation
 interface RawCourseInstructor {
   id?: string;
   _id?: string;
@@ -69,11 +62,26 @@ interface RawCourse {
   updatedAt?: string;
   categories?: RawCourseCategory[];
 }
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+}
+
+/**
+ * Transform backend course data to frontend Product format
+ */
 function transformCourseToProduct(course: RawCourse): CourseForMarketplacePage {
-  // Safely handle different course data structures
   try {
     return {
-      id: (course.id || course._id || "unknown") as string,
+      id: course.id || course._id || "unknown",
       title: course.title || "Untitled Course",
       slug: course.slug || "untitled-course",
       description: course.shortDescription || course.description || "",
@@ -100,7 +108,7 @@ function transformCourseToProduct(course: RawCourse): CourseForMarketplacePage {
       createdAt: course.createdAt || new Date().toISOString(),
       updatedAt: course.updatedAt,
       categories: course.categories?.map((c: RawCourseCategory) => ({
-        id: (c.id || c._id || "unknown") as string,
+        id: c.id || c._id || "unknown",
         name: c.name,
       })),
     };
@@ -111,17 +119,17 @@ function transformCourseToProduct(course: RawCourse): CourseForMarketplacePage {
       id: course?.id || course?._id || "unknown",
       title: course?.title || "Untitled Course",
       slug: course?.slug || "untitled-course",
-      stats: {
-        duration: course?.stats?.duration || 0,
-        rating: course?.stats?.rating || 0,
-        reviewCount: course?.stats?.reviewCount || 0,
-      },
       description: "",
       instructor: {
         id: course?.instructor?.id || "unknown",
         username: course?.instructor?.username || "Unknown Author",
       },
       price: 0,
+      stats: {
+        duration: 0,
+        rating: 0,
+        reviewCount: 0,
+      },
       thumbnail: "/images/landing/product.png",
       type: "video",
       createdAt: new Date().toISOString(),
@@ -131,7 +139,7 @@ function transformCourseToProduct(course: RawCourse): CourseForMarketplacePage {
 
 /**
  * Fetch products with pagination and filtering
- * Makes actual API call to backend /api/courses endpoint
+ * Makes API call to backend /api/courses endpoint via CourseAPI
  */
 export async function fetchProducts(
   filters: MarketplaceFilters = {},
@@ -180,8 +188,8 @@ export async function fetchProducts(
           "price-high-low": { sortBy: "price", sortOrder: "desc" },
           "rating-high-low": { sortBy: "averageRating", sortOrder: "desc" },
           newest: { sortBy: "createdAt", sortOrder: "desc" },
-          "video-first": { sortBy: "createdAt", sortOrder: "desc" }, // Will filter by type
-          "document-first": { sortBy: "createdAt", sortOrder: "desc" }, // Will filter by type
+          "video-first": { sortBy: "createdAt", sortOrder: "desc" },
+          "document-first": { sortBy: "createdAt", sortOrder: "desc" },
         };
       const mapping = sortMapping[filters.sortBy];
       if (mapping) {
@@ -195,7 +203,7 @@ export async function fetchProducts(
       apiParams.maxPrice = filters.priceRange.max;
     }
 
-    // Make API call to backend
+    // Make API call to backend via CourseAPI
     const response = await CourseAPI.getPublishedCourses(apiParams);
 
     if (!response.success) {
@@ -270,20 +278,22 @@ export async function fetchCategories(): Promise<Category[]> {
   try {
     console.log("🏷️ Fetching categories from backend");
 
-    const response = await CourseAPI.getCategories();
+    const response = await MarketplaceAPI.listCategories();
 
-    if (!response.success) {
+    console.log(response);
+
+    if (!response.data.success) {
       console.error(
         "❌ Failed to fetch categories from backend:",
-        response.message
+        response.data.message
       );
       return [];
     }
 
-    const categories = response.data || [];
-    console.log(
-      `✅ Successfully fetched ${categories.length} categories from backend`
-    );
+    console.log("categories apni: ", response.data);
+
+    // Transform backend categories to include count for marketplace display
+    const categories = response.data.data || [];
 
     return categories;
   } catch (error) {
@@ -293,10 +303,11 @@ export async function fetchCategories(): Promise<Category[]> {
 }
 
 /**
- * Fetch sort options (static frontend data)
+ * Fetch sort options
+ * Returns available sort options for the marketplace
  */
 export async function fetchSortOptions(): Promise<SortOptionItem[]> {
-  // These are frontend-defined sort options
+  // These are static sort options that work with the backend API
   return [
     { value: "most-relevant", label: "Most Relevant" },
     { value: "a-z", label: "A to Z" },
@@ -317,6 +328,11 @@ export async function fetchSortOptions(): Promise<SortOptionItem[]> {
 export async function fetchPriceRange(): Promise<PriceRange> {
   try {
     console.log("💰 Fetching price range from backend");
+
+    // Check cache first
+    if (priceRangeCache && isCacheValid(priceRangeCache.timestamp)) {
+      return priceRangeCache.data;
+    }
 
     // For now, we fetch a sample of products and calculate the range
     // In the future, this could be a dedicated backend endpoint
@@ -342,6 +358,12 @@ export async function fetchPriceRange(): Promise<PriceRange> {
       min: Math.min(...prices),
       max: Math.max(...prices),
       currency: "USD",
+    };
+
+    // Cache the result
+    priceRangeCache = {
+      data: priceRange,
+      timestamp: Date.now(),
     };
 
     console.log(
@@ -439,36 +461,8 @@ export async function searchProducts(
 }
 
 /**
- * Get a single product by ID
- */
-export async function fetchProduct(
-  id: string
-): Promise<CourseForMarketplacePage | null> {
-  try {
-    console.log("📄 Fetching single product from backend:", id);
-
-    const response = await CourseAPI.getCourse(id);
-
-    if (!response.success) {
-      console.error(
-        "❌ Failed to fetch product from backend:",
-        response.message
-      );
-      return null;
-    }
-
-    const product = transformCourseToProduct(response.data);
-    console.log("✅ Successfully fetched product from backend:", product.title);
-
-    return product;
-  } catch (error) {
-    console.error("💥 Error fetching product from backend:", error);
-    return null;
-  }
-}
-
-/**
  * Get type statistics
+ * Returns the count of video vs document courses
  */
 export async function fetchTypeStats(): Promise<{
   video: number;
@@ -500,5 +494,34 @@ export async function fetchTypeStats(): Promise<{
   } catch (error) {
     console.error("💥 Error fetching type statistics from backend:", error);
     return { video: 0, document: 0 };
+  }
+}
+
+/**
+ * Get a single product by ID
+ */
+export async function fetchProduct(
+  id: string
+): Promise<CourseForMarketplacePage | null> {
+  try {
+    console.log("📄 Fetching single product from backend:", id);
+
+    const response = await CourseAPI.getCourse(id);
+
+    if (!response.success) {
+      console.error(
+        "❌ Failed to fetch product from backend:",
+        response.message
+      );
+      return null;
+    }
+
+    const product = transformCourseToProduct(response.data);
+    console.log("✅ Successfully fetched product from backend:", product.title);
+
+    return product;
+  } catch (error) {
+    console.error("💥 Error fetching product from backend:", error);
+    return null;
   }
 }

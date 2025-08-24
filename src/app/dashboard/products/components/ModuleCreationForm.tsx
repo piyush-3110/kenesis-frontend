@@ -20,8 +20,10 @@ import {
   Play,
   Headphones,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 /**
  * ModuleCreationForm Component
@@ -37,6 +39,7 @@ const ModuleCreationForm: React.FC = () => {
     updateModule,
     deleteModule,
     setCurrentStep,
+    markStepCompleted,
   } = useProductCreationStore();
 
   const {
@@ -47,6 +50,50 @@ const ModuleCreationForm: React.FC = () => {
   } = useCreateModule();
   const logout = useLogout();
   const { addToast } = useUIStore();
+
+  /**
+   * Validates that every chapter has at least one module before proceeding to review
+   * @returns Object with validation status and details
+   */
+  const validateChapterModules = () => {
+    if (!currentCourse || !currentCourse.chapters.length) {
+      return {
+        isValid: false,
+        message: "Course must have at least one chapter",
+        chaptersWithoutModules: [],
+      };
+    }
+
+    const chaptersWithoutModules = currentCourse.chapters.filter(
+      (chapter) => !chapter.modules || chapter.modules.length === 0
+    );
+
+    return {
+      isValid: chaptersWithoutModules.length === 0,
+      message:
+        chaptersWithoutModules.length > 0
+          ? `Please add at least one module to: ${chaptersWithoutModules
+              .map((chapter) => `"${chapter.title}"`)
+              .join(", ")}`
+          : "All chapters have modules",
+      chaptersWithoutModules,
+    };
+  };
+
+  const handleContinueToReview = () => {
+    const validation = validateChapterModules();
+    if (!validation.isValid) {
+      addToast({
+        type: "error", 
+        message: validation.message
+      });
+      return;
+    }
+    
+    // Mark modules step as completed
+    markStepCompleted("modules");
+    setCurrentStep("review");
+  };
 
   const [formData, setFormData] = useState<ModuleFormData>({
     title: "",
@@ -63,6 +110,8 @@ const ModuleCreationForm: React.FC = () => {
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const [mainFilePreview, setMainFilePreview] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingSubmission, setPendingSubmission] = useState(false);
 
   const currentChapter = currentCourse?.chapters.find(
     (ch) => ch.id === selectedChapterId
@@ -232,135 +281,175 @@ const ModuleCreationForm: React.FC = () => {
       resetForm();
       addToast({ type: "success", message: "Module updated successfully!" });
     } else {
-      // API call for creating new modules following exact API specification
-      try {
-        console.log("📤 Creating module for course ID:", currentCourse.id);
-        console.log("📤 Module data:", formData);
-        console.log("📤 Main file:", mainFile);
-        console.log("📤 Attachments:", attachmentFiles);
+      // Show confirmation modal for new module creation
+      setShowConfirmationModal(true);
+    }
+  };
 
-        // Create FormData following API specification exactly
-        const moduleFormData = new FormData();
+  const handleConfirmSubmission = async () => {
+    setPendingSubmission(true);
+    
+    if (!selectedChapterId || !currentCourse?.id) {
+      setPendingSubmission(false);
+      return;
+    }
 
-        // Required fields according to API docs
-        moduleFormData.append("chapterId", chapterIdForAPI);
-        moduleFormData.append("title", formData.title.trim());
-        moduleFormData.append("type", formData.type);
+    // Find the selected chapter and ensure it has a backend ID
+    const selectedChapter = currentCourse.chapters.find(
+      (ch) => ch.id === selectedChapterId
+    );
+    if (!selectedChapter) {
+      console.error("❌ Selected chapter not found");
+      addToast({
+        type: "error",
+        message: "Selected chapter not found. Please select a valid chapter.",
+      });
+      setPendingSubmission(false);
+      return;
+    }
 
-        // Optional fields - only append if they have values
-        if (formData.description?.trim()) {
-          moduleFormData.append("description", formData.description.trim());
-        }
+    // Use backend chapter ID if available, otherwise local ID
+    const chapterIdForAPI = selectedChapter.backendId || selectedChapter.id;
+    console.log("📍 Using chapter ID for API:", chapterIdForAPI);
 
-        if (formData.duration && formData.duration > 0) {
-          moduleFormData.append("duration", formData.duration.toString());
-        }
+    // Clear any existing API errors
+    clearError();
 
-        if (formData.isPreview !== undefined) {
-          moduleFormData.append("isPreview", formData.isPreview.toString());
-        }
+    try {
+      console.log("📤 Creating module for course ID:", currentCourse.id);
+      console.log("📤 Module data:", formData);
+      console.log("📤 Main file:", mainFile);
+      console.log("📤 Attachments:", attachmentFiles);
 
-        // Optional order (API will auto-assign if not provided)
-        const nextOrder = (currentChapter?.modules.length || 0) + 1;
-        moduleFormData.append("order", nextOrder.toString());
+      // Create FormData following API specification exactly
+      const moduleFormData = new FormData();
 
-        // Optional main file
-        if (mainFile) {
-          moduleFormData.append("mainFile", mainFile);
-        }
+      // Required fields according to API docs
+      moduleFormData.append("chapterId", chapterIdForAPI);
+      moduleFormData.append("title", formData.title.trim());
+      moduleFormData.append("type", formData.type);
 
-        // Optional attachments (max 10)
-        attachmentFiles.forEach((file) => {
-          moduleFormData.append("attachments", file);
+      // Optional fields - only append if they have values
+      if (formData.description?.trim()) {
+        moduleFormData.append("description", formData.description.trim());
+      }
+
+      if (formData.duration && formData.duration > 0) {
+        moduleFormData.append("duration", formData.duration.toString());
+      }
+
+      if (formData.isPreview !== undefined) {
+        moduleFormData.append("isPreview", formData.isPreview.toString());
+      }
+
+      // Optional order (API will auto-assign if not provided)
+      const nextOrder = (selectedChapter?.modules.length || 0) + 1;
+      moduleFormData.append("order", nextOrder.toString());
+
+      // Optional main file
+      if (mainFile) {
+        moduleFormData.append("mainFile", mainFile);
+      }
+
+      // Optional attachments (max 10)
+      attachmentFiles.forEach((file) => {
+        moduleFormData.append("attachments", file);
+      });
+
+      console.log(
+        "📤 API URL will be: /api/courses/" + currentCourse.id + "/modules"
+      );
+      console.log("📦 FormData contents:");
+      for (const [key, value] of moduleFormData.entries()) {
+        console.log(`  ${key}:`, value);
+      }
+
+      const result = await createModuleAPI(currentCourse.id, moduleFormData);
+
+      if (result.success && result.data) {
+        console.log("✅ Module created successfully:", result.data);
+
+        // Add module to local state with the API-generated data
+        const newModuleData = {
+          title: formData.title,
+          description: formData.description,
+          type: formData.type,
+          chapterId: selectedChapterId,
+          order: result.data.module?.order || nextOrder,
+          duration: formData.duration,
+          isPreview: formData.isPreview,
+          mainFile: mainFile || undefined,
+          attachments: attachmentFiles,
+          backendId: result.data.module?.id, // Store backend ID for future API calls
+        };
+
+        addModule(selectedChapterId, newModuleData);
+
+        resetForm();
+        setShowConfirmationModal(false);
+        setPendingSubmission(false);
+        addToast({
+          type: "success",
+          message: result.message || "Module created successfully!",
         });
+      } else {
+        console.error("❌ Module creation failed:", result);
 
-        console.log(
-          "📤 API URL will be: /api/courses/" + currentCourse.id + "/modules"
-        );
-        console.log("📦 FormData contents:");
-        for (const [key, value] of moduleFormData.entries()) {
-          console.log(`  ${key}:`, value);
-        }
-
-        const result = await createModuleAPI(currentCourse.id, moduleFormData);
-
-        if (result.success && result.data) {
-          console.log("✅ Module created successfully:", result.data);
-
-          // Add module to local state with the API-generated data
-          const newModuleData = {
-            title: formData.title,
-            description: formData.description,
-            type: formData.type,
-            chapterId: selectedChapterId,
-            order: result.data.module?.order || nextOrder,
-            duration: formData.duration,
-            isPreview: formData.isPreview,
-            mainFile: mainFile || undefined,
-            attachments: attachmentFiles,
-            backendId: result.data.module?.id, // Store backend ID for future API calls
-          };
-
-          addModule(selectedChapterId, newModuleData);
-
-          resetForm();
-          addToast({
-            type: "success",
-            message: result.message || "Module created successfully!",
-          });
-        } else {
-          console.error("❌ Module creation failed:", result);
-
-          // Handle specific error scenarios
-          if (result.isUnauthorized) {
-            logout.mutate();
-            addToast({
-              type: "error",
-              message: "Session expired. Please log in again.",
-            });
-            router.push("/");
-            return;
-          }
-
-          if (result.isForbidden) {
-            addToast({
-              type: "error",
-              message: "You are not authorized to modify this course.",
-            });
-            return;
-          }
-
-          if (result.isNotFound) {
-            addToast({
-              type: "error",
-              message:
-                "Course or chapter not found. Please ensure the chapter was saved properly.",
-            });
-            return;
-          }
-
-          if (result.isRateLimit) {
-            addToast({ type: "error", message: result.message });
-            return;
-          }
-
-          if (result.isValidationError) {
-            addToast({ type: "error", message: result.message });
-            return;
-          }
-
+        // Handle specific error scenarios
+        if (result.isUnauthorized) {
+          logout.mutate();
           addToast({
             type: "error",
-            message: result.message || "Failed to create module",
+            message: "Session expired. Please log in again.",
           });
+          router.push("/");
+          return;
         }
-      } catch (error) {
-        console.error("Module creation error:", error);
+
+        if (result.isForbidden) {
+          addToast({
+            type: "error",
+            message: "You are not authorized to modify this course.",
+          });
+          setPendingSubmission(false);
+          return;
+        }
+
+        if (result.isNotFound) {
+          addToast({
+            type: "error",
+            message:
+              "Course or chapter not found. Please ensure the chapter was saved properly.",
+          });
+          setPendingSubmission(false);
+          return;
+        }
+
+        if (result.isRateLimit) {
+          addToast({ type: "error", message: result.message });
+          setPendingSubmission(false);
+          return;
+        }
+
+        if (result.isValidationError) {
+          addToast({ type: "error", message: result.message });
+          setPendingSubmission(false);
+          return;
+        }
+
         addToast({
           type: "error",
-          message: "Something went wrong while creating the module.",
+          message: result.message || "Failed to create module",
         });
+        setPendingSubmission(false);
       }
+    } catch (error) {
+      console.error("Module creation error:", error);
+      addToast({
+        type: "error",
+        message: "Something went wrong while creating the module.",
+      });
+      setPendingSubmission(false);
     }
   };
 
@@ -449,26 +538,46 @@ const ModuleCreationForm: React.FC = () => {
           Select Chapter to Add Modules
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {currentCourse.chapters.map((chapter) => (
-            <button
-              key={chapter.id}
-              onClick={() => setSelectedChapterId(chapter.id)}
-              className={cn(
-                "p-4 rounded-lg border text-left transition-all duration-300",
-                selectedChapterId === chapter.id
-                  ? "border-[#0680FF] bg-[#0680FF]/10"
-                  : "border-gray-600 hover:border-gray-500"
-              )}
-            >
-              <h4 className="font-semibold text-white mb-1">{chapter.title}</h4>
-              <p className="text-gray-400 text-sm mb-2">
-                {chapter.description}
-              </p>
-              <span className="text-xs text-[#0680FF]">
-                {chapter.modules.length} modules
-              </span>
-            </button>
-          ))}
+          {currentCourse.chapters.map((chapter) => {
+            const hasModules = chapter.modules && chapter.modules.length > 0;
+            return (
+              <button
+                key={chapter.id}
+                onClick={() => setSelectedChapterId(chapter.id)}
+                className={cn(
+                  "p-4 rounded-lg border text-left transition-all duration-300 relative",
+                  selectedChapterId === chapter.id
+                    ? "border-[#0680FF] bg-[#0680FF]/10"
+                    : hasModules
+                    ? "border-gray-600 hover:border-gray-500"
+                    : "border-red-500/50 bg-red-500/5 hover:border-red-500"
+                )}
+              >
+                {!hasModules && (
+                  <div className="absolute top-2 right-2">
+                    <AlertTriangle className="w-4 h-4 text-red-400" />
+                  </div>
+                )}
+                <h4 className="font-semibold text-white mb-1 truncate">{chapter.title}</h4>
+                <p className="text-gray-400 text-sm mb-2 line-clamp-2">
+                  {chapter.description}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className={cn(
+                    "text-xs",
+                    hasModules ? "text-[#0680FF]" : "text-red-400"
+                  )}>
+                    {chapter.modules.length} modules
+                  </span>
+                  {!hasModules && (
+                    <span className="text-xs text-red-400 font-medium">
+                      Needs modules
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -891,23 +1000,7 @@ const ModuleCreationForm: React.FC = () => {
                           </div>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEdit(module.id)}
-                          className="p-2 text-gray-400 hover:text-[#0680FF] transition-colors"
-                          title="Edit module"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(module.id)}
-                          className="p-2 text-gray-400 hover:text-red-400 transition-colors"
-                          title="Delete module"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {/* Edit/Delete buttons removed - only available in My Products section after creation */}
                     </div>
                   </div>
                 ))}
@@ -918,23 +1011,71 @@ const ModuleCreationForm: React.FC = () => {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <button
-          onClick={() => setCurrentStep("chapters")}
-          className="flex items-center gap-2 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Chapters
-        </button>
+      <div className="space-y-4">
+        {/* Validation warning if needed */}
+        {(() => {
+          const validation = validateChapterModules();
+          if (!validation.isValid) {
+            return (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-yellow-400 font-medium text-sm">Warning: Missing Modules</p>
+                  <p className="text-yellow-300 text-sm mt-1">
+                    {validation.message}
+                  </p>
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
-        <button
-          onClick={() => setCurrentStep("review")}
-          className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300"
-        >
-          Continue to Review
-          <ArrowRight className="w-5 h-5" />
-        </button>
+        <div className="flex justify-end pt-2">
+          {/* Continue to Review Button with Tooltip */}
+          <div className="relative group">
+            <button
+              onClick={handleContinueToReview}
+              className={cn(
+                "flex items-center gap-2 px-8 py-3 font-medium rounded-lg transition-all duration-300",
+                validateChapterModules().isValid
+                  ? "bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white hover:shadow-lg hover:shadow-blue-500/25"
+                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
+              )}
+              disabled={!validateChapterModules().isValid}
+            >
+              Continue to Review
+              <ArrowRight className="w-5 h-5" />
+            </button>
+            
+            {/* Tooltip for disabled state */}
+            {!validateChapterModules().isValid && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max max-w-xs">
+                <div className="text-center">
+                  <p className="font-medium text-red-400 mb-1">Cannot Continue</p>
+                  <p className="text-gray-300">{validateChapterModules().message}</p>
+                </div>
+                {/* Tooltip arrow */}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+          setPendingSubmission(false);
+        }}
+        onConfirm={handleConfirmSubmission}
+        title="Create Module"
+        message="Are you sure you want to create this module? Once created, you'll be able to edit the content but the module structure will be saved to your course."
+        confirmText="Create Module"
+        isLoading={pendingSubmission}
+      />
     </div>
   );
 };

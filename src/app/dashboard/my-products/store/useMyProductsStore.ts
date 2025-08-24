@@ -8,19 +8,29 @@ import { CourseAPI, GetMyCoursesParams, MyCourse } from '@/lib/api';
  * My Products Store
  * Handles state management for the My Products section
  * Now integrated with My Courses API (logged-in user's courses)
+ * 
+ * Note: The My Courses API provides basic course information without detailed
+ * chapters/modules data. For complete analytics including accurate chapter/module
+ * counts and calculated durations, use the individual course view which loads
+ * complete course data via getCourse + getChapters APIs.
+ * 
+ * The cards show basic information suitable for overview purposes.
  */
 
 // Transform API MyCourse data to UI Product format
 const transformMyCourseToProduct = (course: MyCourse): Product => {
-  // Format duration from seconds to readable string
+  // Format duration from seconds to readable string (using same logic as overview)
   const formatDuration = (seconds?: number): string => {
-    if (!seconds) return '0m';
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+    if (!seconds || seconds === 0) return '0m';
+    
+    const totalMinutes = Math.ceil(seconds / 60); // Convert seconds to minutes, round up
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
     if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
     }
-    return `${minutes}m`;
+    return `${totalMinutes}m`;
   };
 
   // Determine category based on type
@@ -50,9 +60,9 @@ const transformMyCourseToProduct = (course: MyCourse): Product => {
     submittedAt: course.submittedAt,
     publishedAt: course.publishedAt,
     
-    // UI-specific computed properties
-    studentCount: 0, // Could be derived from enrollment data if available
-    duration: formatDuration(course.stats.duration),
+    // UI-specific computed properties using available data
+    studentCount: 0, // My Courses API doesn't include enrollment data - would need separate API call
+    duration: formatDuration(course.stats.duration), // Use basic duration from stats
     category: category,
     tags: tags,
     isPublished: course.status === 'published',

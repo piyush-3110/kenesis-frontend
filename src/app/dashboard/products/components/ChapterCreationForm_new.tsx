@@ -31,7 +31,6 @@ const ChapterCreationForm: React.FC = () => {
     updateChapter,
     deleteChapter,
     setCurrentStep,
-    markStepCompleted,
   } = useProductCreationStore();
 
   const {
@@ -271,8 +270,6 @@ const ChapterCreationForm: React.FC = () => {
       return;
     }
 
-    // Mark chapters step as completed
-    markStepCompleted("chapters");
     setCurrentStep("modules");
   };
 
@@ -462,7 +459,20 @@ const ChapterCreationForm: React.FC = () => {
                     )}
                   </div>
                 </div>
-                {/* Edit/Delete buttons removed - only available in My Products section after creation */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEdit(chapter.id)}
+                    className="p-2 text-gray-400 hover:text-[#0680FF] transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(chapter.id)}
+                    className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -470,7 +480,14 @@ const ChapterCreationForm: React.FC = () => {
       )}
 
       {/* Navigation */}
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <button
+          onClick={() => setCurrentStep("course")}
+          className="flex items-center gap-2 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Course
+        </button>
         <button
           onClick={handleContinueToModules}
           disabled={!currentCourse.chapters.length}

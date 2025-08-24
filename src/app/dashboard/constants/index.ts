@@ -169,10 +169,6 @@ export const DASHBOARD_BOTTOM_ITEMS: DashboardMenuItem[] = [
     label: 'Messages',
     icon: MessageSquare,
     href: '/dashboard/messages',
-    badge: {
-      count: 3,
-      variant: 'primary',
-    },
   },
   {
     id: 'logout',

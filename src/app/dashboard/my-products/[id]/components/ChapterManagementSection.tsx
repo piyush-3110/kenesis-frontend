@@ -5,6 +5,8 @@ import { Plus, Edit2, Trash2, FileText, Video } from 'lucide-react';
 import { CourseAPI } from '@/lib/api';
 import { DASHBOARD_COLORS } from '../../../constants';
 import ChapterEditModal from './ChapterEditModal';
+import DeleteChapterModal from './DeleteChapterModal';
+import { useUIStore } from '@/store/useUIStore';
 
 interface ChapterManagementSectionProps {
   courseId: string;
@@ -23,9 +25,12 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
   onChaptersChange,
   canEdit
 }) => {
+  const { addToast } = useUIStore();
   const [isCreating, setIsCreating] = useState(false);
   const [editingChapter, setEditingChapter] = useState<string | null>(null);
   const [selectedChapterForEdit, setSelectedChapterForEdit] = useState<any | null>(null);
+  const [deletingChapter, setDeletingChapter] = useState<any | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
@@ -72,17 +77,61 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
   };
 
   const handleDeleteChapter = async (chapterId: string) => {
-    if (!confirm('Are you sure you want to delete this chapter? All modules in this chapter will also be deleted.')) {
-      return;
-    }
+    const chapter = chapters.find(ch => ch.id === chapterId);
+    if (!chapter) return;
+    
+    setDeletingChapter(chapter);
+  };
 
+  const confirmDeleteChapter = async () => {
+    if (!deletingChapter) return;
+    
     try {
-      const response = await CourseAPI.deleteChapter(courseId, chapterId);
+      setDeleteLoading(true);
+      console.log('🗑️ Attempting to delete chapter:', deletingChapter.id);
+      const response = await CourseAPI.deleteChapter(courseId, deletingChapter.id);
+      
       if (response.success) {
-        onChaptersChange(chapters.filter(ch => ch.id !== chapterId));
+        console.log('✅ Chapter deleted successfully');
+        onChaptersChange(chapters.filter(ch => ch.id !== deletingChapter.id));
+        setDeletingChapter(null);
+        addToast({
+          type: "success",
+          message: response.message || "Chapter deleted successfully!"
+        });
+      } else {
+        console.error('❌ Failed to delete chapter:', response.message);
+        addToast({
+          type: "error",
+          message: response.message || "Failed to delete chapter"
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete chapter:', error);
+      
+      // Extract meaningful error message from the backend response
+      let errorMessage = 'Failed to delete chapter';
+      
+      if (error.response?.data?.message) {
+        // Backend returned structured error with message
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        // Alternative error field
+        errorMessage = error.response.data.error;
+      } else if (error.message && error.message !== 'Request failed with status code 400') {
+        // Use error message if it's meaningful
+        errorMessage = error.message;
+      } else if (error.response?.status === 400) {
+        // Generic 400 error, likely validation issue
+        errorMessage = 'Cannot delete chapter: Please check if all modules are deleted first';
+      }
+      
+      addToast({
+        type: "error",
+        message: errorMessage
+      });
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -215,6 +264,17 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
           chapter={selectedChapterForEdit}
           courseId={courseId}
           onChapterUpdated={handleChapterUpdated}
+        />
+      )}
+
+      {/* Delete Chapter Modal */}
+      {deletingChapter && (
+        <DeleteChapterModal
+          isOpen={true}
+          onClose={() => setDeletingChapter(null)}
+          onConfirm={confirmDeleteChapter}
+          chapter={deletingChapter}
+          loading={deleteLoading}
         />
       )}
     </div>

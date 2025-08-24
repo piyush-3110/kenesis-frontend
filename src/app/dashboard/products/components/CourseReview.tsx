@@ -17,8 +17,11 @@ import {
   Send,
   CheckCircle,
   Loader2,
+  AlertCircle,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 /**
  * CourseReview Component
@@ -26,7 +29,7 @@ import { cn } from "@/lib/utils";
  */
 const CourseReview: React.FC = () => {
   const router = useRouter();
-  const { currentCourse, setCurrentStep, resetCreation } =
+  const { currentCourse, setCurrentStep, resetCreation, markStepCompleted } =
     useProductCreationStore();
   const {
     submitForReview: submitCourseAPI,
@@ -39,6 +42,8 @@ const CourseReview: React.FC = () => {
 
   const [submissionNotes, setSubmissionNotes] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [pendingSubmission, setPendingSubmission] = useState(false);
 
   const getModuleIcon = (type: string) => {
     switch (type) {
@@ -79,11 +84,80 @@ const CourseReview: React.FC = () => {
     );
   };
 
+  /**
+   * Validates that every chapter has at least one module
+   * This is a critical requirement for course submission
+   * @returns Object with validation status and details about missing modules
+   */
+  const validateChapterModules = () => {
+    if (!currentCourse || !currentCourse.chapters.length) {
+      return {
+        isValid: false,
+        message: "Course must have at least one chapter",
+        chaptersWithoutModules: [],
+      };
+    }
+
+    const chaptersWithoutModules = currentCourse.chapters.filter(
+      (chapter) => !chapter.modules || chapter.modules.length === 0
+    );
+
+    return {
+      isValid: chaptersWithoutModules.length === 0,
+      message:
+        chaptersWithoutModules.length > 0
+          ? `The following chapters need at least one module: ${chaptersWithoutModules
+              .map((chapter) => `"${chapter.title}"`)
+              .join(", ")}`
+          : "All chapters have modules",
+      chaptersWithoutModules,
+    };
+  };
+
+  /**
+   * Checks if the course is ready for submission
+   * Includes all necessary validations for production readiness
+   */
+  const isCourseReadyForSubmission = () => {
+    const moduleValidation = validateChapterModules();
+    const hasBasicInfo = currentCourse?.title && currentCourse?.description;
+    
+    return {
+      isReady: moduleValidation.isValid && hasBasicInfo,
+      validationErrors: [
+        ...(moduleValidation.isValid ? [] : [moduleValidation.message]),
+        ...(hasBasicInfo ? [] : ["Course must have title and description"]),
+      ],
+    };
+  };
+
   const handleSubmitForApproval = async () => {
     if (!currentCourse?.id) {
       addToast({ type: "error", message: "No course found to submit." });
       return;
     }
+
+    // Validate course before submission
+    const readinessCheck = isCourseReadyForSubmission();
+    if (!readinessCheck.isReady) {
+      addToast({
+        type: "error",
+        message: `Course not ready for submission: ${readinessCheck.validationErrors.join(", ")}`,
+      });
+      return;
+    }
+
+    // Show confirmation modal
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmSubmission = async () => {
+    if (!currentCourse?.id) {
+      setPendingSubmission(false);
+      return;
+    }
+
+    setPendingSubmission(true);
 
     // Clear any existing API errors
     clearError();
@@ -96,6 +170,12 @@ const CourseReview: React.FC = () => {
 
       if (result.success) {
         setIsSubmitted(true);
+        setShowConfirmationModal(false);
+        setPendingSubmission(false);
+        
+        // Mark review step as completed
+        markStepCompleted("review");
+        
         addToast({
           type: "success",
           message: result.message || "Course submitted for review!",
@@ -123,6 +203,7 @@ const CourseReview: React.FC = () => {
             type: "error",
             message: "You are not authorized to submit this course.",
           });
+          setPendingSubmission(false);
           return;
         }
 
@@ -131,16 +212,19 @@ const CourseReview: React.FC = () => {
             type: "error",
             message: "Course not found. Please refresh and try again.",
           });
+          setPendingSubmission(false);
           return;
         }
 
         if (result.isRateLimit) {
           addToast({ type: "error", message: result.message });
+          setPendingSubmission(false);
           return;
         }
 
         if (result.isValidationError) {
           addToast({ type: "error", message: result.message });
+          setPendingSubmission(false);
           return;
         }
 
@@ -149,6 +233,7 @@ const CourseReview: React.FC = () => {
             type: "error",
             message: "Course not ready for submission.",
           });
+          setPendingSubmission(false);
           return;
         }
 
@@ -156,6 +241,7 @@ const CourseReview: React.FC = () => {
           type: "error",
           message: result.message || "Failed to submit course",
         });
+        setPendingSubmission(false);
       }
     } catch (error) {
       console.error("Course submission error:", error);
@@ -163,6 +249,7 @@ const CourseReview: React.FC = () => {
         type: "error",
         message: "Something went wrong while submitting the course.",
       });
+      setPendingSubmission(false);
     }
   };
 
@@ -206,6 +293,11 @@ const CourseReview: React.FC = () => {
   const totalDuration = getTotalDuration();
   const totalModules = getTotalModules();
   const totalChapters = currentCourse.chapters.length;
+  
+  // Validation checks for production readiness
+  const moduleValidation = validateChapterModules();
+  const courseReadiness = isCourseReadyForSubmission();
+  const isSubmissionDisabled = apiLoading || !courseReadiness.isReady;
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
@@ -251,14 +343,32 @@ const CourseReview: React.FC = () => {
           <div className="space-y-6">
             <div>
               <h3 className="font-semibold text-white mb-2">Course Type</h3>
-              <p className="text-gray-400">{currentCourse.type}</p>
+              <p className="text-gray-400 break-words">{currentCourse.type}</p>
             </div>
+
+            {/* Categories Section */}
+            {(currentCourse as any)?.categories && (currentCourse as any).categories.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-white mb-2">Categories</h3>
+                <div className="flex flex-wrap gap-2">
+                  {(currentCourse as any).categories.map((category: any, index: number) => (
+                    <span
+                      key={category.id || index}
+                      className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full text-sm truncate max-w-[150px]"
+                      title={category.name}
+                    >
+                      {category.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div>
               <h3 className="font-semibold text-white mb-2">
                 Short Description
               </h3>
-              <p className="text-gray-400">{currentCourse.shortDescription}</p>
+              <p className="text-gray-400 break-words line-clamp-3">{currentCourse.shortDescription}</p>
             </div>
 
             <div>
@@ -295,7 +405,7 @@ const CourseReview: React.FC = () => {
             <h3 className="font-semibold text-white mb-2">
               Detailed Description
             </h3>
-            <p className="text-gray-400 leading-relaxed">
+            <p className="text-gray-400 leading-relaxed break-words">
               {currentCourse.description}
             </p>
           </div>
@@ -314,13 +424,13 @@ const CourseReview: React.FC = () => {
             {/* Chapter Header */}
             <div className="p-6 border-b border-gray-700">
               <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                <div className="flex-1 min-w-0 pr-4">
+                  <h3 className="text-lg font-semibold text-white mb-2 truncate" title={`Chapter ${chapterIndex + 1}: ${chapter.title}`}>
                     Chapter {chapterIndex + 1}: {chapter.title}
                   </h3>
-                  <p className="text-gray-400">{chapter.description}</p>
+                  <p className="text-gray-400 break-words line-clamp-2">{chapter.description}</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex-shrink-0">
                   <div className="text-sm text-[#0680FF] font-medium">
                     {chapter.modules.length} modules
                   </div>
@@ -342,27 +452,27 @@ const CourseReview: React.FC = () => {
                   key={module.id}
                   className="flex items-center justify-between p-4 bg-gray-800/30 rounded-lg"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="text-[#0680FF]">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="text-[#0680FF] flex-shrink-0">
                       {getModuleIcon(module.type)}
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-white">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-white truncate" title={`${moduleIndex + 1}. ${module.title}`}>
                           {moduleIndex + 1}. {module.title}
                         </span>
                         {module.isPreview && (
-                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded">
+                          <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded flex-shrink-0">
                             Preview
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-400 text-sm">
+                      <p className="text-gray-400 text-sm break-words line-clamp-2">
                         {module.description}
                       </p>
                     </div>
                   </div>
-                  <div className="text-right text-sm text-gray-500">
+                  <div className="text-right text-sm text-gray-500 flex-shrink-0 ml-3">
                     <div>{module.duration} min</div>
                     <div className="text-xs">{module.type.toUpperCase()}</div>
                   </div>
@@ -378,7 +488,7 @@ const CourseReview: React.FC = () => {
         <h3 className="font-semibold text-white mb-4">
           Pre-submission Checklist
         </h3>
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-400" />
             <span className="text-gray-300">Course details completed</span>
@@ -393,46 +503,85 @@ const CourseReview: React.FC = () => {
             <CheckCircle className="w-5 h-5 text-green-400" />
             <span className="text-gray-300">{totalModules} modules added</span>
           </div>
+          
+          {/* Module validation check */}
+          <div className="flex items-start gap-2">
+            {moduleValidation.isValid ? (
+              <CheckCircle className="w-5 h-5 text-green-400 mt-0.5" />
+            ) : (
+              <XCircle className="w-5 h-5 text-red-400 mt-0.5" />
+            )}
+            <div className="flex-1">
+              <span className={moduleValidation.isValid ? "text-gray-300" : "text-red-400"}>
+                Every chapter has at least one module
+              </span>
+              {!moduleValidation.isValid && moduleValidation.chaptersWithoutModules.length > 0 && (
+                <div className="mt-1 text-sm text-red-300">
+                  Missing modules in: {moduleValidation.chaptersWithoutModules.map(chapter => `"${chapter.title}"`).join(", ")}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex items-center gap-2">
             <CheckCircle className="w-5 h-5 text-green-400" />
             <span className="text-gray-300">Payment tokens configured</span>
           </div>
         </div>
+        
+        {/* Warning message if validation fails */}
+        {!courseReadiness.isReady && (
+          <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-yellow-400 font-medium text-sm">Course Not Ready for Submission</p>
+              <p className="text-yellow-300 text-sm mt-1">
+                {courseReadiness.validationErrors.join(". ")}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-between pt-6">
-        <button
-          onClick={() => setCurrentStep("modules")}
-          className="flex items-center gap-2 px-6 py-3 border border-gray-600 text-gray-300 rounded-lg hover:border-gray-500 transition-colors"
-          disabled={apiLoading}
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Modules
-        </button>
-
-        <button
-          onClick={handleSubmitForApproval}
-          disabled={apiLoading}
-          className={cn(
-            "flex items-center gap-2 px-8 py-3 font-medium rounded-lg transition-all duration-300",
-            apiLoading
-              ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white hover:shadow-lg hover:shadow-blue-500/25"
+      <div className="flex justify-end pt-6">
+        {/* Submit Button with Tooltip */}
+        <div className="relative group">
+          <button
+            onClick={handleSubmitForApproval}
+            disabled={isSubmissionDisabled}
+            className={cn(
+              "flex items-center gap-2 px-8 py-3 font-medium rounded-lg transition-all duration-300",
+              isSubmissionDisabled
+                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white hover:shadow-lg hover:shadow-blue-500/25"
+            )}
+          >
+            {apiLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <Send className="w-5 h-5" />
+                Submit for Approval
+              </>
+            )}
+          </button>
+          
+          {/* Tooltip for disabled state */}
+          {!courseReadiness.isReady && !apiLoading && (
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max max-w-xs">
+              <div className="text-center">
+                <p className="font-medium text-red-400 mb-1">Cannot Submit Course</p>
+                <p className="text-gray-300">{courseReadiness.validationErrors.join(". ")}</p>
+              </div>
+              {/* Tooltip arrow */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
+            </div>
           )}
-        >
-          {apiLoading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Submitting...
-            </>
-          ) : (
-            <>
-              <Send className="w-5 h-5" />
-              Submit for Approval
-            </>
-          )}
-        </button>
+        </div>
       </div>
 
       {/* Submission Notes */}
@@ -461,6 +610,21 @@ const CourseReview: React.FC = () => {
           <p className="text-red-400 text-sm">{apiError}</p>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => {
+          setShowConfirmationModal(false);
+          setPendingSubmission(false);
+        }}
+        onConfirm={handleConfirmSubmission}
+        title="Submit Course for Review"
+        message="Are you sure you want to submit this course for admin review? Once submitted, you won't be able to make changes until the review is complete."
+        confirmText="Submit Course"
+        type="info"
+        isLoading={pendingSubmission}
+      />
     </div>
   );
 };

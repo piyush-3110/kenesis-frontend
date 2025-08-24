@@ -27,10 +27,10 @@ export const useModuleContent = (
     queryKey: moduleContentKey(courseId || "", moduleId || ""),
     enabled: enabled && !!courseId && !!chapterId && !!moduleId,
     queryFn: async (): Promise<ModuleContentData> => {
-      const res = await CourseAPI.getModuleContent(
+      const res = await CourseAPI.getModuleContentById(
         courseId!,
-        chapterId!,
-        moduleId!
+        chapterId!
+        
       );
       if (!res.success)
         throw new Error(res.message || "Failed to load module content");

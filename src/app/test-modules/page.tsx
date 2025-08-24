@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import ModuleManagementSection from '../dashboard/my-products/[id]/components/ModuleManagementSection';
+import ModuleManagementSection from '../dashboard/my-products/components/ModuleManagementSectionNew';
 
 // Test page to validate module management functionality
 export default function TestModulesPage() {
