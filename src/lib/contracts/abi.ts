@@ -557,11 +557,13 @@ export const ERC20_ABI = [
 export interface CoursePurchaseParams {
   seller: `0x${string}`;
   priceInUSD: bigint;
+  courseId: string;
   courseURI: string;
   courseDuration: bigint;
   tokenToPayWith: `0x${string}`;
   affiliateAddress: `0x${string}`;
   affiliatePercentage: bigint;
+  backendAuthHash: string;
 }
 
 export interface CoursePurchasedEvent {
