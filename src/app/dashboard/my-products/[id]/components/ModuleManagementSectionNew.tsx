@@ -84,6 +84,10 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   useEffect(() => {
     if (chapters.length > 0 && !selectedChapter) {
       setSelectedChapter(chapters[0].id);
+    } else if (chapters.length === 0) {
+      // If no chapters available, clear loading state
+      setLoading(false);
+      setModules([]);
     }
   }, [chapters, selectedChapter]);
 
@@ -95,6 +99,10 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
       } else {
         loadModulesForChapter(selectedChapter);
       }
+    } else {
+      // If no chapter selected, stop loading
+      setLoading(false);
+      setModules([]);
     }
   }, [selectedChapter, filters]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -384,7 +392,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p className="text-gray-400">Loading modules...</p>
           </div>
-        ) : !selectedChapter ? (
+        ) : !selectedChapter || selectedChapter === "" ? (
           <div className="text-center py-12">
             <FileText size={48} className="mx-auto text-gray-600 mb-4" />
             <h3 className="text-lg font-medium text-gray-300 mb-2">Select a Chapter</h3>

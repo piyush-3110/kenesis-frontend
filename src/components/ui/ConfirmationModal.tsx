@@ -72,17 +72,17 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         }
       }}
     >
-      <div className="bg-gray-800 rounded-lg w-full max-w-md border border-gray-700">
+      <div className="bg-gray-800 rounded-lg w-full max-w-md border border-gray-700 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {getIcon()}
-            <h2 className="text-lg font-semibold text-white">{title}</h2>
+            <h2 className="text-lg font-semibold text-white break-words">{title}</h2>
           </div>
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+            className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 flex-shrink-0"
           >
             <X size={20} />
           </button>
@@ -91,7 +91,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         {/* Content */}
         <div className="p-6">
           <div className={`p-4 rounded-lg border ${getIconBgColor()} mb-6`}>
-            <p className="text-gray-300 text-sm leading-relaxed">{message}</p>
+            <p className="text-gray-300 text-sm leading-relaxed break-words whitespace-pre-wrap">{message}</p>
           </div>
 
           {/* Actions */}
