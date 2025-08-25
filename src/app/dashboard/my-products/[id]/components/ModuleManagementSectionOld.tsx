@@ -232,12 +232,12 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
     try {
       const response = await CourseAPI.deleteModule(
         courseId,
-        module.chapterId || selectedChapter,
-        module.id
+        module.id,
+        true // Use hard delete
       );
 
       if (response.success) {
-        console.log("✅ Module deleted successfully");
+        console.log("✅ Module deleted successfully (hard delete)");
         messages.moduleDeleted(module.title);
         // Reload modules
         if (selectedChapter === "all") {

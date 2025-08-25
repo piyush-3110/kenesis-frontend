@@ -252,7 +252,7 @@ const CourseManagementPage: React.FC = () => {
       title={course.title || 'Course Management'}
       subtitle="Manage your course content, chapters, and modules"
     >
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6 flex flex-col min-h-[calc(100vh-200px)]">
         {/* Course Header Card */}
         <div 
           className="rounded-2xl p-[1px]"
@@ -385,13 +385,13 @@ const CourseManagementPage: React.FC = () => {
 
         {/* Content Area */}
         <div 
-          className="rounded-2xl p-[1px]"
+          className="rounded-2xl p-[1px] flex-1 min-h-0"
           style={{
             background: DASHBOARD_COLORS.PRIMARY_BORDER,
           }}
         >
           <div 
-            className="rounded-2xl p-6 min-h-96"
+            className="rounded-2xl p-6 h-full"
             style={{
               background: DASHBOARD_COLORS.CARD_BG,
             }}

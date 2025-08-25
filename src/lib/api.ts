@@ -1953,11 +1953,12 @@ export const CourseAPI = {
    * Delete a module
    * DELETE /api/courses/{courseId}/modules/{moduleId}
    * Following the new API specification with force parameter support
+   * Default: Hard delete (force=true) for immediate permanent removal
    */
   deleteModule: async (
     courseId: string,
     moduleId: string,
-    force: boolean = false
+    force: boolean = true
   ): Promise<ApiResponse<{
     moduleId: string;
     deletedAt: string;
@@ -1966,7 +1967,7 @@ export const CourseAPI = {
     console.log("🗑️ [API] Starting deleteModule request...");
     console.log("🗑️ [API] Course ID:", courseId);
     console.log("🗑️ [API] Module ID:", moduleId);
-    console.log("🗑️ [API] Force delete:", force);
+    console.log("🗑️ [API] Force delete (hard delete):", force);
     console.log("🗑️ [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId);
 
     // Frontend validation
@@ -1987,9 +1988,10 @@ export const CourseAPI = {
     }
 
     try {
-      const params = force ? { force: 'true' } : {};
+      // Always use force=true for hard delete by default
+      const params = { force: force.toString() };
       console.log("🗑️ [API] Request params:", params);
-      console.log("🗑️ [API] Making DELETE request...");
+      console.log("🗑️ [API] Making DELETE request with hard delete...");
       
       const response = await http.delete(`/api/courses/${courseId}/modules/${moduleId}`, {
         params,
@@ -2007,10 +2009,10 @@ export const CourseAPI = {
       const apiResponse = response.data;
 
       if (apiResponse.success) {
-        console.log("✅ [API] Module deleted successfully");
+        console.log("✅ [API] Module permanently deleted successfully");
         console.log("✅ [API] Deleted module ID:", apiResponse.data?.moduleId);
         console.log("✅ [API] Deleted at:", apiResponse.data?.deletedAt);
-        console.log("✅ [API] Force delete:", apiResponse.data?.force);
+        console.log("✅ [API] Hard delete:", apiResponse.data?.force);
       } else {
         console.error("❌ [API] Failed to delete module:", apiResponse.message);
         console.error("❌ [API] Full error response:", JSON.stringify(apiResponse, null, 2));
@@ -2026,7 +2028,7 @@ export const CourseAPI = {
       console.error("  Full error:", error);
 
       // Extract meaningful error message from the backend response
-      let errorMessage = 'Failed to delete module';
+      let errorMessage = 'Failed to permanently delete module';
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

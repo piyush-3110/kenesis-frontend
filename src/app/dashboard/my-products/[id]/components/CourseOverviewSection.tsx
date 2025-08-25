@@ -190,10 +190,10 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
   }, [chapters, totalDuration, totalChapters, totalModules]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 h-full flex flex-col">
       {/* Course Header Info */}
       <div
-        className="rounded-2xl p-[1px]"
+        className="rounded-2xl p-[1px] flex-shrink-0"
         style={{
           background: DASHBOARD_COLORS.PRIMARY_BORDER,
         }}
@@ -287,7 +287,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
 
       {/* Gradient Separator */}
       <div
-        className="h-px w-full"
+        className="h-px w-full flex-shrink-0"
         style={{
           background:
             "linear-gradient(90deg, transparent 0%, rgba(6, 128, 255, 0.3) 50%, transparent 100%)",
@@ -295,7 +295,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
       />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 flex-shrink-0">
         {/* Enrollments Card */}
         <div
           className="rounded-xl p-[1px]"
@@ -413,7 +413,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
 
       {/* Gradient Separator */}
       <div
-        className="h-px w-full"
+        className="h-px w-full flex-shrink-0"
         style={{
           background:
             "linear-gradient(90deg, transparent 0%, rgba(6, 128, 255, 0.2) 50%, transparent 100%)",
@@ -421,16 +421,16 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
       />
 
       {/* Course Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
         {/* Metadata */}
         <div
-          className="rounded-xl p-[1px]"
+          className="rounded-xl p-[1px] h-full"
           style={{
             background: DASHBOARD_COLORS.PRIMARY_BORDER,
           }}
         >
           <div
-            className="rounded-xl p-6"
+            className="rounded-xl p-6 h-full flex flex-col"
             style={{
               background: DASHBOARD_COLORS.CARD_BG,
             }}
@@ -438,7 +438,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
             <h3 className="text-lg font-semibold text-white mb-4">
               Course Information
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-4 flex-1 overflow-y-auto">
               {course.metadata?.requirements &&
                 course.metadata.requirements.length > 0 && (
                   <div>
@@ -464,7 +464,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
               {course.metadata?.learningOutcomes &&
                 course.metadata.learningOutcomes.length > 0 && (
                   <div>
-                    <h4 className="text-sm font-medium text-gray-300 mb-2">
+                    <h4 className="text-lg text-gray-300 mb-2">
                       Learning Outcomes
                     </h4>
                     <ul className="space-y-1">
@@ -472,7 +472,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
                         (outcome: string, index: number) => (
                           <li
                             key={index}
-                            className="text-gray-400 text-sm flex items-center gap-2"
+                            className="text-gray-400 text-[17px] flex items-center gap-2"
                           >
                             <div className="w-1 h-1 bg-green-400 rounded-full"></div>
                             <span className="line-clamp-1">{outcome}</span>
@@ -510,13 +510,13 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
 
         {/* Timeline & Pricing */}
         <div
-          className="rounded-xl p-[1px]"
+          className="rounded-xl p-[1px] h-full"
           style={{
             background: DASHBOARD_COLORS.PRIMARY_BORDER,
           }}
         >
           <div
-            className="rounded-xl p-6"
+            className="rounded-xl p-6 h-full flex flex-col"
             style={{
               background: DASHBOARD_COLORS.CARD_BG,
             }}
@@ -524,7 +524,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
             <h3 className="text-lg font-semibold text-white mb-4">
               Course Settings
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-4 flex-1 overflow-y-auto">
               <div className="flex items-center gap-3">
                 <Calendar className="text-blue-400" size={16} />
                 <div>
@@ -628,10 +628,10 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
 
       {/* Status Information */}
       {course.status !== "draft" && (
-        <>
+        <div className="flex-shrink-0">
           {/* Gradient Separator */}
           <div
-            className="h-px w-full"
+            className="h-px w-full mb-8"
             style={{
               background:
                 "linear-gradient(90deg, transparent 0%, rgba(6, 128, 255, 0.2) 50%, transparent 100%)",
@@ -701,7 +701,7 @@ const CourseOverviewSection: React.FC<CourseOverviewSectionProps> = ({
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

@@ -223,9 +223,9 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
   const handleDeleteModule = async (module: any) => {
     try {
-      const response = await CourseAPI.deleteModule(courseId, module.id, false);
+      const response = await CourseAPI.deleteModule(courseId, module.id, true);
       if (response.success) {
-        console.log("✅ Module deleted successfully");
+        console.log("✅ Module deleted successfully (hard delete)");
         messages.moduleDeleted(module.title);
         // Reload modules
         if (selectedChapter === "all") {
