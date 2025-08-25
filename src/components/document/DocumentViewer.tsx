@@ -97,7 +97,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 bg-black/80 backdrop-blur-sm ${className}`}>
+    <div className={`fixed inset-0 pt-24 z-[9999] bg-black/80 backdrop-blur-sm ${className}`}>
       <div className="flex h-full flex-col">
         {/* Header */}
         <div className="flex items-center justify-between bg-gray-900 px-6 py-4 text-white">

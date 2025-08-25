@@ -34,6 +34,7 @@ const CourseManagementPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load course data
   useEffect(() => {
@@ -159,6 +160,7 @@ const CourseManagementPage: React.FC = () => {
   };
 
   const handleSubmitForReview = async (message?: string) => {
+    setIsSubmitting(true);
     try {
       const response = await CourseAPI.submitForReview(courseId, message);
       if (response.success) {
@@ -173,6 +175,8 @@ const CourseManagementPage: React.FC = () => {
     } catch (err: any) {
       console.error('Failed to submit course:', err);
       showError(err.message || 'Network error occurred while submitting course');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -311,10 +315,11 @@ const CourseManagementPage: React.FC = () => {
               {canSubmit && (
                 <button
                   onClick={() => setIsSubmitModalOpen(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium"
+                  disabled={isSubmitting}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={16} />
-                  <span className="hidden sm:inline">Submit</span>
+                  <span className="hidden sm:inline">{isSubmitting ? 'Submitting...' : 'Submit'}</span>
                 </button>
               )}
 
