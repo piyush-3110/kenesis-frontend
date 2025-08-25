@@ -25,6 +25,7 @@ import type { PurchaseWithNFTResult } from "@/lib/nft/purchaseFlow";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 import { useChainSwitchRequired } from "@/components/web3/ChainSwitch";
 import { useUIStore } from "@/store/useUIStore";
+import { getPurchaseErrorMessage } from "@/lib/utils/errorMessages";
 
 interface CourseAccess {
   hasAccess: boolean;
@@ -163,15 +164,15 @@ function BlockchainPurchaseSectionContent({
       }
     } catch (error) {
       console.error("Failed to generate NFT metadata:", error);
+      const friendlyErrorMessage = getPurchaseErrorMessage(error);
       setNftResult({
         success: false,
         steps: [],
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        error: friendlyErrorMessage,
       });
       addToast({
         type: "error",
-        message: "Failed to prepare NFT certificate.",
+        message: "Failed to prepare NFT certificate. " + friendlyErrorMessage,
       });
       setPurchaseStep("idle");
     }

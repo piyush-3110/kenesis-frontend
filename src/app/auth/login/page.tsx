@@ -15,15 +15,31 @@ import { useEffect } from "react";
 export default function LoginPage() {
   const form = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
   const login = useLogin();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !authLoading) {
       router.push("/dashboard");
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, authLoading, router]);
+
+  // Show loading during auth check
+  if (authLoading) {
+    return (
+      <AuthShell
+        title="Loading..."
+        subtitle="Checking authentication"
+        backHref="/"
+        backText="Back to Home"
+      >
+        <div className="flex items-center justify-center py-8">
+          <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        </div>
+      </AuthShell>
+    );
+  }
 
   // Don't render if authenticated (will redirect)
   if (isAuthenticated) {

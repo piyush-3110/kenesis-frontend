@@ -29,6 +29,7 @@ import {
   type PurchaseStatusResponse,
 } from "@/lib/purchase/purchaseAuthService";
 import { createCourseNFT, type NFTCreationInput } from "@/lib/nft/nftService";
+import { getPurchaseErrorMessage } from "@/lib/utils/errorMessages";
 
 export interface ContractPurchaseParams {
   course: CourseResponse;
@@ -431,10 +432,10 @@ export const usePurchaseCourse = () => {
       return { success: true };
     } catch (error) {
       console.error("Purchase failed:", error);
+      const friendlyErrorMessage = getPurchaseErrorMessage(error);
       return {
         success: false,
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        error: friendlyErrorMessage,
       };
     }
   };
@@ -463,9 +464,10 @@ export const usePurchaseCourse = () => {
       return statusResponse;
     } catch (error) {
       console.error("❌ Purchase status check error:", error);
+      const friendlyErrorMessage = getPurchaseErrorMessage(error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Status check failed",
+        error: friendlyErrorMessage,
       };
     }
   };

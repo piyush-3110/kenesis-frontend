@@ -33,6 +33,7 @@ import {
 } from "@/lib/contracts/marketplaceService";
 import { getTokenConfig, getChainConfig } from "@/lib/contracts/chainConfig";
 import type { CourseResponse } from "@/lib/api/courseApi";
+import { getPurchaseErrorMessage } from "@/lib/utils/errorMessages";
 
 interface SmartContractPurchaseProps {
   course: CourseResponse;
@@ -202,9 +203,9 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
   // Handle errors from both transaction write and receipt
   useEffect(() => {
     if (purchase.error) {
-      const errorMessage = purchase.error.message || "Purchase failed";
-      setError(errorMessage);
-      onPurchaseError?.(errorMessage);
+      const friendlyErrorMessage = getPurchaseErrorMessage(purchase.error);
+      setError(friendlyErrorMessage);
+      onPurchaseError?.(friendlyErrorMessage);
       console.error("Purchase error detected:", purchase.error);
 
       // Reset to purchase step when there's an error so user can retry
@@ -222,15 +223,15 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
       console.log("Purchase result:", result);
 
       if (!result.success && result.error) {
-        setError(result.error);
-        onPurchaseError?.(result.error);
+        const friendlyErrorMessage = getPurchaseErrorMessage(result.error);
+        setError(friendlyErrorMessage);
+        onPurchaseError?.(friendlyErrorMessage);
       }
     } catch (error) {
       console.error("Purchase error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      setError(errorMessage);
-      onPurchaseError?.(errorMessage);
+      const friendlyErrorMessage = getPurchaseErrorMessage(error);
+      setError(friendlyErrorMessage);
+      onPurchaseError?.(friendlyErrorMessage);
     }
   };
 
@@ -260,7 +261,10 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
           <ChainSwitchCard
             tokenString={selectedToken}
             onSwitchComplete={() => setCurrentStep("purchase")}
-            onSwitchError={(err) => setError(err.message)}
+            onSwitchError={(err) => {
+              const friendlyErrorMessage = getPurchaseErrorMessage(err);
+              setError(friendlyErrorMessage);
+            }}
           />
         );
 
