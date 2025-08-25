@@ -136,7 +136,7 @@ const ProductDetailPage: React.FC = () => {
               console.log(
                 "🎉 Purchase successful, refetching course access..."
               );
-              refetch(); // Refetch course data
+              // refetch(); // Refetch course data
               refetchAccess(); // Refetch access status
             }}
           />
