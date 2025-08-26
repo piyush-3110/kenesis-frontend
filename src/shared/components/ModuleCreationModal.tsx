@@ -243,7 +243,7 @@ const ModuleCreationModal: React.FC<ModuleCreationModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div 
-        className="w-full max-w-4xl rounded-2xl shadow-2xl max-h-[90vh] overflow-hidden"
+        className="w-full max-w-4xl rounded-2xl shadow-2xl max-h-[100vh] overflow-hidden"
         style={{
           background: DASHBOARD_COLORS.CARD_BG,
           border: `1px solid ${DASHBOARD_COLORS.PRIMARY_BORDER.replace('linear-gradient(90deg, ', '').replace(' 0%, ', '').replace(' 100%)', '').split(' ')[0]}`
@@ -253,7 +253,7 @@ const ModuleCreationModal: React.FC<ModuleCreationModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div>
             <h2 className="text-xl font-bold text-white">
-              {isEditing ? 'Edit Module' : 'Create New Module'}
+              {isEditing ? 'Edit Module' : 'Create Module'}
             </h2>
             <p className="text-sm text-gray-400 mt-1">
               {isEditing ? 'Update module information and content' : 'Add a new module to your course'}
@@ -269,7 +269,7 @@ const ModuleCreationModal: React.FC<ModuleCreationModalProps> = ({
         </div>
 
         {/* Form */}
-        <div className="p-6 overflow-y-auto max-h-[70vh]">
+        <div className="p-6 overflow-y-auto max-h-[65vh]">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information Section */}
             <div className="space-y-4">
