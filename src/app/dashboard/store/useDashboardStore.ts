@@ -157,6 +157,15 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
 
       const analytics: UserDashboardAnalytics = analyticsRes.data;
 
+      // --- DEBUGGING START ---
+      console.log("Received analytics data:", analytics);
+      console.log("Today's Revenue:", analytics.today.revenue);
+      console.log("Today's Orders:", analytics.today.orders);
+      console.log("Total Revenue:", analytics.totalRevenue);
+      console.log("Total Orders:", analytics.totalOrders);
+      console.log("Transactions count:", analytics.transactions.length);
+      // --- DEBUGGING END ---
+
       // Store the full analytics data
       setAnalytics(analytics);
 
