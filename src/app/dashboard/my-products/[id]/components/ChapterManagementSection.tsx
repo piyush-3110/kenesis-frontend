@@ -13,6 +13,7 @@ interface ChapterManagementSectionProps {
   chapters: any[];
   onChaptersChange: (chapters: any[]) => void;
   canEdit: boolean;
+  canAddContent?: boolean;
 }
 
 /**
@@ -23,7 +24,8 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
   courseId,
   chapters,
   onChaptersChange,
-  canEdit
+  canEdit,
+  canAddContent = canEdit
 }) => {
   const { addToast } = useUIStore();
   const [isCreating, setIsCreating] = useState(false);
@@ -139,7 +141,7 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Course Chapters</h2>
-        {canEdit && (
+        {canAddContent && (
           <button
             onClick={() => setIsCreating(true)}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium"
@@ -164,7 +166,7 @@ const ChapterManagementSection: React.FC<ChapterManagementSectionProps> = ({
           <p className="text-gray-400 mb-4 line-clamp-2">
             Start building your course by adding chapters and modules.
           </p>
-          {canEdit && (
+          {canAddContent && (
             <button
               onClick={() => setIsCreating(true)}
               className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-medium"

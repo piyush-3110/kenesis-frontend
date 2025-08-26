@@ -248,8 +248,10 @@ const CourseManagementPage: React.FC = () => {
     { id: 'stats', label: 'Analytics', icon: Star },
   ];
 
-  const canEdit = (course.status || 'draft') === 'draft' || (course.status || 'draft') === 'rejected';
-  const canSubmit = (course.status || 'draft') === 'draft' && chapters.length > 0;
+  const canEdit = (course.status || 'draft') === 'draft';
+  const canSubmit = ((course.status || 'draft') === 'draft' ) && chapters.length > 0;
+  const canAddContent = canEdit || (course.status || 'draft') === 'published';
+  const canDelete = (course.status || 'draft') === 'draft' || (course.status || 'draft') === 'rejected';
 
   return (
     <DashboardLayout 
@@ -323,7 +325,7 @@ const CourseManagementPage: React.FC = () => {
                 </button>
               )}
 
-              {(course.status || 'draft') === 'draft' && (
+              {canDelete && (
                 <button
                   onClick={() => setIsDeleteModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-200 font-medium"
@@ -415,6 +417,7 @@ const CourseManagementPage: React.FC = () => {
               chapters={chapters}
               onChaptersChange={setChapters}
               canEdit={canEdit}
+              canAddContent={canAddContent}
             />
           )}
           
@@ -423,6 +426,7 @@ const CourseManagementPage: React.FC = () => {
               courseId={courseId}
               chapters={chapters}
               canEdit={canEdit}
+              canAddContent={canAddContent}
             />
           )}
           
