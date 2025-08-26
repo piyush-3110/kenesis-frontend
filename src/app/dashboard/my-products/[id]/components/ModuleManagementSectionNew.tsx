@@ -25,6 +25,7 @@ interface ModuleManagementSectionProps {
   courseId: string;
   chapters: any[];
   canEdit: boolean;
+  canAddContent?: boolean;
 }
 
 interface ModuleFilters {
@@ -46,6 +47,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   courseId,
   chapters,
   canEdit,
+  canAddContent = canEdit,
 }) => {
   const { messages, showError, showSuccess } = useToastMessages();
   
@@ -373,7 +375,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         </div>
 
         {/* Action Buttons */}
-        {canEdit && (
+        {canAddContent && (
           <button
             onClick={() => setIsCreateModalOpen(true)}
             disabled={!selectedChapter || selectedChapter === "all"}
