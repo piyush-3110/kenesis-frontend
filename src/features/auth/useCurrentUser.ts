@@ -6,7 +6,7 @@ import type { ApiEnvelope, User } from "./types";
 import { useAuth } from "./AuthProvider";
 
 export function useCurrentUser() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   return useQuery({
     queryKey: ["auth", "me"],
     queryFn: async () => {
@@ -17,7 +17,7 @@ export function useCurrentUser() {
       if (!data.success) throw new Error(data.message);
       return data.data!.user;
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !authLoading,
     staleTime: 60_000,
   });
 }

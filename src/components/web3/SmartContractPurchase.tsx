@@ -1,6 +1,12 @@
 /**
  * Smart Contract Purchase Component
- * Integrates smart contract functionality with the existing purchase flow
+ * Integrates smart contract functionality with the new authorization flow
+ *
+ * Flow:
+ * 1. Generate NFT metadata (if not provided)
+ * 2. Request backend authorization
+ * 3. Execute smart contract with authorization
+ * 4. Check purchase status from backend
  */
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -27,7 +33,7 @@ import {
 } from "@/lib/contracts/marketplaceService";
 import { getTokenConfig, getChainConfig } from "@/lib/contracts/chainConfig";
 import type { CourseResponse } from "@/lib/api/courseApi";
-import type { PurchaseRecord, CourseAccess } from "@/lib/api/purchaseApi";
+import { getPurchaseErrorMessage } from "@/lib/utils/errorMessages";
 
 interface SmartContractPurchaseProps {
   course: CourseResponse;
@@ -40,8 +46,8 @@ interface SmartContractPurchaseProps {
     nftTokenId?: bigint;
     backendConfirmation?: {
       success: boolean;
-      purchase?: PurchaseRecord;
-      courseAccess?: CourseAccess;
+      purchase?: Record<string, unknown>;
+      courseAccess?: Record<string, unknown>;
       error?: string;
     };
   }) => void;
@@ -70,12 +76,6 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
   useAccount();
   const [currentStep, setCurrentStep] = useState<PurchaseStep>("validate");
   const [error, setError] = useState<string | null>(null);
-  const [backendConfirmationResult, setBackendConfirmationResult] = useState<{
-    success: boolean;
-    purchase?: PurchaseRecord;
-    courseAccess?: CourseAccess;
-    error?: string;
-  } | null>(null);
 
   // Contract hooks
   const purchaseParams: ContractPurchaseParams = useMemo(
@@ -127,51 +127,52 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
     approval.isApproved,
   ]);
 
-  // Handle blockchain transaction success and trigger backend confirmation
+  // Handle blockchain transaction success and trigger backend status check
   useEffect(() => {
-    const handleBackendConfirmation = async () => {
+    const handleBackendStatusCheck = async () => {
       if (!purchase.transactionHash) return;
 
       try {
-        console.log("🔄 Starting backend confirmation...");
-        const backendResult = await purchase.handleBackendConfirmation(
-          purchaseParams,
-          purchase.transactionHash,
-          purchase.nftTokenId
-        );
+        console.log("🔄 Starting backend status check...");
+        const statusResult = await purchase.handleBackendStatusCheck(course.id);
 
-        setBackendConfirmationResult(backendResult);
-
-        if (backendResult.success) {
-          console.log("✅ Backend confirmation successful");
+        if (statusResult.success) {
+          console.log("✅ Backend status check successful");
           setCurrentStep("complete");
           onPurchaseSuccess?.({
             transactionHash: purchase.transactionHash,
             nftTokenId: purchase.nftTokenId,
-            backendConfirmation: backendResult,
+            backendConfirmation: {
+              success: true,
+              purchase:
+                (statusResult.data?.purchase as unknown as Record<
+                  string,
+                  unknown
+                >) || undefined,
+              courseAccess:
+                (statusResult.data as unknown as Record<string, unknown>) ||
+                undefined,
+            },
           });
         } else {
-          console.warn("⚠️ Backend confirmation failed:", backendResult.error);
+          console.warn("⚠️ Backend status check failed:", statusResult.error);
           // Still mark as complete since blockchain transaction succeeded
-          // But show a warning about backend
           setCurrentStep("complete");
           onPurchaseSuccess?.({
             transactionHash: purchase.transactionHash,
             nftTokenId: purchase.nftTokenId,
-            backendConfirmation: backendResult,
+            backendConfirmation: {
+              success: false,
+              error: statusResult.error,
+            },
           });
         }
       } catch (error) {
-        console.error("❌ Backend confirmation error:", error);
+        console.error("❌ Backend status check error:", error);
         const errorMessage =
           error instanceof Error
             ? error.message
-            : "Backend confirmation failed";
-
-        setBackendConfirmationResult({
-          success: false,
-          error: errorMessage,
-        });
+            : "Backend status check failed";
 
         // Still mark as complete since blockchain transaction succeeded
         setCurrentStep("complete");
@@ -193,18 +194,18 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
       currentStep !== "complete"
     ) {
       setCurrentStep("confirming-backend");
-      handleBackendConfirmation();
+      handleBackendStatusCheck();
     }
-  }, [purchase, currentStep, purchaseParams, onPurchaseSuccess]);
+  }, [purchase, currentStep, course.id, onPurchaseSuccess]);
 
   // Backend confirmation handler (removed since it's now inline)
 
   // Handle errors from both transaction write and receipt
   useEffect(() => {
     if (purchase.error) {
-      const errorMessage = purchase.error.message || "Purchase failed";
-      setError(errorMessage);
-      onPurchaseError?.(errorMessage);
+      const friendlyErrorMessage = getPurchaseErrorMessage(purchase.error);
+      setError(friendlyErrorMessage);
+      onPurchaseError?.(friendlyErrorMessage);
       console.error("Purchase error detected:", purchase.error);
 
       // Reset to purchase step when there's an error so user can retry
@@ -222,15 +223,15 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
       console.log("Purchase result:", result);
 
       if (!result.success && result.error) {
-        setError(result.error);
-        onPurchaseError?.(result.error);
+        const friendlyErrorMessage = getPurchaseErrorMessage(result.error);
+        setError(friendlyErrorMessage);
+        onPurchaseError?.(friendlyErrorMessage);
       }
     } catch (error) {
       console.error("Purchase error:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      setError(errorMessage);
-      onPurchaseError?.(errorMessage);
+      const friendlyErrorMessage = getPurchaseErrorMessage(error);
+      setError(friendlyErrorMessage);
+      onPurchaseError?.(friendlyErrorMessage);
     }
   };
 
@@ -260,7 +261,10 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
           <ChainSwitchCard
             tokenString={selectedToken}
             onSwitchComplete={() => setCurrentStep("purchase")}
-            onSwitchError={(err) => setError(err.message)}
+            onSwitchError={(err) => {
+              const friendlyErrorMessage = getPurchaseErrorMessage(err);
+              setError(friendlyErrorMessage);
+            }}
           />
         );
 
@@ -419,23 +423,9 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                   <h4 className="text-blue-400 font-medium mb-2">
                     Confirming Purchase
                   </h4>
-                  <p className="text-blue-300 text-sm mb-3">
-                    Your blockchain transaction was successful! We&apos;re now
-                    confirming your purchase with our backend to activate your
-                    course access.
+                  <p className="text-blue-300 text-sm">
+                    Checking purchase status with backend services...
                   </p>
-
-                  {purchase.transactionHash && chainConfig && (
-                    <a
-                      href={`${chainConfig.blockExplorer}/tx/${purchase.transactionHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300"
-                    >
-                      <ExternalLink size={14} />
-                      View transaction on {chainConfig.name} Explorer
-                    </a>
-                  )}
                 </div>
               </div>
             </div>
@@ -443,9 +433,6 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
         );
 
       case "complete":
-        const hasBackendError =
-          backendConfirmationResult && !backendConfirmationResult.success;
-
         return (
           <div className="space-y-4">
             {/* Main success message */}
@@ -458,9 +445,7 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                   </h4>
                   <p className="text-green-300 text-sm mb-3">
                     Your blockchain transaction has been completed successfully
-                    {hasBackendError
-                      ? "."
-                      : " and your course access has been activated!"}
+                    and your course access has been activated!
                   </p>
 
                   {purchase.transactionHash && chainConfig && (
@@ -477,28 +462,6 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                 </div>
               </div>
             </div>
-
-            {/* Backend confirmation warning if it failed */}
-            {hasBackendError && (
-              <div className="p-4 rounded-lg bg-yellow-600/20 border border-yellow-600/30">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle size={20} className="text-yellow-400 mt-0.5" />
-                  <div className="flex-1">
-                    <h4 className="text-yellow-400 font-medium mb-2">
-                      Course Access Pending
-                    </h4>
-                    <p className="text-yellow-300 text-sm mb-2">
-                      Your payment was successful, but we couldn&apos;t
-                      automatically activate your course access. Our team will
-                      manually verify your purchase and activate access shortly.
-                    </p>
-                    <p className="text-yellow-300 text-xs">
-                      Error: {backendConfirmationResult?.error}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         );
 
