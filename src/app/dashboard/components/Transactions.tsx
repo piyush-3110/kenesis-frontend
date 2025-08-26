@@ -2,11 +2,21 @@
 
 import React, { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Filter, ArrowUpRight, ArrowDownRight, User, ExternalLink } from "lucide-react";
+import {
+  ChevronDown,
+  Filter,
+  ArrowUpRight,
+  ArrowDownRight,
+  User,
+  ExternalLink,
+} from "lucide-react";
 import GradientBorder from "./GradientBorder";
 import { useDashboardStore } from "../store/useDashboardStore";
 import { formatCurrency, formatCompactNumber } from "@/shared/utils/formatters";
-import { formatTokenString, getTokenDisplayData } from "@/lib/utils/tokenDisplay";
+import {
+  formatTokenString,
+  getTokenDisplayData,
+} from "@/lib/utils/tokenDisplay";
 
 interface Transaction {
   id: string;
@@ -38,8 +48,7 @@ const TransactionItem: React.FC<{ transaction: Transaction }> = ({
     );
 
     if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-    if (diffInSeconds < 3600)
-      return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400)
       return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 604800)
@@ -85,12 +94,12 @@ const TransactionItem: React.FC<{ transaction: Transaction }> = ({
           return `${formatCompactNumber(amount)} ${tokenDisplay.symbol}`;
         }
       }
-      
+
       // Check if it's a known currency
       if (["USD", "EUR", "GBP"].includes(currency.toUpperCase())) {
         return formatCurrency(amount, currency);
       }
-      
+
       return `${formatCompactNumber(amount)} ${currency}`;
     } catch {
       return `${formatCompactNumber(amount)} ${currency}`;
@@ -133,7 +142,8 @@ const TransactionItem: React.FC<{ transaction: Transaction }> = ({
               {getTimeAgo(transaction.timestamp)}
             </p>
             <p className="text-gray-500 text-xs">
-              {transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+              {transaction.type.charAt(0).toUpperCase() +
+                transaction.type.slice(1)}
             </p>
           </div>
         </div>
@@ -172,9 +182,12 @@ const TransactionItem: React.FC<{ transaction: Transaction }> = ({
               </div>
             )}
           </div>
-          <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-gray-800/50 rounded">
+          <a
+            href="#"
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-gray-800/50 rounded"
+          >
             <ExternalLink className="w-3 h-3 text-gray-400 hover:text-white" />
-          </button>
+          </a>
         </div>
       </div>
     </div>
@@ -189,7 +202,9 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
   const [sortBy, setSortBy] = useState<
     "Latest First" | "Oldest First" | "Highest Amount" | "Lowest Amount"
   >("Latest First");
-  const [filterBy, setFilterBy] = useState<"All" | "completed" | "pending" | "failed">("All");
+  const [filterBy, setFilterBy] = useState<
+    "All" | "completed" | "pending" | "failed"
+  >("All");
   const [showFilters, setShowFilters] = useState(false);
 
   const { transactions: storeTransactions, isLoading } = useDashboardStore();
@@ -200,14 +215,14 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
       if (showFilters) setShowFilters(false);
     };
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
   }, [showFilters]);
 
   // Filter transactions based on status
   const filteredTransactions = useMemo(() => {
     if (filterBy === "All") return storeTransactions;
-    return storeTransactions.filter(tx => tx.status === filterBy);
+    return storeTransactions.filter((tx) => tx.status === filterBy);
   }, [storeTransactions, filterBy]);
 
   // Sort transactions based on selected option
@@ -232,9 +247,21 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
 
   const filterOptions = [
     { value: "All", label: "All Status", count: storeTransactions.length },
-    { value: "completed", label: "Completed", count: storeTransactions.filter(tx => tx.status === "completed").length },
-    { value: "pending", label: "Pending", count: storeTransactions.filter(tx => tx.status === "pending").length },
-    { value: "failed", label: "Failed", count: storeTransactions.filter(tx => tx.status === "failed").length },
+    {
+      value: "completed",
+      label: "Completed",
+      count: storeTransactions.filter((tx) => tx.status === "completed").length,
+    },
+    {
+      value: "pending",
+      label: "Pending",
+      count: storeTransactions.filter((tx) => tx.status === "pending").length,
+    },
+    {
+      value: "failed",
+      label: "Failed",
+      count: storeTransactions.filter((tx) => tx.status === "failed").length,
+    },
   ];
 
   const sortOptions = [
@@ -282,7 +309,8 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
               Latest Transactions
             </h3>
             <div className="text-gray-400 text-xs mt-1">
-              Showing {sortedTransactions.length} of {storeTransactions.length} transactions
+              Showing {sortedTransactions.length} of {storeTransactions.length}{" "}
+              transactions
             </div>
           </div>
 
@@ -311,7 +339,7 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
 
               {/* Filter dropdown */}
               {showFilters && (
-                <div 
+                <div
                   className="absolute top-full mt-1 right-0 bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-lg py-1 z-20 min-w-[140px]"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -324,12 +352,16 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
                       }}
                       className={cn(
                         "w-full text-left px-3 py-2 text-sm hover:bg-gray-800/50 transition-colors",
-                        filterBy === option.value ? "text-blue-400" : "text-gray-300"
+                        filterBy === option.value
+                          ? "text-blue-400"
+                          : "text-gray-300"
                       )}
                     >
                       <div className="flex items-center justify-between">
                         <span>{option.label}</span>
-                        <span className="text-xs text-gray-500">({option.count})</span>
+                        <span className="text-xs text-gray-500">
+                          ({option.count})
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -370,7 +402,8 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
                 <Filter className="w-6 h-6 text-gray-400" />
               </div>
               <div className="text-gray-400 text-sm">
-                No transactions found {filterBy !== "All" && `with status "${filterBy}"`}
+                No transactions found{" "}
+                {filterBy !== "All" && `with status "${filterBy}"`}
               </div>
             </div>
           )}
@@ -381,12 +414,17 @@ const Transactions: React.FC<TransactionsProps> = ({ className }) => {
           <div className="mt-4 pt-4 border-t border-gray-700/50">
             <div className="flex justify-between items-center text-xs text-gray-400">
               <span>
-                Total: {formatCurrency(
+                Total:{" "}
+                {formatCurrency(
                   sortedTransactions.reduce((sum, tx) => sum + tx.amount, 0)
                 )}
               </span>
               <span>
-                {sortedTransactions.filter(tx => tx.status === "completed").length} completed
+                {
+                  sortedTransactions.filter((tx) => tx.status === "completed")
+                    .length
+                }{" "}
+                completed
               </span>
             </div>
           </div>

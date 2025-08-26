@@ -22,7 +22,7 @@ import { getCurrentChainConfigs } from "@/lib/contracts/chainConfig";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
 import { SiweAuthButton } from "@/features/wallet/SiweAuthButton";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
-import { MarketplaceAPI } from "@/features/marketplace/api";
+// import { MarketplaceAPI } from "@/features/marketplace/api";
 import { CategoriesAPI } from "@/lib/api";
 import type { Category } from "@/types/Product";
 import { formatSimpleErrors } from "@/lib/utils/errorFormatter";
@@ -75,7 +75,7 @@ const CourseCreationForm: React.FC = () => {
       try {
         const res = await CategoriesAPI.getCategories({ active: true });
         if (!mounted) return;
-        
+
         if (res.success && res.data) {
           setCategories(res.data);
         } else {
@@ -91,7 +91,7 @@ const CourseCreationForm: React.FC = () => {
     };
   }, []);
 
-  const logoutMutation = useLogout();
+  // const logoutMutation = useLogout();
 
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [previewVideoFile, setPreviewVideoFile] = useState<File | null>(null);
@@ -537,12 +537,17 @@ const CourseCreationForm: React.FC = () => {
       } else {
         // Format validation errors for better user experience
         let errorMessage = result.message || "Failed to create course";
-        
+
         // Check if the result has errors property (from API response)
-        if ('errors' in result && result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+        if (
+          "errors" in result &&
+          result.errors &&
+          Array.isArray(result.errors) &&
+          result.errors.length > 0
+        ) {
           errorMessage = formatSimpleErrors(result.errors);
         }
-        
+
         addToast({
           type: "error",
           message: errorMessage,
@@ -657,14 +662,14 @@ const CourseCreationForm: React.FC = () => {
         <div>
           <label className="block text-white font-medium mb-3">
             Categories
-            <span className="text-sm text-gray-400 ml-2">
-              (Select up to 5)
-            </span>
+            <span className="text-sm text-gray-400 ml-2">(Select up to 5)</span>
           </label>
           <div className="space-y-2">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {categories.map((cat) => {
-                const isSelected = (formData.categoryIds || []).includes(cat.id);
+                const isSelected = (formData.categoryIds || []).includes(
+                  cat.id
+                );
                 return (
                   <button
                     key={cat.id}
@@ -1088,7 +1093,7 @@ const CourseCreationForm: React.FC = () => {
                       Upload preview video (optional)
                     </p>
                     <p className="text-gray-500 text-xs mt-1">
-                      Max 500MB, MP4/WEBM. Helps attract students to your course.
+                      Max 50MB, MP4/WEBM. Helps attract students to your course.
                     </p>
                   </>
                 )}

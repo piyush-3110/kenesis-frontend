@@ -49,8 +49,8 @@ const DashboardPage: React.FC = () => {
                 key={metric.id}
                 title={metric.title}
                 value={metric.value}
-                change={metric.change}
-                trend={metric.trend}
+                // change={metric.change}
+                // trend={metric.trend}
               />
             ))}
           </div>
