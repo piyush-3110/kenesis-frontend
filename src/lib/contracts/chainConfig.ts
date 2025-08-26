@@ -55,7 +55,7 @@ export const CHAIN_CONFIGS: EnvironmentConfig = {
       chainId: sepolia.id, // Sepolia
       name: sepolia.name,
       nativeSymbol: sepolia.nativeCurrency.symbol,
-      contractAddress: "0xe72fdF3fF7cF6966af81d986092A123a14eA24fd", // Deployed Sepolia contract
+      contractAddress: "0xec1b9345B25df1661CD2336128355a33F8c62936", // Deployed Sepolia contract
       nftContractAddress:
         process.env.NEXT_PUBLIC_SEPOLIA_NFT_CONTRACT ||
         "0x2E5019f4903BB824EdcEb7a8cf5337fceeb77199", // Deployed Sepolia NFT contract

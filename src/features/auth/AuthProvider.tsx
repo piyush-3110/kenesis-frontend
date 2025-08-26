@@ -1,11 +1,18 @@
 "use client";
 
-import React, { createContext, useContext, useMemo, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
 import { TokenManager } from "./tokenManager";
 
 interface AuthContextValue {
   isAuthenticated: boolean;
   accessToken: string | null;
+  isLoading: boolean;
   setTokens: (t: { accessToken: string; refreshToken: string }) => void;
   clear: () => void;
 }
@@ -13,14 +20,21 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [accessToken, setAccessToken] = useState<string | null>(
-    TokenManager.getAccessToken()
-  );
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Hydrate auth state on client side
+  useEffect(() => {
+    const token = TokenManager.getAccessToken();
+    setAccessToken(token);
+    setIsLoading(false);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthenticated: Boolean(accessToken),
       accessToken,
+      isLoading,
       setTokens: (t) => {
         TokenManager.setTokens(t);
         setAccessToken(t.accessToken);
@@ -30,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAccessToken(null);
       },
     }),
-    [accessToken]
+    [accessToken, isLoading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

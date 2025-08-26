@@ -13,12 +13,7 @@ import {
 } from "wagmi";
 import { parseEther, formatUnits } from "viem";
 import { useMemo } from "react";
-import {
-  KENESIS_MARKETPLACE_ABI,
-  ERC20_ABI,
-  type CoursePurchaseParams,
-  type PaymentAmount,
-} from "./abi";
+import { KENESIS_MARKETPLACE_ABI, ERC20_ABI, type PaymentAmount } from "./abi";
 import {
   getChainConfig,
   getTokenConfig,
@@ -28,17 +23,36 @@ import {
 } from "./chainConfig";
 import type { CourseResponse } from "@/lib/api/courseApi";
 import {
-  completePurchaseFlow,
-  type PurchaseRecord,
-  type CourseAccess,
-} from "@/lib/api/purchaseApi";
+  requestPurchaseAuthorization,
+  checkPurchaseStatus,
+  type PurchaseAuthorizationRequest,
+  type PurchaseStatusResponse,
+} from "@/lib/purchase/purchaseAuthService";
+import { createCourseNFT, type NFTCreationInput } from "@/lib/nft/nftService";
+import { getPurchaseErrorMessage } from "@/lib/utils/errorMessages";
 
 export interface ContractPurchaseParams {
   course: CourseResponse;
   tokenString: string; // e.g., "USDT-137"
-  nftMetadataUri?: string; // IPFS URI for the NFT metadata
+  nftMetadataUri?: string; // IPFS URI for the NFT metadata - will be auto-generated if not provided
   affiliateAddress?: string;
   affiliatePercentage?: number; // 0-50 (percentage)
+}
+
+export interface PurchaseAuthorizationData {
+  contractParams: {
+    seller: string;
+    priceInUSD: number;
+    courseId: string;
+    courseURI: string;
+    courseDuration: number;
+    tokenToPayWith: string;
+    affiliateAddress: string;
+    affiliatePercentage: number;
+    backendAuthHash: string;
+  };
+  chainId: string;
+  expiresAt: number;
 }
 
 export interface PurchaseQuote {
@@ -60,8 +74,8 @@ export interface PurchaseResult {
   // Backend confirmation results
   backendConfirmation?: {
     success: boolean;
-    purchase?: PurchaseRecord;
-    courseAccess?: CourseAccess;
+    purchase?: Record<string, unknown>;
+    courseAccess?: Record<string, unknown>;
     error?: string;
   };
 }
@@ -271,7 +285,7 @@ export const useTokenApproval = (
 };
 
 /**
- * Hook for purchasing a course through the smart contract
+ * Hook for purchasing a course through the smart contract with new authorization flow
  */
 export const usePurchaseCourse = () => {
   const { address: marketplaceAddress } = useMarketplaceContract();
@@ -283,6 +297,7 @@ export const usePurchaseCourse = () => {
   } = useWriteContract();
   const { switchChain } = useSwitchChain();
   const currentChainId = useChainId();
+  const { address: userAddress } = useAccount();
 
   // Wait for transaction receipt
   const {
@@ -298,226 +313,196 @@ export const usePurchaseCourse = () => {
     params: ContractPurchaseParams
   ): Promise<PurchaseResult> => {
     try {
-      console.log("Starting purchase with params:", params);
-
       if (!marketplaceAddress) {
         throw new Error("Marketplace contract not available for current chain");
       }
 
+      if (!userAddress) {
+        throw new Error("Wallet not connected");
+      }
+
       // Parse token string and get required chain
       const { chainId: requiredChainId } = parseTokenString(params.tokenString);
-      console.log(
-        "Required chain ID:",
-        requiredChainId,
-        "Current chain ID:",
-        currentChainId
-      );
 
       // Check if we need to switch chains
       if (currentChainId !== requiredChainId) {
+        console.log(`Switching to chain ${requiredChainId}`);
         if (!isSupportedChain(requiredChainId)) {
           throw new Error(`Chain ${requiredChainId} is not supported`);
         }
-
-        console.log("Switching to chain:", requiredChainId);
         await switchChain({ chainId: requiredChainId });
         // Wait a bit for the chain switch to complete
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
 
-      // Get token configuration
-      const tokenConfig = getTokenConfig(params.tokenString);
-      if (!tokenConfig) {
-        throw new Error(`Token ${params.tokenString} is not supported`);
+      // Step 1: Generate NFT metadata URI if not provided
+      let nftMetadataUri = params.nftMetadataUri;
+      if (!nftMetadataUri) {
+        console.log("🎨 Generating NFT metadata...");
+        const nftInput: NFTCreationInput = {
+          course: params.course,
+          selectedToken: params.tokenString,
+          walletAddress: userAddress,
+        };
+
+        const nftResult = await createCourseNFT(nftInput);
+        if (!nftResult.success || !nftResult.metadataUri) {
+          throw new Error(
+            `Failed to generate NFT metadata: ${nftResult.error}`
+          );
+        }
+        nftMetadataUri = nftResult.metadataUri;
+        console.log("✅ NFT metadata generated:", nftMetadataUri);
       }
 
-      const tokenAddress = getContractTokenAddress(
-        params.tokenString
-      ) as `0x${string}`;
-      const priceInWei = parseEther(params.course.price.toString());
-
-      console.log("Token config:", tokenConfig);
-      console.log("Token address:", tokenAddress);
-      console.log("Price in wei:", priceInWei);
-      console.log("NFT Metadata URI:", params.nftMetadataUri);
-      console.log(
-        "Course access duration (days):",
-        params.course.accessDuration
-      );
-      console.log(
-        "Course affiliate percentage:",
-        params.course.affiliatePercentage
-      );
-      console.log(
-        "Instructor wallet address:",
-        params.course.instructor.walletAddress
-      );
-      console.log("Instructor ID (fallback):", params.course.instructor.id);
-
-      // Validate seller address
-      const sellerAddress =
-        params.course.instructor.walletAddress || params.course.instructor.id;
-      if (!sellerAddress) {
-        throw new Error("No seller address or instructor ID available");
-      }
-
-      if (!sellerAddress.startsWith("0x") || sellerAddress.length !== 42) {
-        console.warn("Invalid seller address format:", sellerAddress);
-        console.warn(
-          "This may cause the transaction to fail. Expected a valid Ethereum address."
-        );
-        // Still proceed but warn the user
-      }
-
-      // Validate NFT metadata URI
-      if (!params.nftMetadataUri || params.nftMetadataUri.trim() === "") {
-        throw new Error("NFT metadata URI is required for course purchase");
-      }
-
-      // Convert access duration to seconds for contract
-      let courseDurationInSeconds = BigInt(0);
-      if (params.course.accessDuration && params.course.accessDuration > 0) {
-        // accessDuration is in days, convert to seconds
-        courseDurationInSeconds = BigInt(
-          params.course.accessDuration * 24 * 60 * 60
-        );
-      } else if (params.course.accessDuration === -1) {
-        // -1 means lifetime access, use max uint256 for contract (unlimited)
-        courseDurationInSeconds = BigInt("3155692600"); // Grant access for 100 years
-      }
-
-      console.log(
-        "Course access duration (seconds):",
-        courseDurationInSeconds.toString()
-      );
-
-      // Prepare contract parameters
-      const contractParams: CoursePurchaseParams = {
-        seller: sellerAddress as `0x${string}`, // Use wallet address if available, fallback to ID
-        priceInUSD: priceInWei,
-        courseURI: params.nftMetadataUri, // Use the actual generated NFT metadata URI
-        courseDuration: courseDurationInSeconds, // Use actual course duration in seconds
-        tokenToPayWith: tokenAddress,
-        affiliateAddress: (params.affiliateAddress ||
-          "0x0000000000000000000000000000000000000000") as `0x${string}`,
-        affiliatePercentage: BigInt(
-          (params.affiliatePercentage ||
-            params.course.affiliatePercentage ||
-            0) * 100
-        ), // Use provided or course affiliate percentage
+      // Step 2: Request purchase authorization from backend
+      console.log("🔐 Requesting purchase authorization...");
+      const authRequest: PurchaseAuthorizationRequest = {
+        courseId: params.course.id,
+        tokenToPayWith: params.tokenString,
+        courseURI: nftMetadataUri,
+        affiliateAddress: params.affiliateAddress,
       };
 
-      console.log("Contract params:", contractParams);
-      console.log("Contract params details:");
-      console.log("- Seller:", contractParams.seller);
-      console.log(
-        "- Price in USD (wei):",
-        contractParams.priceInUSD.toString()
-      );
-      console.log("- Course URI:", contractParams.courseURI);
-      console.log(
-        "- Course Duration (seconds):",
-        contractParams.courseDuration.toString()
-      );
-      console.log("- Token to pay with:", contractParams.tokenToPayWith);
-      console.log("- Affiliate address:", contractParams.affiliateAddress);
-      console.log(
-        "- Affiliate percentage (basis points):",
-        contractParams.affiliatePercentage.toString()
-      );
+      const authResponse = await requestPurchaseAuthorization(authRequest);
+      if (!authResponse.success || !authResponse.data) {
+        throw new Error(
+          `Failed to get purchase authorization: ${authResponse.message}`
+        );
+      }
 
-      // For native tokens, we need to send value with the transaction
-      const options = tokenConfig.isNative
-        ? {
-            value: priceInWei, // This should be the actual payment amount from getPaymentAmount
-          }
-        : {};
+      const authData = authResponse.data;
+      console.log("✅ Purchase authorization received");
 
-      console.log("Transaction options:", options);
+      // Step 3: Execute the purchase with authorization
+      const contractParams = authData.contractParams;
+
+      // Convert parameters to the correct types for the smart contract
+      const seller = contractParams.seller as `0x${string}`;
+      const priceInUSD = parseEther(contractParams.priceInUSD.toString()); // Convert to cents/wei
+      const courseId = contractParams.courseId;
+      const courseURI = contractParams.courseURI;
+      const courseDuration = BigInt(contractParams.courseDuration);
+      const tokenToPayWith = contractParams.tokenToPayWith as `0x${string}`;
+      const affiliateAddress = contractParams.affiliateAddress as `0x${string}`;
+      const affiliatePercentage = BigInt(
+        contractParams.affiliatePercentage * 100
+      ); // Convert to basis points
+      // Convert the auth hash to a hex string if it's not already
+      const backendAuthHash = contractParams.backendAuthHash.startsWith("0x")
+        ? (contractParams.backendAuthHash as `0x${string}`)
+        : (`0x${contractParams.backendAuthHash}` as `0x${string}`);
+
+      // Get token configuration for native token check
+      const tokenConfig = getTokenConfig(params.tokenString);
+      if (!tokenConfig) {
+        throw new Error("Token configuration not found");
+      }
+
+      // For native tokens, we need to calculate the payment amount
+      let value: bigint | undefined;
+      if (tokenConfig.isNative) {
+        // We should use getPaymentAmount from the contract but we'll need to use the payment amount from backend
+        // For now, use the priceInUSD as value (this might need adjustment based on oracle prices)
+        value = priceInUSD;
+      }
 
       // Execute the purchase
-      console.log(
-        "Calling writeContract with marketplace address:",
-        marketplaceAddress
-      );
+      console.log("💳 Executing purchase transaction...");
+      const contractArgs = [
+        seller,
+        priceInUSD,
+        courseId,
+        courseURI,
+        courseDuration,
+        tokenToPayWith,
+        affiliateAddress,
+        affiliatePercentage,
+        backendAuthHash,
+      ] as const;
+
       writeContract({
         address: marketplaceAddress,
         abi: KENESIS_MARKETPLACE_ABI,
         functionName: "purchaseCourse",
-        args: [
-          contractParams.seller,
-          contractParams.priceInUSD,
-          contractParams.courseURI,
-          contractParams.courseDuration,
-          contractParams.tokenToPayWith,
-          contractParams.affiliateAddress,
-          contractParams.affiliatePercentage,
-        ],
-        ...options,
+        args: contractArgs,
+        value,
       });
 
-      console.log("Purchase transaction initiated");
       return { success: true };
     } catch (error) {
       console.error("Purchase failed:", error);
+      const friendlyErrorMessage = getPurchaseErrorMessage(error);
       return {
         success: false,
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        error: friendlyErrorMessage,
       };
     }
   };
 
-  // Effect to handle backend confirmation after successful transaction
-  const handleBackendConfirmation = async (
-    params: ContractPurchaseParams,
-    transactionHash: string,
-    nftTokenId?: bigint
-  ) => {
+  // Backend status check handler
+  const handleBackendStatusCheck = async (
+    courseId: string
+  ): Promise<{
+    success: boolean;
+    data?: PurchaseStatusResponse;
+    error?: string;
+  }> => {
     try {
-      console.log("🔄 Starting backend purchase confirmation...");
+      console.log("� Checking purchase status...");
+      const statusResponse = await checkPurchaseStatus(courseId);
 
-      const backendResult = await completePurchaseFlow({
-        courseId: params.course.id,
-        tokenString: params.tokenString,
-        purchasePrice: params.course.price,
-        transactionHash,
-        nftTokenId,
-        affiliateAddress: params.affiliateAddress,
-      });
+      if (statusResponse.success) {
+        console.log("✅ Purchase status retrieved:", statusResponse.data);
+      } else {
+        console.warn(
+          "⚠️ Purchase status check failed:",
+          statusResponse.message
+        );
+      }
 
-      console.log("✅ Backend confirmation result:", backendResult);
-      return backendResult;
+      return statusResponse;
     } catch (error) {
-      console.error("❌ Backend confirmation failed:", error);
+      console.error("❌ Purchase status check error:", error);
+      const friendlyErrorMessage = getPurchaseErrorMessage(error);
       return {
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Backend confirmation failed",
+        error: friendlyErrorMessage,
       };
     }
   };
 
   // Extract NFT token ID from transaction receipt
-  const nftTokenId = receipt?.logs?.find((log) => {
-    // Look for CoursePurchased event
+  const nftTokenId = useMemo(() => {
+    if (!receipt?.logs) return undefined;
+
     try {
-      // This is a simplified version - you'd want to properly decode the event
-      return log.topics[0] === "0x..."; // CoursePurchased event signature
-    } catch {
-      return false;
+      // Look for CoursePurchasedWithNFT event
+      const purchaseEvent = receipt.logs.find((log) => {
+        // Check if this is our marketplace contract and has the right topic
+        return (
+          log.address.toLowerCase() === marketplaceAddress?.toLowerCase() &&
+          log.topics[0] === "0x..." // TODO: Add actual event signature hash
+        );
+      });
+
+      if (purchaseEvent && purchaseEvent.topics[3]) {
+        return BigInt(purchaseEvent.topics[3]);
+      }
+    } catch (error) {
+      console.warn("Failed to extract NFT token ID from receipt:", error);
     }
-  });
+
+    return undefined;
+  }, [receipt, marketplaceAddress]);
 
   return {
     purchaseCourse,
-    handleBackendConfirmation,
+    handleBackendStatusCheck,
     isLoading: isPending || isWaitingReceipt,
     isSuccess,
     transactionHash,
-    nftTokenId: nftTokenId ? BigInt(0) : undefined, // Extract from logs
+    nftTokenId,
     error: writeError || receiptError,
   };
 };
@@ -559,9 +544,7 @@ export const usePurchaseValidation = (params: ContractPurchaseParams) => {
     validationErrors.push("Invalid course price");
   }
 
-  if (!params.nftMetadataUri || params.nftMetadataUri.trim() === "") {
-    validationErrors.push("NFT metadata is required for purchase");
-  }
+  // No longer require NFT metadata URI since we generate it automatically
 
   if (
     params.affiliatePercentage &&

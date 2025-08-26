@@ -57,7 +57,7 @@ function AuthSection() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const { addToast } = useUIStore();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const logout = useLogout();
   const { data: user } = useCurrentUser();
 
@@ -112,8 +112,8 @@ function AuthSection() {
     }
   };
 
-  // Show loading state during SSR to prevent hydration mismatch
-  if (!isClient) {
+  // Show loading state during SSR and auth loading to prevent hydration mismatch
+  if (!isClient || authLoading) {
     return (
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 bg-gray-700 rounded-full animate-pulse"></div>
