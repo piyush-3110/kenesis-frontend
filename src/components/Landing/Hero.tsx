@@ -99,7 +99,7 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Right Side - Girls Image */}
-          <div className="flex justify-center lg:justify-end order-first lg:order-last">
+          <div className="flex justify-center mt-16 mt:mt-0 lg:justify-end order-first lg:order-last">
             <Image
               src="/images/landing/girls.png"
               alt="Kenesis Banner Models"

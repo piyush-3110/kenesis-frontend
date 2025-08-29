@@ -32,7 +32,8 @@ function NavLinks() {
   return (
     <div className="hidden md:flex items-center space-x-8">
       <Link
-        href="/presale"
+        href="https://kenesis-presale.vercel.app/"
+        target="_blank"
         className="text-gray-300 hover:text-white transition-all duration-300 hover:scale-105 group"
       >
         <span className="font-medium text-lg">Presale</span>
@@ -224,7 +225,8 @@ function AuthSection() {
 
                 <div className="md:hidden border-b border-gray-700/40 py-1">
                   <Link
-                    href="/presale"
+                    href="https://kenesis-presale.vercel.app/"
+                    target="_blank"
                     onClick={() => setIsDropdownOpen(false)}
                     className="flex items-center space-x-4 px-5 py-4 text-gray-300 hover:text-white hover:bg-green-500/20 transition-all duration-300 group"
                   >
@@ -509,7 +511,8 @@ export default function Navbar() {
                       </button>
                     )}
                     <Link
-                      href="/presale"
+                      href="https://kenesis-presale.vercel.app/"
+                      target="_blank"
                       className="px-5 py-4 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-between text-white font-medium"
                     >
                       Presale

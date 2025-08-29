@@ -16,6 +16,8 @@ import UserProfile from "./UserProfile";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
+import Link from "next/link";
+import Image from "next/image";
 
 /**
  * Sidebar Component
@@ -108,46 +110,16 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Header */}
       <div className="p-6 border-b border-gray-800/50">
-        <div className="flex items-center justify-between">
-          {/* Logo/Brand */}
-          <button
-            onClick={() => router.push("/")}
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          >
-            <div
-              className="w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center"
-              style={{
-                boxShadow: "0 0 20px rgba(6, 128, 255, 0.3)",
-              }}
-            >
-              <span className="text-white font-bold text-lg">K</span>
-            </div>
-
-            {!isCollapsed && (
-              <h1
-                className="text-white font-medium hover:text-blue-400 transition-colors"
-                style={{
-                  fontFamily: "CircularXX, Inter, sans-serif",
-                  fontSize: "20px",
-                  fontWeight: 500,
-                  lineHeight: "100%",
-                }}
-              >
-                Kinesis
-              </h1>
-            )}
-          </button>
-
-          {/* Mobile close button */}
-          {isMobileOpen && (
-            <button
-              onClick={onMobileClose}
-              className="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200 lg:hidden"
-            >
-              <X className="w-5 h-5 text-gray-400" />
-            </button>
-          )}
-        </div>
+        <Link href="/" className="flex items-center space-x-2">
+      <Image
+        src="/images/landing/logo.png"
+        alt="Kenesis Logo"
+        width={100}
+        height={120}
+        priority
+        className="h-6 w-24 md:h-8 md:w-36"
+      />
+    </Link>
       </div>
 
       {/* Navigation */}
