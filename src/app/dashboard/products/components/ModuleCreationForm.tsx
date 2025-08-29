@@ -1,18 +1,10 @@
-"use client";
-
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useProductCreationStore } from "../store/useProductCreationStore";
-import { useCreateModule } from "@/hooks/useCourse";
-import { useLogout } from "@/features/auth/hooks";
 import { useUIStore } from "@/store/useUIStore";
 import { ModuleFormData } from "../types";
 import { MODULE_TYPES, FILE_UPLOAD_LIMITS } from "../constants";
 import {
   Plus,
-  Edit,
-  Trash2,
-  ArrowLeft,
   ArrowRight,
   Upload,
   X,
@@ -24,31 +16,24 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { uploadFile } from "@/lib/uploadService";
+import { http } from "@/lib/http/axios";
 
 /**
  * ModuleCreationForm Component
  * Step 3: Create and manage modules within chapters with blue gradient design and API integration
  */
 const ModuleCreationForm: React.FC = () => {
-  const router = useRouter();
   const {
     currentCourse,
     selectedChapterId,
     setSelectedChapterId,
     addModule,
     updateModule,
-    deleteModule,
     setCurrentStep,
     markStepCompleted,
   } = useProductCreationStore();
 
-  const {
-    createModule: createModuleAPI,
-    loading: apiLoading,
-    error: apiError,
-    clearError,
-  } = useCreateModule();
-  const logout = useLogout();
   const { addToast } = useUIStore();
 
   /**
@@ -84,12 +69,12 @@ const ModuleCreationForm: React.FC = () => {
     const validation = validateChapterModules();
     if (!validation.isValid) {
       addToast({
-        type: "error", 
-        message: validation.message
+        type: "error",
+        message: validation.message,
       });
       return;
     }
-    
+
     // Mark modules step as completed
     markStepCompleted("modules");
     setCurrentStep("review");
@@ -113,11 +98,30 @@ const ModuleCreationForm: React.FC = () => {
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingSubmission, setPendingSubmission] = useState(false);
 
+  const [uploadedUrls, setUploadedUrls] = useState<{
+    mainFileUrl: string | null;
+    attachmentUrls: string[];
+  }>({
+    mainFileUrl: null,
+    attachmentUrls: [],
+  });
+
+  const [uploadProgress, setUploadProgress] = useState<{
+    mainFile: { percentage: number; status: string } | null;
+    attachments: { [index: number]: { percentage: number; status: string } };
+  }>({
+    mainFile: null,
+    attachments: {},
+  });
+
   const currentChapter = currentCourse?.chapters.find(
     (ch) => ch.id === selectedChapterId
   );
 
-  const handleInputChange = (field: keyof ModuleFormData, value: any) => {
+  const handleInputChange = (
+    field: keyof ModuleFormData,
+    value: string | string[] | number | boolean
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -127,12 +131,12 @@ const ModuleCreationForm: React.FC = () => {
   const handleFileUpload = (file: File, isMainFile = true) => {
     if (isMainFile) {
       // Auto-detect module type based on file type
-      const isVideoFile = file.type.startsWith('video/');
-      const autoDetectedType = isVideoFile ? 'video' : 'document';
-      
+      const isVideoFile = file.type.startsWith("video/");
+      const autoDetectedType = isVideoFile ? "video" : "document";
+
       // Update form data with auto-detected type
-      setFormData(prev => ({ ...prev, type: autoDetectedType }));
-      
+      setFormData((prev) => ({ ...prev, type: autoDetectedType }));
+
       // Validate main file size (unified 500MB limit for all types)
       const maxSize = 500 * 1024 * 1024; // 500MB
 
@@ -147,10 +151,20 @@ const ModuleCreationForm: React.FC = () => {
       // Accept all supported video and document types
       const allowedTypes = [
         // Video types
-        'video/mp4', 'video/webm', 'video/ogg', 'video/avi', 'video/mov', 'video/mkv', 'video/wmv', 'video/quicktime',
+        "video/mp4",
+        "video/webm",
+        "video/ogg",
+        "video/avi",
+        "video/mov",
+        "video/mkv",
+        "video/wmv",
+        "video/quicktime",
         // Document types
-        'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
       ];
 
       if (!allowedTypes.includes(file.type)) {
@@ -164,7 +178,7 @@ const ModuleCreationForm: React.FC = () => {
       setErrors((prev) => ({ ...prev, mainFile: "" }));
       setMainFile(file);
       setMainFilePreview(URL.createObjectURL(file));
-      
+
       // Show info about auto-detection
       addToast({
         type: "info",
@@ -227,13 +241,15 @@ const ModuleCreationForm: React.FC = () => {
 
     // Main file validation - required for proper type detection
     if (!editingModuleId && !mainFile) {
-      newErrors.mainFile = "Please upload a main file to determine the module type";
+      newErrors.mainFile =
+        "Please upload a main file to determine the module type";
     }
 
     // Type validation - ensure type is set (auto-detected from uploaded file)
     if (!formData.type || !["video", "document"].includes(formData.type)) {
       if (!newErrors.mainFile) {
-        newErrors.mainFile = "Module type could not be determined. Please upload a valid file.";
+        newErrors.mainFile =
+          "Module type could not be determined. Please upload a valid file.";
       }
     }
 
@@ -287,9 +303,6 @@ const ModuleCreationForm: React.FC = () => {
     const chapterIdForAPI = selectedChapter.backendId || selectedChapter.id;
     console.log("📍 Using chapter ID for API:", chapterIdForAPI);
 
-    // Clear any existing API errors
-    clearError();
-
     if (editingModuleId) {
       // Local update for editing existing modules
       updateModule(selectedChapterId, editingModuleId, formData);
@@ -304,7 +317,7 @@ const ModuleCreationForm: React.FC = () => {
 
   const handleConfirmSubmission = async () => {
     setPendingSubmission(true);
-    
+
     if (!selectedChapterId || !currentCourse?.id) {
       setPendingSubmission(false);
       return;
@@ -328,38 +341,109 @@ const ModuleCreationForm: React.FC = () => {
     const chapterIdForAPI = selectedChapter.backendId || selectedChapter.id;
     console.log("📍 Using chapter ID for API:", chapterIdForAPI);
 
-    // Clear any existing API errors
-    clearError();
-
     try {
-      console.log("📤 Creating module for course ID:", currentCourse.id);
-      console.log("📤 Module data:", formData);
-      console.log("📤 Main file:", mainFile);
-      console.log("📤 Attachments:", attachmentFiles);
+      // Step 1: Upload files concurrently if they exist and capture results directly
 
-      // Create module data object following API specification
+      // Upload main file and capture result directly
+      const mainFileResult = mainFile
+        ? await uploadFile(
+            mainFile,
+            formData.type === "video" ? "module-videos" : "module-documents",
+            (progress) => {
+              // Update progress state for main file
+              setUploadProgress((prev) => ({
+                ...prev,
+                mainFile: {
+                  percentage: progress.percentage,
+                  status: "Uploading...",
+                },
+              }));
+            }
+          )
+        : null;
+
+      // Upload attachments concurrently and capture results directly
+      const attachmentResults =
+        attachmentFiles.length > 0
+          ? await Promise.all(
+              attachmentFiles.map((file, index) =>
+                uploadFile(file, "module-attachments", (progress) => {
+                  // Update progress state for each attachment
+                  setUploadProgress((prev) => ({
+                    ...prev,
+                    attachments: {
+                      ...prev.attachments,
+                      [index]: {
+                        percentage: progress.percentage,
+                        status: "Uploading...",
+                      },
+                    },
+                  }));
+                })
+              )
+            )
+          : [];
+
+      // Extract URLs from results
+      const finalMainFileUrl = mainFileResult ? mainFileResult.url : null;
+      const finalAttachmentUrls = attachmentResults.map((result) => result.url);
+
+      // Optional: Update state for UI consistency (but not critical for API call)
+      setUploadedUrls({
+        mainFileUrl: finalMainFileUrl,
+        attachmentUrls: finalAttachmentUrls,
+      });
+
+      // Clear upload progress after completion
+      setUploadProgress({
+        mainFile: null,
+        attachments: {},
+      });
+
+      addToast({
+        type: "success",
+        message: "All files uploaded successfully!",
+      });
+
+      // Step 2: Create module with the correct, final URLs
       const nextOrder = (selectedChapter?.modules.length || 0) + 1;
-      const moduleApiData = {
+      const formattedAttachments = attachmentFiles.map((file, index) => ({
+        name: file.name,
+        url: finalAttachmentUrls[index], // Use the corresponding uploaded URL
+        fileSize: file.size,
+        mimeType: file.type,
+      }));
+
+      const moduleData = {
         chapterId: chapterIdForAPI,
         title: formData.title.trim(),
+        // 'type' is inferred on the backend, but sending it is fine.
         type: formData.type,
         description: formData.description?.trim(),
-        duration: formData.duration && formData.duration > 0 ? formData.duration : undefined,
+        duration:
+          formData.duration && formData.duration > 0
+            ? formData.duration
+            : undefined,
         isPreview: formData.isPreview,
         order: nextOrder,
-        mainFile: mainFile || undefined,
-        attachments: attachmentFiles.length > 0 ? attachmentFiles : []
+        videoUrl: formData.type === "video" ? finalMainFileUrl : undefined,
+        documentUrl:
+          formData.type === "document" ? finalMainFileUrl : undefined,
+
+        // Use the new `formattedAttachments` array
+        attachments:
+          formattedAttachments.length > 0 ? formattedAttachments : undefined,
       };
 
-      console.log(
-        "📤 API URL will be: /api/courses/" + currentCourse.id + "/modules"
+      console.log("📤 Creating module with data:", moduleData);
+
+      const response = await http.post(
+        `/api/courses/${currentCourse.id}/modules`,
+        moduleData
       );
-      console.log("📦 Module data:", moduleApiData);
 
-      const result = await createModuleAPI(currentCourse.id, moduleApiData);
-
-      if (result.success && result.data) {
-        console.log("✅ Module created successfully:", result.data);
+      if (response.data.success && response.data.data) {
+        console.log("✅ Module created successfully:", response.data.data);
 
         // Add module to local state with the API-generated data
         const newModuleData = {
@@ -367,12 +451,12 @@ const ModuleCreationForm: React.FC = () => {
           description: formData.description,
           type: formData.type,
           chapterId: selectedChapterId,
-          order: result.data?.order || nextOrder,
+          order: response.data?.data?.order || nextOrder,
           duration: formData.duration,
           isPreview: formData.isPreview,
-          mainFile: mainFile || undefined,
-          attachments: attachmentFiles,
-          backendId: result.data?.id, // Store backend ID for future API calls
+          mainFile: uploadedUrls.mainFileUrl || undefined,
+          attachments: uploadedUrls.attachmentUrls,
+          backendId: response.data?.data?.id, // Store backend ID for future API calls
         };
 
         addModule(selectedChapterId, newModuleData);
@@ -382,66 +466,32 @@ const ModuleCreationForm: React.FC = () => {
         setPendingSubmission(false);
         addToast({
           type: "success",
-          message: result.message || "Module created successfully!",
+          message: response.data.message || "Module created successfully!",
         });
       } else {
-        console.error("❌ Module creation failed:", result);
-
-        // Handle specific error scenarios
-        if (result.isUnauthorized) {
-          logout.mutate();
-          addToast({
-            type: "error",
-            message: "Session expired. Please log in again.",
-          });
-          router.push("/");
-          return;
-        }
-
-        if (result.isForbidden) {
-          addToast({
-            type: "error",
-            message: "You are not authorized to modify this course.",
-          });
-          setPendingSubmission(false);
-          return;
-        }
-
-        if (result.isNotFound) {
-          addToast({
-            type: "error",
-            message:
-              "Course or chapter not found. Please ensure the chapter was saved properly.",
-          });
-          setPendingSubmission(false);
-          return;
-        }
-
-        if (result.isRateLimit) {
-          addToast({ type: "error", message: result.message });
-          setPendingSubmission(false);
-          return;
-        }
-
-        if (result.isValidationError) {
-          addToast({ type: "error", message: result.message });
-          setPendingSubmission(false);
-          return;
-        }
+        console.error("❌ Module creation failed:", response.data);
 
         addToast({
           type: "error",
-          message: result.message || "Failed to create module",
+          message: response.data.message || "Failed to create module",
         });
         setPendingSubmission(false);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Module creation error:", error);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while creating the module.";
       addToast({
         type: "error",
-        message: "Something went wrong while creating the module.",
+        message: errorMessage,
       });
       setPendingSubmission(false);
+      setUploadProgress({
+        mainFile: null,
+        attachments: {},
+      });
     }
   };
 
@@ -458,34 +508,10 @@ const ModuleCreationForm: React.FC = () => {
     setMainFile(null);
     setAttachmentFiles([]);
     setMainFilePreview(null);
-  };
-
-  const handleEdit = (moduleId: string) => {
-    const chapterModule = currentChapter?.modules.find(
-      (m) => m.id === moduleId
-    );
-    if (chapterModule) {
-      setFormData({
-        title: chapterModule.title,
-        description: chapterModule.description || "",
-        type: chapterModule.type,
-        order: chapterModule.order,
-        duration: chapterModule.duration || 0,
-        isPreview: chapterModule.isPreview,
-        mainFile: chapterModule.mainFile as File,
-        attachments: chapterModule.attachments as File[],
-      });
-      setEditingModuleId(moduleId);
-    }
-  };
-
-  const handleDelete = (moduleId: string) => {
-    if (
-      confirm("Are you sure you want to delete this module?") &&
-      selectedChapterId
-    ) {
-      deleteModule(selectedChapterId, moduleId);
-    }
+    setUploadProgress({
+      mainFile: null,
+      attachments: {},
+    });
   };
 
   const getModuleIcon = (type: string) => {
@@ -525,7 +551,18 @@ const ModuleCreationForm: React.FC = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       {/* Chapter Selection */}
-      <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-lg p-6 border border-gray-700">
+      <div className="bg-gradient-to-r from-gray-900/50 to-gray-800/50 rounded-lg p-6 border border-gray-700 relative">
+        {pendingSubmission && (
+          <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center z-50">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-[#0680FF] mx-auto mb-2" />
+              <p className="text-white font-medium">Uploading files...</p>
+              <p className="text-gray-300 text-sm">
+                Please wait while we process your module
+              </p>
+            </div>
+          </div>
+        )}
         <h3 className="text-lg font-semibold text-white mb-4">
           Select Chapter to Add Modules
         </h3>
@@ -536,13 +573,15 @@ const ModuleCreationForm: React.FC = () => {
               <button
                 key={chapter.id}
                 onClick={() => setSelectedChapterId(chapter.id)}
+                disabled={pendingSubmission}
                 className={cn(
                   "p-4 rounded-lg border text-left transition-all duration-300 relative",
                   selectedChapterId === chapter.id
                     ? "border-[#0680FF] bg-[#0680FF]/10"
                     : hasModules
                     ? "border-gray-600 hover:border-gray-500"
-                    : "border-red-500/50 bg-red-500/5 hover:border-red-500"
+                    : "border-red-500/50 bg-red-500/5 hover:border-red-500",
+                  pendingSubmission && "opacity-50 cursor-not-allowed"
                 )}
               >
                 {!hasModules && (
@@ -550,15 +589,19 @@ const ModuleCreationForm: React.FC = () => {
                     <AlertTriangle className="w-4 h-4 text-red-400" />
                   </div>
                 )}
-                <h4 className="font-semibold text-white mb-1 truncate">{chapter.title}</h4>
+                <h4 className="font-semibold text-white mb-1 truncate">
+                  {chapter.title}
+                </h4>
                 <p className="text-gray-400 text-sm mb-2 line-clamp-2">
                   {chapter.description}
                 </p>
                 <div className="flex items-center justify-between">
-                  <span className={cn(
-                    "text-xs",
-                    hasModules ? "text-[#0680FF]" : "text-red-400"
-                  )}>
+                  <span
+                    className={cn(
+                      "text-xs",
+                      hasModules ? "text-[#0680FF]" : "text-red-400"
+                    )}
+                  >
                     {chapter.modules.length} modules
                   </span>
                   {!hasModules && (
@@ -576,7 +619,18 @@ const ModuleCreationForm: React.FC = () => {
       {selectedChapterId && currentChapter && (
         <>
           {/* Module Form */}
-          <div className="bg-gradient-to-r from-gray-900/30 to-gray-800/30 rounded-lg p-6 border border-gray-700">
+          <div className="bg-gradient-to-r from-gray-900/30 to-gray-800/30 rounded-lg p-6 border border-gray-700 relative">
+            {pendingSubmission && (
+              <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center z-50">
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#0680FF] mx-auto mb-2" />
+                  <p className="text-white font-medium">Uploading files...</p>
+                  <p className="text-gray-300 text-sm">
+                    Please wait while we process your module
+                  </p>
+                </div>
+              </div>
+            )}
             <h3 className="text-lg font-semibold text-white mb-6">
               {editingModuleId ? "Edit Module" : "Add New Module"}
               <span className="text-[#0680FF] ml-2">
@@ -594,13 +648,12 @@ const ModuleCreationForm: React.FC = () => {
                   <input
                     type="text"
                     value={formData.title}
-                    onChange={(e) =>
-                      handleInputChange("title", e.target.value)
-                    }
+                    onChange={(e) => handleInputChange("title", e.target.value)}
                     placeholder="Enter module title (min 3 characters)"
                     className={inputClass}
                     minLength={3}
                     required
+                    disabled={pendingSubmission}
                   />
                 </div>
                 {errors.title && (
@@ -622,6 +675,7 @@ const ModuleCreationForm: React.FC = () => {
                     placeholder="Describe what this module covers (optional but recommended)"
                     rows={3}
                     className={cn(inputClass, "resize-none")}
+                    disabled={pendingSubmission}
                   />
                 </div>
                 {errors.description && (
@@ -652,6 +706,7 @@ const ModuleCreationForm: React.FC = () => {
                       min="0"
                       max="600"
                       className={inputClass}
+                      disabled={pendingSubmission}
                     />
                   </div>
                   {errors.duration && (
@@ -687,6 +742,7 @@ const ModuleCreationForm: React.FC = () => {
                           }
                         }}
                         className="w-5 h-5 text-[#0680FF] bg-[#010519] border border-gray-600 rounded focus:ring-[#0680FF] focus:ring-2"
+                        disabled={pendingSubmission}
                       />
                       <div>
                         <span className="text-white font-medium block">
@@ -728,7 +784,8 @@ const ModuleCreationForm: React.FC = () => {
                             setMainFilePreview(null);
                             setMainFile(null);
                           }}
-                          className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors z-10"
+                          disabled={pendingSubmission}
+                          className="absolute top-2 right-2 p-1 bg-red-500 rounded-full hover:bg-red-600 transition-colors z-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <X className="w-4 h-4 text-white" />
                         </button>
@@ -741,7 +798,8 @@ const ModuleCreationForm: React.FC = () => {
                             Click to upload main file
                           </p>
                           <p className="text-gray-500 text-xs mt-1">
-                            Max 500MB - Supports videos (MP4, WEBM, OGG, AVI, MOV, WMV) and documents (PDF, DOC, DOCX, PPT, PPTX)
+                            Max 500MB - Supports videos (MP4, WEBM, OGG, AVI,
+                            MOV, WMV) and documents (PDF, DOC, DOCX, PPT, PPTX)
                           </p>
                         </div>
                         <input
@@ -751,6 +809,7 @@ const ModuleCreationForm: React.FC = () => {
                             e.target.files?.[0] &&
                             handleFileUpload(e.target.files[0], true)
                           }
+                          disabled={pendingSubmission}
                           className="hidden"
                         />
                       </label>
@@ -759,6 +818,25 @@ const ModuleCreationForm: React.FC = () => {
                 </div>
                 {errors.mainFile && (
                   <p className="text-red-400 text-sm mt-2">{errors.mainFile}</p>
+                )}
+                {/* Main File Upload Progress Bar */}
+                {uploadProgress.mainFile && (
+                  <div className="mt-3">
+                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                      <span>Uploading main file...</span>
+                      <span>
+                        {Math.round(uploadProgress.mainFile.percentage)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${uploadProgress.mainFile.percentage}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
 
@@ -779,13 +857,39 @@ const ModuleCreationForm: React.FC = () => {
                             key={index}
                             className="flex items-center justify-between bg-gray-800/50 rounded p-2"
                           >
-                            <span className="text-white text-sm truncate flex-1 mr-2">
-                              {file.name}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <span className="text-white text-sm truncate block">
+                                {file.name}
+                              </span>
+                              {/* Attachment Upload Progress Bar */}
+                              {uploadProgress.attachments[index] && (
+                                <div className="mt-2">
+                                  <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                    <span>Uploading...</span>
+                                    <span>
+                                      {Math.round(
+                                        uploadProgress.attachments[index]
+                                          .percentage
+                                      )}
+                                      %
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-gray-700 rounded-full h-1.5">
+                                    <div
+                                      className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                                      style={{
+                                        width: `${uploadProgress.attachments[index].percentage}%`,
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                             <button
                               type="button"
                               onClick={() => removeAttachment(index)}
-                              className="text-red-400 hover:text-red-300 flex-shrink-0"
+                              disabled={pendingSubmission}
+                              className="text-red-400 hover:text-red-300 flex-shrink-0 ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                               <X className="w-4 h-4" />
                             </button>
@@ -817,6 +921,7 @@ const ModuleCreationForm: React.FC = () => {
                             // Clear the input so the same file can be selected again if needed
                             e.target.value = "";
                           }}
+                          disabled={pendingSubmission}
                           className="hidden"
                         />
                       </label>
@@ -844,10 +949,10 @@ const ModuleCreationForm: React.FC = () => {
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  disabled={apiLoading}
+                  disabled={pendingSubmission}
                   className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {apiLoading && !editingModuleId ? (
+                  {pendingSubmission && !editingModuleId ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
                       Creating...
@@ -863,7 +968,7 @@ const ModuleCreationForm: React.FC = () => {
                 {editingModuleId && (
                   <button
                     type="button"
-                    disabled={apiLoading}
+                    disabled={pendingSubmission}
                     onClick={() => {
                       setEditingModuleId(null);
                       resetForm();
@@ -874,13 +979,6 @@ const ModuleCreationForm: React.FC = () => {
                   </button>
                 )}
               </div>
-
-              {/* Display API errors */}
-              {apiError && (
-                <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <p className="text-red-400 text-sm">{apiError}</p>
-                </div>
-              )}
             </form>
           </div>
 
@@ -925,13 +1023,16 @@ const ModuleCreationForm: React.FC = () => {
                               </span>
                             )}
                           </div>
-                          <p className="text-gray-400 text-sm mb-2 overflow-hidden break-words" style={{
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            wordBreak: 'break-word',
-                            overflowWrap: 'break-word'
-                          }}>
+                          <p
+                            className="text-gray-400 text-sm mb-2 overflow-hidden break-words"
+                            style={{
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              wordBreak: "break-word",
+                              overflowWrap: "break-word",
+                            }}
+                          >
                             {module.description}
                           </p>
                           <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -970,7 +1071,9 @@ const ModuleCreationForm: React.FC = () => {
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-yellow-400 font-medium text-sm">Warning: Missing Modules</p>
+                  <p className="text-yellow-400 font-medium text-sm">
+                    Warning: Missing Modules
+                  </p>
                   <p className="text-yellow-300 text-sm mt-1">
                     {validation.message}
                   </p>
@@ -990,20 +1093,25 @@ const ModuleCreationForm: React.FC = () => {
                 "flex items-center gap-2 px-8 py-3 font-medium rounded-lg transition-all duration-300",
                 validateChapterModules().isValid
                   ? "bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white hover:shadow-lg hover:shadow-blue-500/25"
-                  : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-600 text-gray-400 cursor-not-allowed",
+                pendingSubmission && "opacity-50 cursor-not-allowed"
               )}
-              disabled={!validateChapterModules().isValid}
+              disabled={!validateChapterModules().isValid || pendingSubmission}
             >
               Continue to Review
               <ArrowRight className="w-5 h-5" />
             </button>
-            
+
             {/* Tooltip for disabled state */}
             {!validateChapterModules().isValid && (
               <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max max-w-xs">
                 <div className="text-center">
-                  <p className="font-medium text-red-400 mb-1">Cannot Continue</p>
-                  <p className="text-gray-300">{validateChapterModules().message}</p>
+                  <p className="font-medium text-red-400 mb-1">
+                    Cannot Continue
+                  </p>
+                  <p className="text-gray-300">
+                    {validateChapterModules().message}
+                  </p>
                 </div>
                 {/* Tooltip arrow */}
                 <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"></div>
@@ -1018,7 +1126,6 @@ const ModuleCreationForm: React.FC = () => {
         isOpen={showConfirmationModal}
         onClose={() => {
           setShowConfirmationModal(false);
-          setPendingSubmission(false);
         }}
         onConfirm={handleConfirmSubmission}
         title="Create Module"
