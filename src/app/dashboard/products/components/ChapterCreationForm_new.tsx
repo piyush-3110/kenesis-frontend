@@ -131,7 +131,7 @@ const ChapterCreationForm: React.FC = () => {
 
   const handleConfirmSubmission = async () => {
     setPendingSubmission(true);
-    
+
     // Clear any existing API errors
     clearError();
 
@@ -228,7 +228,7 @@ const ChapterCreationForm: React.FC = () => {
   };
 
   const handleEdit = (chapterId: string) => {
-    const chapter = currentCourse?.chapters.find((ch) => ch.id === chapterId);
+    const chapter = currentCourse?.chapters?.find((ch) => ch.id === chapterId);
     if (chapter) {
       setFormData({
         title: chapter.title,
@@ -251,7 +251,7 @@ const ChapterCreationForm: React.FC = () => {
   };
 
   const handleContinueToModules = () => {
-    if (!currentCourse?.chapters.length) {
+    if (!currentCourse?.chapters?.length) {
       addToast({
         type: "error",
         message: "Please add at least one chapter before continuing.",
@@ -260,7 +260,7 @@ const ChapterCreationForm: React.FC = () => {
     }
 
     // Check if all chapters have backend IDs (have been saved)
-    const chaptersWithoutBackendId = currentCourse.chapters.filter(
+    const chaptersWithoutBackendId = currentCourse?.chapters?.filter(
       (ch) => !ch.backendId
     );
     if (chaptersWithoutBackendId.length > 0) {
@@ -429,14 +429,14 @@ const ChapterCreationForm: React.FC = () => {
       </div>
 
       {/* Existing Chapters */}
-      {currentCourse.chapters.length > 0 && (
+      {currentCourse?.chapters?.length > 0 && (
         <div className="bg-gradient-to-r from-gray-900/30 to-gray-800/30 rounded-lg p-6 border border-gray-700">
           <h3 className="text-lg font-semibold text-white mb-6">
-            Course Chapters ({currentCourse.chapters.length})
+            Course Chapters ({currentCourse?.chapters?.length})
           </h3>
 
           <div className="space-y-4">
-            {currentCourse.chapters.map((chapter, index) => (
+            {currentCourse?.chapters?.map((chapter, index) => (
               <div
                 key={chapter.id}
                 className="flex items-center gap-4 p-4 bg-gray-800/50 rounded-lg border border-gray-700"
@@ -490,7 +490,7 @@ const ChapterCreationForm: React.FC = () => {
         </button>
         <button
           onClick={handleContinueToModules}
-          disabled={!currentCourse.chapters.length}
+          disabled={!currentCourse?.chapters?.length}
           className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#0680FF] to-[#022ED2] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Continue to Modules
@@ -503,7 +503,6 @@ const ChapterCreationForm: React.FC = () => {
         isOpen={showConfirmationModal}
         onClose={() => {
           setShowConfirmationModal(false);
-          setPendingSubmission(false);
         }}
         onConfirm={handleConfirmSubmission}
         title="Create Chapter"
