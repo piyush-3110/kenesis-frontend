@@ -132,7 +132,7 @@ const ChapterCreationForm: React.FC = () => {
 
   const handleConfirmSubmission = async () => {
     setPendingSubmission(true);
-    
+
     // Clear any existing API errors
     clearError();
 
@@ -451,10 +451,16 @@ const ChapterCreationForm: React.FC = () => {
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-medium truncate" title={chapter.title}>
+                  <h4
+                    className="text-white font-medium truncate"
+                    title={chapter.title}
+                  >
                     {chapter.title}
                   </h4>
-                  <p className="text-gray-400 text-sm line-clamp-2 break-words" title={chapter.description}>
+                  <p
+                    className="text-gray-400 text-sm line-clamp-2 break-words"
+                    title={chapter.description}
+                  >
                     {chapter.description}
                   </p>
                   <div className="mt-2 text-xs text-gray-500">
@@ -490,7 +496,6 @@ const ChapterCreationForm: React.FC = () => {
         isOpen={showConfirmationModal}
         onClose={() => {
           setShowConfirmationModal(false);
-          setPendingSubmission(false);
         }}
         onConfirm={handleConfirmSubmission}
         title="Create Chapter"

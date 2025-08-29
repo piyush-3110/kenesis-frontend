@@ -51,8 +51,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   };
 
   const getConfirmButtonClasses = () => {
-    const baseClasses = "flex items-center gap-2 px-6 py-3 font-medium rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed";
-    
+    const baseClasses =
+      "flex items-center gap-2 px-6 py-3 font-medium rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed";
+
     switch (confirmButtonVariant) {
       case "danger":
         return `${baseClasses} bg-gradient-to-r from-red-600 to-red-700 text-white hover:shadow-lg hover:shadow-red-500/25`;
@@ -77,11 +78,13 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {getIcon()}
-            <h2 className="text-lg font-semibold text-white break-words">{title}</h2>
+            <h2 className="text-lg font-semibold text-white break-words">
+              {title}
+            </h2>
           </div>
           <button
             onClick={onClose}
-            disabled={isLoading}
+            // disabled={isLoading}
             className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 flex-shrink-0"
           >
             <X size={20} />
@@ -91,7 +94,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         {/* Content */}
         <div className="p-6">
           <div className={`p-4 rounded-lg border ${getIconBgColor()} mb-6`}>
-            <p className="text-gray-300 text-sm leading-relaxed break-words whitespace-pre-wrap">{message}</p>
+            <p className="text-gray-300 text-sm leading-relaxed break-words whitespace-pre-wrap">
+              {message}
+            </p>
           </div>
 
           {/* Actions */}

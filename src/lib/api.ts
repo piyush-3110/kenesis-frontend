@@ -1118,107 +1118,141 @@ export const CourseAPI = {
       chapterId: string;
       title: string;
       description?: string;
-      type: 'video' | 'document';
+      type: "video" | "document";
       order?: number;
       duration?: number;
       isPreview?: boolean;
       mainFile?: File;
       attachments?: File[];
     }
-  ): Promise<ApiResponse<{
-    id: string;
-    chapterId: string;
-    title: string;
-    description?: string;
-    type: 'video' | 'document';
-    order: number;
-    duration?: number;
-    videoUrl?: string;
-    documentUrl?: string;
-    attachments?: Array<{
+  ): Promise<
+    ApiResponse<{
       id: string;
-      filename: string;
-      url: string;
-      size: number;
-      mimeType: string;
-    }>;
-    isPreview: boolean;
-    createdAt: string;
-    updatedAt: string;
-  }>> => {
+      chapterId: string;
+      title: string;
+      description?: string;
+      type: "video" | "document";
+      order: number;
+      duration?: number;
+      videoUrl?: string;
+      documentUrl?: string;
+      attachments?: Array<{
+        id: string;
+        filename: string;
+        url: string;
+        size: number;
+        mimeType: string;
+      }>;
+      isPreview: boolean;
+      createdAt: string;
+      updatedAt: string;
+    }>
+  > => {
     console.log("📝 [API] Starting createModule request...");
     console.log("📝 [API] Course ID:", courseId);
-    console.log("📝 [API] Module data:", JSON.stringify({
-      chapterId: moduleData.chapterId,
-      title: moduleData.title,
-      description: moduleData.description,
-      type: moduleData.type,
-      order: moduleData.order,
-      duration: moduleData.duration,
-      isPreview: moduleData.isPreview,
-      hasMainFile: !!moduleData.mainFile,
-      attachmentCount: moduleData.attachments?.length || 0
-    }, null, 2));
+    console.log(
+      "📝 [API] Module data:",
+      JSON.stringify(
+        {
+          chapterId: moduleData.chapterId,
+          title: moduleData.title,
+          description: moduleData.description,
+          type: moduleData.type,
+          order: moduleData.order,
+          duration: moduleData.duration,
+          isPreview: moduleData.isPreview,
+          hasMainFile: !!moduleData.mainFile,
+          attachmentCount: moduleData.attachments?.length || 0,
+        },
+        null,
+        2
+      )
+    );
 
     // Frontend validation
     const validationErrors: string[] = [];
-    if (!courseId?.trim()) validationErrors.push('Course ID is required');
-    if (!moduleData.chapterId?.trim()) validationErrors.push('Chapter ID is required');
-    if (!moduleData.title?.trim()) validationErrors.push('Title is required');
-    if (moduleData.title && moduleData.title.length < 3) validationErrors.push('Title must be at least 3 characters');
-    if (moduleData.title && moduleData.title.length > 200) validationErrors.push('Title cannot exceed 200 characters');
-  
+    if (!courseId?.trim()) validationErrors.push("Course ID is required");
+    if (!moduleData.chapterId?.trim())
+      validationErrors.push("Chapter ID is required");
+    if (!moduleData.title?.trim()) validationErrors.push("Title is required");
+    if (moduleData.title && moduleData.title.length < 3)
+      validationErrors.push("Title must be at least 3 characters");
+    if (moduleData.title && moduleData.title.length > 200)
+      validationErrors.push("Title cannot exceed 200 characters");
+
     if (moduleData.description && moduleData.description.length > 1000) {
-      validationErrors.push('Description cannot exceed 1000 characters');
+      validationErrors.push("Description cannot exceed 1000 characters");
     }
-    if (moduleData.order && moduleData.order < 1) validationErrors.push('Order must be at least 1');
-    if (moduleData.duration && moduleData.duration < 0) validationErrors.push('Duration must be non-negative');
+    if (moduleData.order && moduleData.order < 1)
+      validationErrors.push("Order must be at least 1");
+    if (moduleData.duration && moduleData.duration < 0)
+      validationErrors.push("Duration must be non-negative");
 
     if (validationErrors.length > 0) {
       console.error("❌ [API] Frontend validation failed:", validationErrors);
       return {
         success: false,
-        message: validationErrors.join(', '),
+        message: validationErrors.join(", "),
       };
     }
 
     try {
       // Create FormData for multipart upload
       const formData = new FormData();
-      
+
       // Add required fields
-      formData.append('chapterId', moduleData.chapterId);
-      formData.append('title', moduleData.title);
-      formData.append('type', moduleData.type);
-      
+      formData.append("chapterId", moduleData.chapterId);
+      formData.append("title", moduleData.title);
+      formData.append("type", moduleData.type);
+
       // Add optional fields
-      if (moduleData.description) formData.append('description', moduleData.description);
-      if (moduleData.order !== undefined) formData.append('order', moduleData.order.toString());
-      if (moduleData.duration !== undefined) formData.append('duration', moduleData.duration.toString());
-      if (moduleData.isPreview !== undefined) formData.append('isPreview', moduleData.isPreview.toString());
-      
+      if (moduleData.description)
+        formData.append("description", moduleData.description);
+      if (moduleData.order !== undefined)
+        formData.append("order", moduleData.order.toString());
+      if (moduleData.duration !== undefined)
+        formData.append("duration", moduleData.duration.toString());
+      if (moduleData.isPreview !== undefined)
+        formData.append("isPreview", moduleData.isPreview.toString());
+
       // Add main file if provided
       if (moduleData.mainFile) {
-        formData.append('mainFile', moduleData.mainFile);
-        console.log("📝 [API] Main file attached:", moduleData.mainFile.name, "Size:", moduleData.mainFile.size);
+        formData.append("mainFile", moduleData.mainFile);
+        console.log(
+          "📝 [API] Main file attached:",
+          moduleData.mainFile.name,
+          "Size:",
+          moduleData.mainFile.size
+        );
       }
-      
+
       // Add attachments if provided
       if (moduleData.attachments && moduleData.attachments.length > 0) {
         moduleData.attachments.forEach((file, index) => {
-          formData.append('attachments', file);
-          console.log(`📝 [API] Attachment ${index + 1} attached:`, file.name, "Size:", file.size);
+          formData.append("attachments", file);
+          console.log(
+            `📝 [API] Attachment ${index + 1} attached:`,
+            file.name,
+            "Size:",
+            file.size
+          );
         });
       }
 
-      console.log("📝 [API] API endpoint: /api/courses/" + courseId + "/modules");
+      console.log(
+        "📝 [API] API endpoint: /api/courses/" + courseId + "/modules"
+      );
       console.log("📝 [API] Making POST request with FormData...");
 
-      const response = await http.post(`/api/courses/${courseId}/modules`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await http.post(
+        `/api/courses/${courseId}/modules`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       console.log(
         "📝 [API] createModule response received:",
@@ -1234,7 +1268,10 @@ export const CourseAPI = {
         console.log("✅ [API] Module title:", apiResponse.data?.title);
       } else {
         console.error("❌ [API] Failed to create module:", apiResponse.message);
-        console.error("❌ [API] Full error response:", JSON.stringify(apiResponse, null, 2));
+        console.error(
+          "❌ [API] Full error response:",
+          JSON.stringify(apiResponse, null, 2)
+        );
       }
 
       return apiResponse;
@@ -1243,30 +1280,38 @@ export const CourseAPI = {
       console.error("  Error name:", error.name);
       console.error("  Error message:", error.message);
       console.error("  Response status:", error.response?.status);
-      console.error("  Response data:", JSON.stringify(error.response?.data, null, 2));
+      console.error(
+        "  Response data:",
+        JSON.stringify(error.response?.data, null, 2)
+      );
 
       // Extract meaningful error message from the backend response
-      let errorMessage = 'Failed to create module';
-      
+      let errorMessage = "Failed to create module";
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.status === 400) {
-        errorMessage = 'Invalid module data. Please check all required fields.';
+        errorMessage = "Invalid module data. Please check all required fields.";
       } else if (error.response?.status === 401) {
-        errorMessage = 'Authentication required. Please log in again.';
+        errorMessage = "Authentication required. Please log in again.";
       } else if (error.response?.status === 403) {
-        errorMessage = 'You don\'t have permission to create modules in this course.';
+        errorMessage =
+          "You don't have permission to create modules in this course.";
       } else if (error.response?.status === 404) {
-        errorMessage = 'Course or chapter not found.';
+        errorMessage = "Course or chapter not found.";
       } else if (error.response?.status === 413) {
-        errorMessage = 'File size exceeds 500MB limit.';
+        errorMessage = "File size exceeds 500MB limit.";
       } else if (error.response?.status === 415) {
-        errorMessage = 'Invalid file type. Only video and document formats are allowed.';
+        errorMessage =
+          "Invalid file type. Only video and document formats are allowed.";
       } else if (error.response?.status === 429) {
-        errorMessage = 'Too many requests. Please wait and try again.';
+        errorMessage = "Too many requests. Please wait and try again.";
       } else if (error.response?.status >= 500) {
-        errorMessage = 'Server error. Please try again later.';
-      } else if (error.message && !error.message.includes('Request failed with status code')) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (
+        error.message &&
+        !error.message.includes("Request failed with status code")
+      ) {
         errorMessage = error.message;
       }
 
@@ -1536,9 +1581,16 @@ export const CourseAPI = {
     console.log("🗑️ [API] Starting deleteChapter request...");
     console.log("🗑️ [API] Course ID:", courseId);
     console.log("🗑️ [API] Chapter ID:", chapterId);
-    console.log("🗑️ [API] API endpoint: /api/courses/" + courseId + "/chapters/" + chapterId);
+    console.log(
+      "🗑️ [API] API endpoint: /api/courses/" +
+        courseId +
+        "/chapters/" +
+        chapterId
+    );
 
-    const response = await http.delete(`/api/courses/${courseId}/chapters/${chapterId}`);
+    const response = await http.delete(
+      `/api/courses/${courseId}/chapters/${chapterId}`
+    );
 
     console.log(
       "🗑️ [API] deleteChapter response received:",
@@ -1571,9 +1623,9 @@ export const CourseAPI = {
     params?: {
       page?: number;
       limit?: number;
-      sortBy?: 'order' | 'createdAt' | 'title';
-      sortOrder?: 'asc' | 'desc';
-      type?: 'video' | 'document';
+      sortBy?: "order" | "createdAt" | "title";
+      sortOrder?: "asc" | "desc";
+      type?: "video" | "document";
       includeStats?: boolean;
     }
   ): Promise<
@@ -1606,21 +1658,16 @@ export const CourseAPI = {
     console.log("📚 [API] Starting getModulesForChapter request...");
     console.log("📚 [API] Course ID:", courseId);
     console.log("📚 [API] Chapter ID:", chapterId);
-    console.log(
-      "📚 [API] API endpoint: /api/courses/" +
-        courseId +
-        "/modules"
-    );
+    console.log("📚 [API] API endpoint: /api/courses/" + courseId + "/modules");
 
     const queryParams = {
       chapterId,
-      ...params
+      ...params,
     };
 
-    const response = await http.get(
-      `/api/courses/${courseId}/modules`,
-      { params: queryParams }
-    );
+    const response = await http.get(`/api/courses/${courseId}/modules`, {
+      params: queryParams,
+    });
 
     console.log(
       "📚 [API] getModulesForChapter response received:",
@@ -1701,7 +1748,10 @@ export const CourseAPI = {
     console.log("📚 [API] Params:", JSON.stringify(params, null, 2));
     console.log("📚 [API] API endpoint: /api/courses/" + courseId + "/modules");
 
-    const response = await apiClient.getWithQuery(`/api/courses/${courseId}/modules`, params);
+    const response = await apiClient.getWithQuery(
+      `/api/courses/${courseId}/modules`,
+      params
+    );
 
     console.log(
       "📚 [API] getModules response received:",
@@ -1809,7 +1859,13 @@ export const CourseAPI = {
     console.log("🎥 [API] Course ID:", courseId);
     console.log("🎥 [API] Module ID:", moduleId);
     console.log("🎥 [API] Params:", JSON.stringify(params, null, 2));
-    console.log("🎥 [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId + "/content");
+    console.log(
+      "🎥 [API] API endpoint: /api/courses/" +
+        courseId +
+        "/modules/" +
+        moduleId +
+        "/content"
+    );
 
     const response = await apiClient.getWithQuery(
       `/api/courses/${courseId}/modules/${moduleId}/content`,
@@ -1880,7 +1936,9 @@ export const CourseAPI = {
    * Delete a course
    * DELETE /api/courses/{courseId}
    */
-  deleteCourse: async (courseId: string): Promise<ApiResponse<{ message: string }>> => {
+  deleteCourse: async (
+    courseId: string
+  ): Promise<ApiResponse<{ message: string }>> => {
     console.log("🗑️ [API] Starting deleteCourse request...");
     console.log("🗑️ [API] Course ID:", courseId);
     console.log("🗑️ [API] API endpoint: /api/courses/" + courseId);
@@ -1915,18 +1973,20 @@ export const CourseAPI = {
   updateModule: async (
     courseId: string,
     moduleId: string,
-    moduleData: FormData
+    moduleData: any
   ): Promise<ApiResponse<{ message: string; module?: any }>> => {
     console.log("📝 [API] Starting updateModule request...");
     console.log("📝 [API] Course ID:", courseId);
     console.log("📝 [API] Module ID:", moduleId);
-    console.log("📝 [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId);
+    console.log(
+      "📝 [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId
+    );
 
-    const response = await http.put(`/api/courses/${courseId}/modules/${moduleId}`, moduleData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await http.put(
+      `/api/courses/${courseId}/modules/${moduleId}`,
+      moduleData,
+      {}
+    );
 
     console.log(
       "📝 [API] updateModule response received:",
@@ -1959,31 +2019,35 @@ export const CourseAPI = {
     courseId: string,
     moduleId: string,
     force: boolean = true
-  ): Promise<ApiResponse<{
-    moduleId: string;
-    deletedAt: string;
-    force: boolean;
-  }>> => {
+  ): Promise<
+    ApiResponse<{
+      moduleId: string;
+      deletedAt: string;
+      force: boolean;
+    }>
+  > => {
     console.log("🗑️ [API] Starting deleteModule request...");
     console.log("🗑️ [API] Course ID:", courseId);
     console.log("🗑️ [API] Module ID:", moduleId);
     console.log("🗑️ [API] Force delete (hard delete):", force);
-    console.log("🗑️ [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId);
+    console.log(
+      "🗑️ [API] API endpoint: /api/courses/" + courseId + "/modules/" + moduleId
+    );
 
     // Frontend validation
     const validationErrors: string[] = [];
     if (!courseId || courseId.trim().length === 0) {
-      validationErrors.push('Course ID is required');
+      validationErrors.push("Course ID is required");
     }
     if (!moduleId || moduleId.trim().length === 0) {
-      validationErrors.push('Module ID is required');
+      validationErrors.push("Module ID is required");
     }
-    
+
     if (validationErrors.length > 0) {
       console.error("❌ [API] Frontend validation failed:", validationErrors);
       return {
         success: false,
-        message: validationErrors.join(', '),
+        message: validationErrors.join(", "),
       };
     }
 
@@ -1992,13 +2056,16 @@ export const CourseAPI = {
       const params = { force: force.toString() };
       console.log("🗑️ [API] Request params:", params);
       console.log("🗑️ [API] Making DELETE request with hard delete...");
-      
-      const response = await http.delete(`/api/courses/${courseId}/modules/${moduleId}`, {
-        params,
-        headers: {
-          'Accept': 'application/json'
+
+      const response = await http.delete(
+        `/api/courses/${courseId}/modules/${moduleId}`,
+        {
+          params,
+          headers: {
+            Accept: "application/json",
+          },
         }
-      });
+      );
 
       console.log("🗑️ [API] Raw axios response:");
       console.log("  Status:", response.status);
@@ -2015,7 +2082,10 @@ export const CourseAPI = {
         console.log("✅ [API] Hard delete:", apiResponse.data?.force);
       } else {
         console.error("❌ [API] Failed to delete module:", apiResponse.message);
-        console.error("❌ [API] Full error response:", JSON.stringify(apiResponse, null, 2));
+        console.error(
+          "❌ [API] Full error response:",
+          JSON.stringify(apiResponse, null, 2)
+        );
       }
 
       return apiResponse;
@@ -2024,29 +2094,36 @@ export const CourseAPI = {
       console.error("  Error name:", error.name);
       console.error("  Error message:", error.message);
       console.error("  Response status:", error.response?.status);
-      console.error("  Response data:", JSON.stringify(error.response?.data, null, 2));
+      console.error(
+        "  Response data:",
+        JSON.stringify(error.response?.data, null, 2)
+      );
       console.error("  Full error:", error);
 
       // Extract meaningful error message from the backend response
-      let errorMessage = 'Failed to permanently delete module';
-      
+      let errorMessage = "Failed to permanently delete module";
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
       } else if (error.response?.status === 400) {
-        errorMessage = 'Cannot delete module: Invalid request or module is in use';
+        errorMessage =
+          "Cannot delete module: Invalid request or module is in use";
       } else if (error.response?.status === 401) {
-        errorMessage = 'Authentication required. Please log in again.';
+        errorMessage = "Authentication required. Please log in again.";
       } else if (error.response?.status === 403) {
-        errorMessage = 'You don\'t have permission to delete this module.';
+        errorMessage = "You don't have permission to delete this module.";
       } else if (error.response?.status === 404) {
-        errorMessage = 'Module not found or already deleted';
+        errorMessage = "Module not found or already deleted";
       } else if (error.response?.status === 429) {
-        errorMessage = 'Too many requests. Please wait and try again.';
+        errorMessage = "Too many requests. Please wait and try again.";
       } else if (error.response?.status >= 500) {
-        errorMessage = 'Server error. Please try again later.';
-      } else if (error.message && !error.message.includes('Request failed with status code')) {
+        errorMessage = "Server error. Please try again later.";
+      } else if (
+        error.message &&
+        !error.message.includes("Request failed with status code")
+      ) {
         errorMessage = error.message;
       }
 
@@ -2058,7 +2135,6 @@ export const CourseAPI = {
     }
   },
 };
-
 
 /**
  * Categories API
@@ -2078,10 +2154,12 @@ export const CategoriesAPI = {
 
     const queryParams = new URLSearchParams();
     if (params?.active !== undefined) {
-      queryParams.append('active', params.active.toString());
+      queryParams.append("active", params.active.toString());
     }
 
-    const url = `/api/courses/categories${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/api/courses/categories${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
     const response = await http.get(url);
 
     console.log(
@@ -2099,7 +2177,10 @@ export const CategoriesAPI = {
         JSON.stringify(apiResponse.data, null, 2)
       );
     } else {
-      console.error("❌ [API] Failed to fetch categories:", apiResponse.message);
+      console.error(
+        "❌ [API] Failed to fetch categories:",
+        apiResponse.message
+      );
       console.error(
         "❌ [API] Full error response:",
         JSON.stringify(apiResponse, null, 2)

@@ -19,6 +19,7 @@ export interface Course {
   thumbnail?: File | string;
   previewVideo?: File | string;
   metadata?: CourseMetadata;
+  categoryIds?: string[]; // Multi-select categories as 24-char Mongo IDs
   chapters: Chapter[];
   status: CourseStatus;
   createdAt?: string;
