@@ -19,7 +19,7 @@ import { Module } from "@/types/Product";
 import ModuleItem from "../../components/ModuleItem";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { ModuleCreationModal } from "@/shared/components";
-import { useModuleCreation } from "@/shared/hooks";
+import { http } from "@/lib/http/axios";
 
 interface ModuleManagementSectionProps {
   courseId: string;
@@ -50,21 +50,9 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   canAddContent = canEdit,
 }) => {
   const { messages, showError, showSuccess } = useToastMessages();
-  
-  // Use shared module creation hook
-  const { 
-    createModule: createModuleShared, 
-    loading: moduleCreationLoading 
-  } = useModuleCreation(courseId, {
-    onSuccess: () => {
-      // Reload modules after successful creation
-      if (selectedChapter === "all") {
-        loadAllModules();
-      } else {
-        loadModulesForChapter(selectedChapter);
-      }
-    }
-  });
+
+  // Module API loading state
+  const [moduleApiLoading, setModuleApiLoading] = useState(false);
   const [modules, setModules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedChapter, setSelectedChapter] = useState<string>("");
@@ -118,7 +106,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         chapterId,
         {
           ...filters,
-          includeStats: true
+          includeStats: true,
         }
       );
 
@@ -151,7 +139,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
             chapter.id,
             {
               ...filters,
-              includeStats: false // Don't include stats for individual chapter calls
+              includeStats: false, // Don't include stats for individual chapter calls
             }
           );
 
@@ -202,12 +190,13 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         const order = filters.sortOrder === "desc" ? -1 : 1;
 
         if (field === "order") return (a.order - b.order) * order;
-        if (field === "title")
-          return a.title.localeCompare(b.title) * order;
+        if (field === "title") return a.title.localeCompare(b.title) * order;
         if (field === "createdAt")
           return (
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-          ) * order;
+            (new Date(a.createdAt).getTime() -
+              new Date(b.createdAt).getTime()) *
+            order
+          );
         return 0;
       });
 
@@ -245,9 +234,9 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
   const handleEditModule = (moduleId: string) => {
     console.log("Edit module:", moduleId);
-    
+
     // Find the module to edit
-    const moduleToEdit = modules.find(m => m.id === moduleId);
+    const moduleToEdit = modules.find((m) => m.id === moduleId);
     if (moduleToEdit) {
       setEditingModule(moduleToEdit);
       setIsEditModalOpen(true);
@@ -257,63 +246,76 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
     }
   };
 
+  // Accepts S3 URLs and sends JSON to backend
   const handleUpdateModule = async (moduleData: any) => {
+    if (!moduleData.id) {
+      showError("Module ID is missing for update.");
+      return false;
+    }
+    setModuleApiLoading(true);
     try {
-      console.log("Updating module with data:", moduleData);
-      
-      // Create FormData for the update
-      const formData = new FormData();
-      
-      // Add required fields
-      if (moduleData.title) formData.append('title', moduleData.title);
-      if (moduleData.description) formData.append('description', moduleData.description);
-      if (moduleData.order !== undefined) formData.append('order', moduleData.order.toString());
-      if (moduleData.duration !== undefined) formData.append('duration', moduleData.duration.toString());
-      if (moduleData.isPreview !== undefined) formData.append('isPreview', moduleData.isPreview.toString());
-      
-      // Add files if provided
-      if (moduleData.mainFile) {
-        formData.append('mainFile', moduleData.mainFile);
-      }
-      if (moduleData.attachments && moduleData.attachments.length > 0) {
-        moduleData.attachments.forEach((attachment: File) => {
-          formData.append('attachments', attachment);
-        });
-      }
-      
-      const response = await CourseAPI.updateModule(courseId, moduleData.id, formData);
-      
+      const response = await CourseAPI.updateModule(
+        courseId,
+        moduleData.id,
+        moduleData
+      );
       if (response.success) {
-        console.log("✅ Module updated successfully");
         showSuccess("Module updated successfully");
-        
-        // Reload modules after successful update
         if (selectedChapter === "all") {
           loadAllModules();
         } else {
           loadModulesForChapter(selectedChapter);
         }
-        
         return true;
       } else {
-        console.error("❌ Failed to update module:", response.message);
         showError(response.message || "Failed to update module");
         return false;
       }
     } catch (error) {
       console.error("💥 Error updating module:", error);
-      showError("Failed to update module");
+      showError("An unexpected error occurred.");
       return false;
+    } finally {
+      setModuleApiLoading(false);
     }
   };
 
+  // Accepts S3 URLs and sends JSON to backend
   const handleCreateModule = async (moduleData: any) => {
+    setModuleApiLoading(true);
     try {
-      console.log("Creating module with data:", moduleData);
-      return await createModuleShared(moduleData);
-    } catch (error) {
+      // The moduleData already contains the S3 URLs from the modal.
+      // We use the 'courseId' prop available in this component.
+      const response = await http.post(
+        `/api/courses/${courseId}/modules`,
+        moduleData
+      );
+
+      // Adjust success check based on your http utility's response structure
+      if (response.data && response.data.success) {
+        showSuccess(response.data.message || "Module created successfully!");
+
+        // Reload modules
+        if (selectedChapter === "all") {
+          loadAllModules();
+        } else {
+          loadModulesForChapter(selectedChapter);
+        }
+        return true; // Indicate success to the modal
+      } else {
+        // Handle API errors passed in the response body
+        showError(response.data?.message || "Failed to create module.");
+        return false; // Indicate failure
+      }
+    } catch (error: any) {
       console.error("💥 Error creating module:", error);
+      // Handle network errors or exceptions
+      const errorMessage =
+        error.response?.data?.message || "An unexpected error occurred.";
+      showError(errorMessage);
       return false;
+    } finally {
+      setModuleApiLoading(false);
     }
   };
 
@@ -323,7 +325,7 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
   };
 
   const handleFilterChange = (newFilters: Partial<ModuleFilters>) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
   console.log("Debug: canEdit =", canEdit, ", chapters =", chapters.length);
@@ -354,7 +356,11 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
           <div className="flex gap-2">
             <select
               value={filters.type || ""}
-              onChange={(e) => handleFilterChange({ type: e.target.value as any || undefined })}
+              onChange={(e) =>
+                handleFilterChange({
+                  type: (e.target.value as any) || undefined,
+                })
+              }
               className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Types</option>
@@ -364,7 +370,9 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
 
             <select
               value={filters.sortBy || "order"}
-              onChange={(e) => handleFilterChange({ sortBy: e.target.value as any })}
+              onChange={(e) =>
+                handleFilterChange({ sortBy: e.target.value as any })
+              }
               className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="order">Order</option>
@@ -397,16 +405,22 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         ) : !selectedChapter || selectedChapter === "" ? (
           <div className="text-center py-12">
             <FileText size={48} className="mx-auto text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-300 mb-2">Select a Chapter</h3>
-            <p className="text-gray-400">Choose a chapter to view its modules</p>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">
+              Select a Chapter
+            </h3>
+            <p className="text-gray-400">
+              Choose a chapter to view its modules
+            </p>
           </div>
         ) : modules.length === 0 ? (
           <div className="text-center py-12">
             <Video size={48} className="mx-auto text-gray-600 mb-4" />
-            <h3 className="text-lg font-medium text-gray-300 mb-2">No Modules Found</h3>
+            <h3 className="text-lg font-medium text-gray-300 mb-2">
+              No Modules Found
+            </h3>
             <p className="text-gray-400 mb-4">
-              {selectedChapter === "all" 
-                ? "No modules found across all chapters" 
+              {selectedChapter === "all"
+                ? "No modules found across all chapters"
                 : "This chapter doesn't have any modules yet"}
             </p>
             {canEdit && selectedChapter !== "all" && (
@@ -443,8 +457,10 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateModule}
         chapters={chapters}
-        selectedChapterId={selectedChapter !== "all" ? selectedChapter : undefined}
-        loading={moduleCreationLoading}
+        selectedChapterId={
+          selectedChapter !== "all" ? selectedChapter : undefined
+        }
+        loading={moduleApiLoading}
       />
 
       <ModuleCreationModal
@@ -455,8 +471,10 @@ const ModuleManagementSection: React.FC<ModuleManagementSectionProps> = ({
         }}
         onSubmit={handleUpdateModule}
         chapters={chapters}
-        selectedChapterId={selectedChapter !== "all" ? selectedChapter : undefined}
-        loading={moduleCreationLoading}
+        selectedChapterId={
+          selectedChapter !== "all" ? selectedChapter : undefined
+        }
+        loading={moduleApiLoading}
         editingModule={editingModule}
         isEditing={true}
       />
