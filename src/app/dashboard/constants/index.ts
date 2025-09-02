@@ -13,7 +13,8 @@ import {
   LogOut,
   BarChart3,
   FolderOpen,
-  CheckSquare
+  CheckSquare,
+  Award
 } from 'lucide-react';
 import { DashboardMenuItem } from '../types';
 
@@ -154,6 +155,12 @@ export const DASHBOARD_MENU_ITEMS: DashboardMenuItem[] = [
     icon: CheckSquare,
     href: '/dashboard/approvals',
     requiresRole: 'admin',
+  },
+  {
+    id: 'my-achievements',
+    label: 'My Achievements',
+    icon: Award,
+    href: '/dashboard/my-achievements',
   },
 ];
 
