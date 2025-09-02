@@ -8,7 +8,7 @@ import { useModuleContent } from "@/features/learning/hooks/useModuleContent";
 import { useToastMessages } from "@/hooks/useToastMessages";
 import type { Module } from "@/features/learning/types";
 import { useLocalCourseProgress } from "@/features/learning/hooks/useLocalCourseProgress";
-import { CourseHeader } from "@/features/learning/components/CourseHeader";
+import { CourseHeader } from "@/features/learning/components";
 import { Sidebar } from "@/features/learning/components/Sidebar";
 import { ModuleContent } from "@/features/learning/components/ModuleContent";
 import CourseReviewsSection from "@/features/reviews/CourseReviewsSection";
@@ -302,7 +302,7 @@ const LearningPage: React.FC = () => {
                       <Lightbulb size={14} className="text-yellow-400" />
                       Requirements
                     </h3>
-                    <ul className="space-y-1">
+                    <ul className="space-y-1">https://kenesis-backend.kenesis.io
                       {course.metadata.requirements
                         .slice(0, 4)
                         .map((r: string, i: number) => (
