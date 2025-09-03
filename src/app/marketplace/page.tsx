@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Filter } from "lucide-react";
 import { useMarketplaceQuery } from "@/app/marketplace/hooks/useMarketplaceQuery";
 import Sidebar from "@/app/marketplace/components/Sidebar";
@@ -9,6 +10,7 @@ import ProductGrid from "@/app/marketplace/components/ProductGrid";
 import { SORT_OPTIONS } from "@/app/marketplace/constants";
 
 const MarketplacePage: React.FC = () => {
+  const router = useRouter();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const {
@@ -54,7 +56,7 @@ const MarketplacePage: React.FC = () => {
             </h2>
             <p className="text-gray-400 mb-4">{error}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => router.refresh()}
               className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
               Try Again

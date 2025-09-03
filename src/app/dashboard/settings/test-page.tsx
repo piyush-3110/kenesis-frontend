@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { Settings as SettingsIcon } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
@@ -10,6 +11,7 @@ import { useCurrentUser } from "@/features/auth/useCurrentUser";
  * Simple test version to debug settings page loading
  */
 const SettingsPageTest: React.FC = () => {
+  const router = useRouter();
   const { data: currentUser, isLoading: userLoading, error: userError } = useCurrentUser();
 
   console.log('SettingsPageTest render:', { 
@@ -52,7 +54,7 @@ const SettingsPageTest: React.FC = () => {
                   Error: {userError instanceof Error ? userError.message : "Failed to load user data"}
                 </div>
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={() => router.refresh()}
                   className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-sm transition-colors"
                 >
                   Refresh Page

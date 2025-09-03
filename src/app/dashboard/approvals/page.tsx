@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { RequireAuth } from "@/features/auth/RequireAuth";
 import { CheckSquare } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
@@ -16,6 +17,7 @@ import type { PendingReviewsFilters } from "./api/approvalsApi";
  * Admin-only page for reviewing and approving/rejecting courses
  */
 const ApprovalsPage: React.FC = () => {
+  const router = useRouter();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const [filters, setFilters] = useState<PendingReviewsFilters>({
     page: 1,
@@ -192,7 +194,7 @@ const ApprovalsPage: React.FC = () => {
                         : "Failed to load reviews"}
                     </div>
                     <button
-                      onClick={() => window.location.reload()}
+                      onClick={() => router.refresh()}
                       className="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white text-sm transition-colors"
                     >
                       Try Again

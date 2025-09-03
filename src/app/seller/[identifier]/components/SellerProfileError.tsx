@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -25,6 +26,7 @@ const SellerProfileError: React.FC<SellerProfileErrorProps> = ({
   identifier,
   isWalletAddress,
 }) => {
+  const router = useRouter();
   const getErrorMessage = () => {
     if (error && typeof error === "object" && "response" in error) {
       const apiError = error as {
@@ -74,7 +76,7 @@ const SellerProfileError: React.FC<SellerProfileErrorProps> = ({
   const errorInfo = getErrorMessage();
 
   const handleRetry = () => {
-    window.location.reload();
+    router.refresh();
   };
 
   return (

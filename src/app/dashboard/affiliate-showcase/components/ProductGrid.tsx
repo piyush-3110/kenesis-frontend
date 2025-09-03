@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { useAffiliateShowcaseStore } from "../store/useAffiliateShowcaseStore";
 import ProductCard from "./ProductCard";
 import ErrorState from "./ErrorState";
@@ -27,11 +28,12 @@ const ProductGrid: React.FC<ProductGridProps> = ({
   isLoading,
   error,
 }) => {
+  const router = useRouter();
   const { filters } = useAffiliateShowcaseStore();
 
   const handleRetry = () => {
-    // Since we're using React Query, we can just trigger a refetch by resetting filters
-    window.location.reload();
+    // Use router refresh instead of window.location.reload
+    router.refresh();
   };
 
   // Show error state if there's an error
