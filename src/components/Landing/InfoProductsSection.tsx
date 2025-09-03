@@ -26,8 +26,8 @@ const InfoProductsSection: React.FC = () => {
       />
 
       {/* Mild radial glow center */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-full h-[900px] rounded-full bg-[radial-gradient(circle,rgba(34,74,255,0.35)_0%,rgba(7,6,21,0)_70%)] blur-3xl" />
+      <div className="absolute top-50 inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-full h-[700px] rounded-full bg-[radial-gradient(circle,rgba(34,74,255,0.35)_0%,rgba(7,6,21,0)_70%)] blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto text-center">

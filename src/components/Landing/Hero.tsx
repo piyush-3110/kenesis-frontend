@@ -7,9 +7,9 @@ import React from "react";
 
 const Hero: React.FC = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center px-4 md:px-24 overflow-hidden">
+    <section className="relative min-h-[100vh] flex items-center justify-center px-4 md:px-24 overflow-hidden">
       {/* Grid Background */}
-      <div className="absolute inset-0 opacity-60">
+      {/* <div className="absolute inset-0 opacity-60">
         <div
           className="w-full h-full"
           style={{
@@ -24,10 +24,10 @@ const Hero: React.FC = () => {
               "radial-gradient(ellipse 90% 70% at center, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 40%, rgba(0,0,0,0.4) 70%, transparent 100%)",
           }}
         />
-      </div>
+      </div> */}
 
       {/* Glowing Blue Effect */}
-      <div className="">
+      {/* <div className="">
         <div
           className="w-full h-full rounded-full blur-3xl opacity-40"
           style={{
@@ -35,7 +35,7 @@ const Hero: React.FC = () => {
               "radial-gradient(circle, rgba(6,128,255,0.8) 0%, rgba(2,46,210,0.5) 40%, rgba(6,128,255,0.2) 70%, transparent 90%)",
           }}
         />
-      </div>
+      </div> */}
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto">
