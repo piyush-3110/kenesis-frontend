@@ -71,10 +71,10 @@ const Hero: React.FC = () => {
             </div>
 
             {/* Subheading Text */}
-            <p className="font-poppins font-normal text-[14px] sm:text-[16px] md:text-[20px] text-white max-w-lg mb-8">
-              <span className="font-bold">Kenesis</span> puts you in control.{" "}
-              <span className="font-bold">Create, sell,</span> and{" "}
-              <span className="font-bold">earn</span> from your info
+            <p className="font-poppins font-normal text-[14px] sm:text-[16px] md:text-[20px] text-white/60 max-w-lg mb-8">
+              <span className="font-bold text-white">Kenesis</span> puts you in control.{" "}
+              <span className="font-bold text-white">Create, sell,</span> and{" "}
+              <span className="font-bold text-white">earn</span> from your info
               products—no middlemen, just rewards. Discover topics and find the
               perfect product for you.
             </p>
