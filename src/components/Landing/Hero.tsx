@@ -44,19 +44,19 @@ const Hero: React.FC = () => {
           {/* Left Side - Text Content */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
             {/* Heading */}
-            <div className="mb-6">
+            <div className="mb-3">
               <h1
                 className="text-white font-poppins font-normal"
                 style={{
                   fontSize: "45.79px",
-                  lineHeight: "75px",
+                  lineHeight: "60px",
                   letterSpacing: "-2%",
                   fontWeight: 400,
                 }}
               >
                 Your upgrade starts here
                 <br />
-                with{" "}
+                <span className="italic">with</span>{" "}
                 <span
                   className="bg-gradient-to-b from-white to-[#0036F6] bg-clip-text text-transparent"
                   style={{
@@ -71,10 +71,10 @@ const Hero: React.FC = () => {
             </div>
 
             {/* Subheading Text */}
-            <p className="font-poppins font-normal text-[14px] sm:text-[16px] md:text-[18px] text-white max-w-lg mb-8">
-              <span className="font-normal">Kenesis</span> puts you in control.{" "}
-              <span className="font-normal">Create, sell,</span> and{" "}
-              <span className="font-normal">earn</span> from your info
+            <p className="font-poppins font-normal text-[14px] sm:text-[16px] md:text-[20px] text-white max-w-lg mb-8">
+              <span className="font-bold">Kenesis</span> puts you in control.{" "}
+              <span className="font-bold">Create, sell,</span> and{" "}
+              <span className="font-bold">earn</span> from your info
               products—no middlemen, just rewards. Discover topics and find the
               perfect product for you.
             </p>
@@ -99,7 +99,7 @@ const Hero: React.FC = () => {
           </div>
 
           {/* Right Side - Girls Image */}
-          <div className="flex justify-center mt-16 mt:mt-0 lg:justify-end order-first lg:order-last">
+          <div className="flex justify-center mt-16 lg:mt-0 lg:justify-end order-first lg:order-last">
             <Image
               src="/images/landing/girls.png"
               alt="Kenesis Banner Models"
