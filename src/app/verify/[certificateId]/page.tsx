@@ -92,6 +92,11 @@ const CertificateVerificationPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Verification Content */}
+          <div className="flex items-center justify-center">
+            <div className="w-full max-w-2xl">{renderContent()}</div>
+          </div>
         </div>
       </section>
     </MainLayout>
