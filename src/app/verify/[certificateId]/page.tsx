@@ -9,6 +9,9 @@ import { VerificationSuccess } from "@/features/learning/components/verification
 import { MainLayout } from "@/components/Landing/MainLayout";
 
 const CertificateVerificationPage = () => {
+  const params = useParams();
+  const certificateId = params.certificateId as string;
+
   return null;
 };
 
