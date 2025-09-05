@@ -15,6 +15,10 @@ const CertificateVerificationPage = () => {
   const { data, isLoading, error } = useVerifyCertificate(certificateId);
 
   const renderContent = () => {
+    if (isLoading) {
+      return <VerificationLoading />;
+    }
+
     return null;
   };
 
