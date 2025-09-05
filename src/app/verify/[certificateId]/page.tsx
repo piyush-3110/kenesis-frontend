@@ -7,3 +7,9 @@ import { VerificationLoading } from "@/features/learning/components/verification
 import { VerificationError } from "@/features/learning/components/verification/VerificationError";
 import { VerificationSuccess } from "@/features/learning/components/verification/VerificationSuccess";
 import { MainLayout } from "@/components/Landing/MainLayout";
+
+const CertificateVerificationPage = () => {
+  return null;
+};
+
+export default CertificateVerificationPage;
