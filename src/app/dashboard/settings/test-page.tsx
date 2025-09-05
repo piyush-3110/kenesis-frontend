@@ -2,10 +2,11 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { RequireAuth } from "@/features/auth/RequireAuth";
+// import { RequireAuth } from "@/features/auth/RequireAuth";
 import { Settings as SettingsIcon } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import { useCurrentUser } from "@/features/auth/useCurrentUser";
+import { RequireAuth } from "@/features/auth/RequireAuth";
 
 /**
  * Simple test version to debug settings page loading
