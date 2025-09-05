@@ -66,6 +66,10 @@ const CertificateVerificationPage = () => {
             }}
           />
         </div>
+
+        {/* Content */}
+        <div className="relative z-10 w-full max-w-4xl mx-auto">
+        </div>
       </section>
     </MainLayout>
   );
