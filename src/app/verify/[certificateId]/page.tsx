@@ -71,6 +71,20 @@ const CertificateVerificationPage = () => {
         <div className="relative z-10 w-full max-w-4xl mx-auto">
           {/* Header Section */}
           <div className="text-center mt-24">
+            <h1 className="font-poppins text-white mb-6">
+              <div className="text-[32px] md:text-[48px] lg:text-[56px] font-semibold leading-tight mb-2">
+                Certificate{" "}
+                <span 
+                  className="bg-gradient-to-b from-white to-[#0680FF] bg-clip-text text-transparent font-bold"
+                  style={{
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  Verification
+                </span>
+              </div>
+            </h1>
           </div>
         </div>
       </section>
