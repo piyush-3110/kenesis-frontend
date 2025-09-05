@@ -19,6 +19,14 @@ const CertificateVerificationPage = () => {
       return <VerificationLoading />;
     }
 
+    if (error) {
+      const errorMessage =
+        (error as any).response?.data?.message ||
+        error.message ||
+        "Certificate not found or invalid.";
+      return <VerificationError message={errorMessage} />;
+    }
+
     return null;
   };
 
