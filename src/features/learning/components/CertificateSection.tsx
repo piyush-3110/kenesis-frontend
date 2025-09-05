@@ -23,6 +23,7 @@ interface CertificateSectionProps {
   className?: string;
   onDownload?: (certificate: Certificate) => void;
   onShare?: (certificate: Certificate) => void;
+  loading?: boolean;
 }
 
 /**
@@ -39,7 +40,16 @@ export const CertificateSection: React.FC<CertificateSectionProps> = ({
   className,
   onDownload,
   onShare,
+  loading,
 }) => {
+  if (loading) {
+    return (
+      <div className={cn("py-12 text-center", className)}>
+        <p className="text-white">Processing certificate...</p>
+      </div>
+    );
+  }
+
   if (!certificates || certificates.length === 0) {
     return (
       <div className={cn("py-12", className)}>
