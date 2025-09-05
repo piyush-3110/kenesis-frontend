@@ -10,6 +10,7 @@ import { QueryProvider } from "@/lib/query/QueryProvider";
 import { AuthProvider } from "@/features/auth/AuthProvider";
 import { WalletProvider } from "@/features/wallet/WalletProvider";
 import { WalletGuard } from "@/features/wallet/WalletGuard";
+import { WalletAccessProvider, ProtectedRoute } from "@/components/wallet";
 // ...existing code...
 
 const inter = Inter({
@@ -67,8 +68,12 @@ export default function RootLayout({
         <QueryProvider>
           <WalletProvider>
             <AuthProvider>
-              <WalletGuard />
-              <EnhancedConditionalLayout>{children}</EnhancedConditionalLayout>
+              <WalletAccessProvider>
+                <WalletGuard />
+                <ProtectedRoute>
+                  <EnhancedConditionalLayout>{children}</EnhancedConditionalLayout>
+                </ProtectedRoute>
+              </WalletAccessProvider>
             </AuthProvider>
           </WalletProvider>
         </QueryProvider>
