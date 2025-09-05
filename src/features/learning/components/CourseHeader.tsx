@@ -104,7 +104,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
             </div>
 
             {/* Certificate Buttons - Creative Position */}
-            <div className="hidden lg:flex items-center gap-2">
+            {/* <div className="hidden lg:flex items-center gap-2">
               <motion.button
                 onClick={handleViewCertificate}
                 whileHover={{ scale: 1.05 }}
@@ -136,7 +136,7 @@ export const CourseHeader: React.FC<CourseHeaderProps> = ({
                 <Download className="w-4 h-4" />
                 <span className="hidden xl:inline">Download</span>
               </motion.button>
-            </div>
+            </div> */}
 
             {/* Info Button */}
             <button

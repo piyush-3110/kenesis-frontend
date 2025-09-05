@@ -69,7 +69,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
       className="group"
     >
       {/* Gradient Border Container */}
-      <div className="rounded-xl p-[1px] bg-gradient-to-r from-blue-500/60 to-transparent transition-all duration-300 group-hover:from-blue-500 group-hover:to-blue-600/50">
+      <div className="rounded-xl p-[1px] h-[400px] bg-gradient-to-r from-blue-500/60 to-transparent transition-all duration-300 group-hover:from-blue-500 group-hover:to-blue-600/50">
         <div
           className="rounded-xl overflow-hidden h-full"
           style={{
@@ -99,7 +99,7 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
 
           {/* Certificate Info */}
           <div className="p-4">
-            <h3 className="text-lg font-semibold text-white mb-2 line-clamp-2 group-hover:text-blue-300 transition-colors">
+            <h3 className="text-lg font-semibold text-white mb-2 line-clamp-1 group-hover:text-blue-300 transition-colors">
               {certificate.title}
             </h3>
             
