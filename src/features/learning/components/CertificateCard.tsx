@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { Download, Share, Award, ExternalLink, CheckCircle } from "lucide-react";
+import { Download, Share, Award, ExternalLink, CheckCircle, ShieldCheck } from "lucide-react";
 import type { Certificate } from "./CertificateSection";
 
 interface CertificateCardProps {
@@ -40,9 +40,17 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
 
   const handleShare = () => {
     onShare?.(certificate);
-    // Fallback: open LinkedIn share
-    const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificate.shareUrl)}`;
-    window.open(linkedInUrl, '_blank', 'width=600,height=400');
+    // Share the verification link instead of LinkedIn
+    if (certificate.shareUrl) {
+      window.open(certificate.shareUrl, '_blank');
+    }
+  };
+
+  const handleVerify = () => {
+    // Open verification page
+    if (certificate.shareUrl) {
+      window.open(certificate.shareUrl, '_blank');
+    }
   };
 
   return (
@@ -127,11 +135,11 @@ const CertificateCard: React.FC<CertificateCardProps> = ({
               </button>
               
               <button
-                onClick={handleShare}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg text-sm font-medium transition-all duration-300 border border-gray-700 hover:border-gray-600"
+                onClick={handleVerify}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-all duration-300"
               >
-                <Share className="w-4 h-4" />
-                Share
+                <ShieldCheck className="w-4 h-4" />
+                Verify
               </button>
             </div>
           </div>
