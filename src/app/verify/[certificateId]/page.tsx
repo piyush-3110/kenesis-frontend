@@ -12,6 +12,8 @@ const CertificateVerificationPage = () => {
   const params = useParams();
   const certificateId = params.certificateId as string;
 
+  const { data, isLoading, error } = useVerifyCertificate(certificateId);
+
   return null;
 };
 
