@@ -7,22 +7,17 @@ import { useCourseChaptersWithModules } from "@/features/learning/hooks/useCours
 import { useModuleContent } from "@/features/learning/hooks/useModuleContent";
 import { useToastMessages } from "@/hooks/useToastMessages";
 import type { Module } from "@/features/learning/types";
-import { useLocalCourseProgress } from "@/features/learning/hooks/useLocalCourseProgress";
+import { useCourseProgress } from "@/hooks/useCourseProgress";
+import { useCourseProgressStore } from "@/store/useCourseProgressStore";
 import { CourseHeader } from "@/features/learning/components";
 import { Sidebar } from "@/features/learning/components/Sidebar";
 import { ModuleContent } from "@/features/learning/components/ModuleContent";
 import CourseReviewsSection from "@/features/reviews/CourseReviewsSection";
-import {
-  Lock,
-  BarChart3,
-  Clock,
-  Users,
-  Globe,
-  Calendar,
-  Lightbulb,
-  Target,
-  CheckSquare,
-} from "lucide-react";
+import { useCompleteModule } from "@/features/learning/hooks/useCompleteModule";
+import { useGenerateCertificate } from "@/hooks/useGenerateCertificate";
+import { CourseInfoSection } from "@/features/learning/components/CourseInfoSection";
+import { CourseCompletionBanner } from "@/features/learning/components/CourseCompletionBanner";
+import { LoadingState, AccessRequiredState } from "@/features/learning/components/LearningPageStates";
 
 const formatDuration = (seconds: number) => {
   const h = Math.floor(seconds / 3600);
@@ -37,6 +32,9 @@ const LearningPage: React.FC = () => {
 
   console.log("🚀 [LEARN_PAGE] Starting learn page...");
   console.log("🚀 [LEARN_PAGE] Course ID:", courseId);
+
+  useCourseProgress(courseId);
+  const { completedModules, completionPercentage } = useCourseProgressStore();
 
   const accessQuery = useCourseAccess(courseId, !!courseId);
   const courseQuery = useCourse(courseId);
@@ -66,8 +64,12 @@ const LearningPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(true);
   const [showInfo, setShowInfo] = React.useState(false);
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set());
-  const { completed, selectedModuleId, setSelectedModuleId, markCompleted } =
-    useLocalCourseProgress(courseId);
+  const [selectedModuleId, setSelectedModuleId] = React.useState<string | null>(null);
+
+  const { mutate: markModuleAsComplete } = useCompleteModule(courseId, () => {});
+  const { mutate: downloadCertificate, isPending: isGeneratingCertificate } = useGenerateCertificate();
+
+  const completed = React.useMemo(() => new Set(completedModules), [completedModules]);
 
   const effectiveChapters = React.useMemo(
     () =>
@@ -110,7 +112,6 @@ const LearningPage: React.FC = () => {
     allModules,
     expanded.size,
     selectedModuleId,
-    setSelectedModuleId,
   ]);
 
   const { data: moduleContent, isLoading: moduleLoading, error: moduleError } = useModuleContent(
@@ -135,12 +136,6 @@ const LearningPage: React.FC = () => {
     documentUrl: moduleContent?.documentUrl ? "Present" : "None"
   });
 
-  const progressPct = React.useMemo(() => {
-    if (!allModules.length) return 0;
-    const done = allModules.filter((m) => completed.has(m.id)).length;
-    return (done / allModules.length) * 100;
-  }, [allModules, completed]);
-
   const currentIndex = selectedModule
     ? allModules.findIndex((m) => m.id === selectedModule.id)
     : -1;
@@ -163,14 +158,7 @@ const LearningPage: React.FC = () => {
 
   if (accessQuery.isLoading || courseQuery.isLoading || chaptersLoading) {
     console.log("⏳ [LEARN_PAGE] Loading state - showing loading screen");
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center text-white">
-          <div className="h-12 w-12 border-b-2 border-blue-500 rounded-full animate-spin mx-auto mb-4" />
-          Loading course...
-        </div>
-      </div>
-    );
+    return <LoadingState />;
   }
 
   if (accessQuery.error) {
@@ -185,19 +173,7 @@ const LearningPage: React.FC = () => {
 
   if (!accessQuery.data?.hasAccess) {
     console.log("🔒 [LEARN_PAGE] No access - showing access required screen");
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="text-center max-w-sm">
-          <Lock className="mx-auto mb-4 text-red-400" size={48} />
-          <h2 className="text-xl font-semibold text-white mb-3">
-            Access Required
-          </h2>
-          <p className="text-gray-400 text-sm">
-            You don&apos;t have access to this course.
-          </p>
-        </div>
-      </div>
-    );
+    return <AccessRequiredState />;
   }
 
   const course = courseQuery.data; // useCourse returns the course directly
@@ -228,11 +204,17 @@ const LearningPage: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col pt-16 lg:pt-24">
+      {completionPercentage === 100 && (
+        <CourseCompletionBanner
+          onDownloadCertificate={() => downloadCertificate(courseId)}
+          isGeneratingCertificate={isGeneratingCertificate}
+        />
+      )}
       <CourseHeader
         course={courseForHeader}
-        progressPercent={progressPct}
+        progressPercent={completionPercentage}
         totalLessons={allModules.length}
-        completedLessons={Array.from(completed).length}
+        completedLessons={completedModules.length}
         onToggleInfo={() => setShowInfo((v) => !v)}
         showInfo={showInfo}
       />
@@ -249,73 +231,7 @@ const LearningPage: React.FC = () => {
         />
         <div className="flex-1 flex flex-col min-w-0">
           {showInfo && (
-            <div className="border-b border-gray-800/40 bg-black/30 p-4">
-              <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 text-sm text-gray-300">
-                <div className="space-y-2">
-                  <h3 className="font-semibold flex items-center gap-2 text-white text-sm">
-                    <BarChart3 size={14} />
-                    Overview
-                  </h3>
-                  <p className="flex items-center gap-2">
-                    <Clock size={14} className="text-green-400" />
-                    {formatDuration(course.stats?.duration || 0)}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Users size={14} className="text-purple-400" />
-                    Students: {course.soldCount || "—"}
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Globe size={14} className="text-yellow-400" />
-                    {course.language || "English"}
-                  </p>
-                  {course.updatedAt && (
-                    <p className="flex items-center gap-2">
-                      <Calendar size={14} className="text-orange-400" />
-                      Updated: {new Date(course.updatedAt).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-                {course.metadata?.learningOutcomes?.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="font-semibold flex items-center gap-2 text-white text-sm">
-                      <Target size={14} className="text-green-400" />
-                      You&apos;ll Learn
-                    </h3>
-                    <ul className="space-y-1">
-                      {course.metadata.learningOutcomes
-                        .slice(0, 4)
-                        .map((o: string, i: number) => (
-                          <li key={i} className="flex gap-2">
-                            <CheckSquare
-                              size={12}
-                              className="text-green-400 mt-0.5"
-                            />
-                            <span>{o}</span>
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
-                )}
-                {course.metadata?.requirements?.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="font-semibold flex items-center gap-2 text-white text-sm">
-                      <Lightbulb size={14} className="text-yellow-400" />
-                      Requirements
-                    </h3>
-                    <ul className="space-y-1">https://kenesis-backend.kenesis.io
-                      {course.metadata.requirements
-                        .slice(0, 4)
-                        .map((r: string, i: number) => (
-                          <li key={i} className="flex gap-2">
-                            <span className="w-1 h-1 rounded-full bg-gray-400 mt-2" />
-                            <span>{r}</span>
-                          </li>
-                        ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>
+            <CourseInfoSection course={course} formatDuration={formatDuration} />
           )}
           <div className="flex-1 overflow-y-auto">
             <ModuleContent
@@ -326,7 +242,7 @@ const LearningPage: React.FC = () => {
               onNext={() => nextModule && setSelectedModuleId(nextModule.id)}
               hasPrev={!!prevModule}
               hasNext={!!nextModule}
-              markCompleted={markCompleted}
+              markCompleted={markModuleAsComplete}
               formatDuration={formatDuration}
             />
             <div className="max-w-6xl mx-auto px-4 pb-12">
