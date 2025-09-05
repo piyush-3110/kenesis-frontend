@@ -31,6 +31,10 @@ const CertificateVerificationPage = () => {
       return <VerificationSuccess certificate={data.data} />;
     }
 
+    if (data?.success === false) {
+      return <VerificationError message={data.message || "Certificate is not valid."} />;
+    }
+
     return null;
   };
 
