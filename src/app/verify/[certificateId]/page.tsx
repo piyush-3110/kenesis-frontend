@@ -27,6 +27,10 @@ const CertificateVerificationPage = () => {
       return <VerificationError message={errorMessage} />;
     }
 
+    if (data?.success && data.data) {
+      return <VerificationSuccess certificate={data.data} />;
+    }
+
     return null;
   };
 
