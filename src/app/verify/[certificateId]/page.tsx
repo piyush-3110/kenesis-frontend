@@ -56,6 +56,16 @@ const CertificateVerificationPage = () => {
             }}
           />
         </div>
+
+        {/* Glowing Blue Blob */}
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/6 w-screen h-[600px] pointer-events-none">
+          <div 
+            className="w-full h-full rounded-full blur-3xl opacity-30"
+            style={{
+              background: 'radial-gradient(circle, rgba(6,128,255,0.8) 0%, rgba(2,46,210,0.5) 30%, rgba(6,128,255,0.2) 60%, transparent 80%)',
+            }}
+          />
+        </div>
       </section>
     </MainLayout>
   );
