@@ -38,7 +38,10 @@ const CertificateVerificationPage = () => {
     return <VerificationError message="Certificate could not be verified." />;
   };
 
-  return null;
+  return (
+    <MainLayout>
+    </MainLayout>
+  );
 };
 
 export default CertificateVerificationPage;
