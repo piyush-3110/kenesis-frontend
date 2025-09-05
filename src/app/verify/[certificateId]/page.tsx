@@ -85,6 +85,12 @@ const CertificateVerificationPage = () => {
                 </span>
               </div>
             </h1>
+            <div className="font-poppins text-white/60 text-lg md:text-xl max-w-2xl mx-auto">
+              Verifying authenticity for:{" "}
+              <div className="mt-2 font-mono text-[#0680FF] text-base md:text-lg break-all">
+                {certificateId}
+              </div>
+            </div>
           </div>
         </div>
       </section>
