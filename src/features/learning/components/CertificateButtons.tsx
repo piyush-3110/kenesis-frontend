@@ -2,8 +2,8 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { Award, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Award } from "lucide-react";
+// import { cn } from "@/lib/utils";
 
 interface CertificateButtonsProps {
   courseTitle: string;
@@ -23,23 +23,23 @@ export const CertificateButtons: React.FC<CertificateButtonsProps> = ({
   courseTitle,
   isCompleted,
   completionPercentage,
-  onViewCertificate,
-  onDownloadCertificate,
+  // onViewCertificate,
+  // onDownloadCertificate,
   className,
 }) => {
   const [showProgressModal, setShowProgressModal] = React.useState(false);
 
-  const handleButtonClick = (action: 'view' | 'download') => {
-    if (isCompleted) {
-      if (action === 'view') {
-        onViewCertificate();
-      } else {
-        onDownloadCertificate();
-      }
-    } else {
-      setShowProgressModal(true);
-    }
-  };
+  // const handleButtonClick = (action: 'view' | 'download') => {
+  //   if (isCompleted) {
+  //     if (action === 'view') {
+  //       onViewCertificate();
+  //     } else {
+  //       onDownloadCertificate();
+  //     }
+  //   } else {
+  //     setShowProgressModal(true);
+  //   }
+  // };
 
   const closeModal = () => {
     setShowProgressModal(false);
@@ -48,8 +48,8 @@ export const CertificateButtons: React.FC<CertificateButtonsProps> = ({
   return (
     <>
       {/* Certificate Buttons */}
-      <div className={cn("flex flex-col sm:flex-row gap-3", className)}>
-        <motion.button
+      {/* <div className={cn("flex flex-col sm:flex-row gap-3", className)}> */}
+        {/* <motion.button
           onClick={() => handleButtonClick('view')}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -62,9 +62,9 @@ export const CertificateButtons: React.FC<CertificateButtonsProps> = ({
         >
           <Award className="w-5 h-5" />
           View Certificate
-        </motion.button>
+        </motion.button> */}
 
-        <motion.button
+        {/* <motion.button
           onClick={() => handleButtonClick('download')}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -77,8 +77,8 @@ export const CertificateButtons: React.FC<CertificateButtonsProps> = ({
         >
           <Download className="w-5 h-5" />
           Download Certificate
-        </motion.button>
-      </div>
+        </motion.button> */}
+      {/* </div> */}
 
       {/* Progress Modal */}
       {showProgressModal && (
