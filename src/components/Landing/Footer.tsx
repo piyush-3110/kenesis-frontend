@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { LiaApple } from "react-icons/lia";
 import { IoLogoGooglePlaystore } from "react-icons/io5";
+import { FaXTwitter, FaInstagram, FaLinkedin, FaTelegram, FaThreads } from "react-icons/fa6";
 
 const Footer = () => {
   return (
@@ -95,32 +96,44 @@ const Footer = () => {
           <div className="flex flex-col items-center lg:items-start gap-4">
             <div className="flex gap-4">
               <Link 
-                href="https://twitter.com/" 
+                href="https://x.com/kenesis_io?s=21&t=iiRYsbGEbXUkxpvkzfIcDQ" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="transform transition-all duration-300 hover:scale-110"
+                className="transform transition-all duration-300 hover:scale-110 p-2 rounded-full bg-white/10 hover:bg-white/20"
               >
-                <Image 
-                  src="/images/landing/x.png" 
-                  alt="Twitter" 
-                  width={24} 
-                  height={24} 
-                  className="filter drop-shadow-md" 
-                />
+                <FaXTwitter className="w-5 h-5 text-white hover:text-blue-400 transition-colors" />
               </Link>
               <Link 
-                href="https://instagram.com/" 
+                href="https://www.instagram.com/kenesis.io?igsh=NmRqdjNjZDR2c2g3&utm_source=qr" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="transform transition-all duration-300 hover:scale-110"
+                className="transform transition-all duration-300 hover:scale-110 p-2 rounded-full bg-white/10 hover:bg-white/20"
               >
-                <Image 
-                  src="/images/landing/instagram.png" 
-                  alt="Instagram" 
-                  width={24} 
-                  height={24} 
-                  className="filter drop-shadow-md" 
-                />
+                <FaInstagram className="w-5 h-5 text-white hover:text-pink-400 transition-colors" />
+              </Link>
+              <Link 
+                href="https://www.linkedin.com/company/kenesis-io/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="transform transition-all duration-300 hover:scale-110 p-2 rounded-full bg-white/10 hover:bg-white/20"
+              >
+                <FaLinkedin className="w-5 h-5 text-white hover:text-blue-600 transition-colors" />
+              </Link>
+              <Link 
+                href="https://t.me/KenesisOfficial" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="transform transition-all duration-300 hover:scale-110 p-2 rounded-full bg-white/10 hover:bg-white/20"
+              >
+                <FaTelegram className="w-5 h-5 text-white hover:text-blue-500 transition-colors" />
+              </Link>
+              <Link 
+                href="https://www.threads.com/@kenesis.io?igshid=NTc4MTIwNjQ2YQ==" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="transform transition-all duration-300 hover:scale-110 p-2 rounded-full bg-white/10 hover:bg-white/20"
+              >
+                <FaThreads className="w-5 h-5 text-white hover:text-gray-300 transition-colors" />
               </Link>
             </div>
             

@@ -19,6 +19,7 @@ import {
   // useProductActions,
 } from "../components";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { RequireAuth } from "@/features/auth/RequireAuth";
 
 const ProductDetailPage: React.FC = () => {
   const params = useParams();
@@ -77,6 +78,7 @@ const ProductDetailPage: React.FC = () => {
   };
 
   return (
+    <RequireAuth>
     <div className="min-h-screen bg-[#0A071A] mt-8">
       <div className="pt-24 md:pt-28 p-4 sm:p-8 max-w-7xl mx-auto">
         {/* Back Button */}
@@ -183,6 +185,7 @@ const ProductDetailPage: React.FC = () => {
         />
       </div>
     </div>
+    </RequireAuth>
   );
 };
 
