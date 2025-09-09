@@ -140,7 +140,7 @@ export const usePaymentAmount = (tokenString: string, priceInUSD: number) => {
     return useReadContract({
         address,
         abi,
-        functionName: "getTokenAmountForUSD",
+        functionName: "getPaymentAmount",
         args: tokenAddress && priceInWei ? [tokenAddress as `0x${string}`, priceInWei] : undefined,
         query: {
             enabled: !!address && !!tokenAddress,
