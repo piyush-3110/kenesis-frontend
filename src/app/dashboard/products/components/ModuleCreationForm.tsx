@@ -130,6 +130,48 @@ const ModuleCreationForm: React.FC = () => {
 
   const handleFileUpload = (file: File, isMainFile = true) => {
     if (isMainFile) {
+      // Determine allowed file types based on the course type
+      const courseType = currentCourse?.type;
+      let allowedTypes: string[] = [];
+      let errorMessage = "Unsupported file type for this course.";
+
+      const videoTypes = [
+        "video/mp4",
+        "video/webm",
+        "video/ogg",
+        "video/avi",
+        "video/mov",
+        "video/mkv",
+        "video/wmv",
+        "video/quicktime",
+      ];
+
+      const documentTypes = [
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      ];
+
+      if (courseType === "video") {
+        allowedTypes = videoTypes;
+        errorMessage = "Invalid file type. Only video files are allowed for a video course.";
+      } else if (courseType === "document") {
+        allowedTypes = documentTypes;
+        errorMessage = "Invalid file type. Only document files are allowed for a document course.";
+      }
+
+      // If course type is not set or something else, we can default to allowing both
+      // but for this requirement, we will be strict.
+      if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+        setErrors((prev) => ({
+          ...prev,
+          mainFile: errorMessage,
+        }));
+        return;
+      }
+
       // Auto-detect module type based on file type
       const isVideoFile = file.type.startsWith("video/");
       const autoDetectedType = isVideoFile ? "video" : "document";
@@ -148,29 +190,11 @@ const ModuleCreationForm: React.FC = () => {
         return;
       }
 
-      // Accept all supported video and document types
-      const allowedTypes = [
-        // Video types
-        "video/mp4",
-        "video/webm",
-        "video/ogg",
-        "video/avi",
-        "video/mov",
-        "video/mkv",
-        "video/wmv",
-        "video/quicktime",
-        // Document types
-        "application/pdf",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-powerpoint",
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      ];
-
-      if (!allowedTypes.includes(file.type)) {
+      // This check is now more specific based on course type
+      if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
         setErrors((prev) => ({
           ...prev,
-          mainFile: `Unsupported file type. Please select a video or document file.`,
+          mainFile: errorMessage,
         }));
         return;
       }
