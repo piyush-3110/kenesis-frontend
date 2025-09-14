@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
             },
             {
                 protocol: "https",
-                hostname: "kenesis-lms.sa-east-1.amazonaws.com",
+                hostname: "kenesis-lms.s3.sa-east-1.amazonaws.com",
                 port: "",
                 pathname: "/**",
             },
