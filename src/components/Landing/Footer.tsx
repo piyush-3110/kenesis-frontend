@@ -76,12 +76,12 @@ const Footer = () => {
                         </div>
 
                         {/* Create Account Button */}
-                        <Link
+                        {/* <Link
                             href="/auth/login"
                             className="bg-white hover:bg-gray-100 text-black font-semibold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg text-lg w-full text-center"
                         >
                             Create your account →
-                        </Link>
+                        </Link> */}
                     </div>
                 </div>
 
