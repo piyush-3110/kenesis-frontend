@@ -48,7 +48,7 @@ const Hero: React.FC = () => {
               <h1
                 className="text-white font-poppins font-normal"
                 style={{
-                  fontSize: "45.79px",
+                  fontSize: "49.79px",
                   lineHeight: "60px",
                   letterSpacing: "-2%",
                   fontWeight: 400,
@@ -58,7 +58,7 @@ const Hero: React.FC = () => {
                 <br />
                 <span className="italic">with</span>{" "}
                 <span
-                  className="bg-gradient-to-b from-white to-[#0036F6] bg-clip-text text-transparent"
+                  className="bg-gradient-to-b from-white to-[#0036F6] bg-clip-text text-transparent font-bold"
                   style={{
                     fontSize: "55.79px",
                     WebkitBackgroundClip: "text",
