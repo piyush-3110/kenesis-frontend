@@ -11,9 +11,9 @@ export interface DashboardTransaction {
   id: string;
   purchasedAt: string;
   course: { id: string; title: string; slug: string } | null;
-  buyer: { id: string; username?: string | null } | null;
+  buyer: { id: string; username?: string | null; avatar?: string | null } | null;
   price: number;
-  token: string;
+  token?: string;
   transactionHash?: string;
   nftId?: string | null;
 }

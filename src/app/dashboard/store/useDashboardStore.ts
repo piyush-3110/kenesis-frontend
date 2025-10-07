@@ -213,7 +213,7 @@ export const useDashboardStore = create<DashboardStore>((set, get) => ({
         from: t.buyer?.id || "buyer",
         to: t.course?.id || "course",
         amount: t.price,
-        currency: t.token.split(":")[0] || "USD",
+        currency: t.token?.split(":")[0] || "USD",
         timestamp: new Date(t.purchasedAt),
         status: "completed",
         type: "transfer",
