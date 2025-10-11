@@ -366,10 +366,41 @@ export const usePurchaseCourse = () => {
                 throw new Error("Token configuration not found");
             }
 
-            // For native tokens, we need to calculate the payment amount
+            // For native tokens, we need to calculate the payment amount FRESH
+            // This prevents issues where the price changes between quote and transaction
             let value: bigint | undefined;
             if (tokenConfig.isNative) {
-                value = params.tokenAmount;
+                console.log("💰 Fetching fresh payment amount for native token...");
+                try {
+                    // Import wagmi's readContract function
+                    const { readContract } = await import('@wagmi/core');
+                    const { walletConfig } = await import('@/lib/wallet/config');
+
+                    // Query the contract for the current payment amount using wagmi config
+                    const freshAmount = await readContract(walletConfig, {
+                        address: marketplaceAddress,
+                        abi: KENESIS_MARKETPLACE_ABI,
+                        functionName: 'getPaymentAmount' as const,
+                        args: [tokenToPayWith, priceInUSD],
+                    });
+
+                    value = freshAmount as bigint;
+                    console.log(`✅ Fresh payment amount: ${value} wei (was ${params.tokenAmount} wei)`);
+
+                    // Log if there's a significant difference
+                    const difference = value > params.tokenAmount
+                        ? value - params.tokenAmount
+                        : params.tokenAmount - value;
+                    const percentDiff = Number(difference * BigInt(10000) / params.tokenAmount) / 100;
+
+                    if (percentDiff > 1) {
+                        console.warn(`⚠️ Price changed by ${percentDiff.toFixed(2)}% since quote was generated`);
+                    }
+                } catch (error) {
+                    console.error("❌ Failed to fetch fresh payment amount, using original quote:", error);
+                    // Fallback to original amount if fresh fetch fails
+                    value = params.tokenAmount;
+                }
             }
 
             // Execute the purchase

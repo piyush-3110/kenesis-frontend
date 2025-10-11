@@ -63,6 +63,7 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
     useAccount();
     const [currentStep, setCurrentStep] = useState<PurchaseStep>("validate");
     const [error, setError] = useState<string | null>(null);
+    const [priceChangeWarning, setPriceChangeWarning] = useState<string | null>(null);
 
     // Contract hooks
     const quote = usePurchaseQuote(selectedToken, course.price);
@@ -170,7 +171,20 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
     useEffect(() => {
         if (purchase.error) {
             const friendlyErrorMessage = getPurchaseErrorMessage(purchase.error);
-            setError(friendlyErrorMessage);
+            const errorString = purchase.error instanceof Error ? purchase.error.message : String(purchase.error);
+
+            // Check if it's a simulation/gas estimation error that might be price-related
+            const isPriceRelatedError = errorString.toLowerCase().includes('insufficient') ||
+                                       errorString.toLowerCase().includes('transaction does not have') ||
+                                       errorString.toLowerCase().includes('gas');
+
+            if (isPriceRelatedError) {
+                console.warn("⚠️ Detected price-related error, suggesting quote refresh");
+                setError(`${friendlyErrorMessage} - The price may have changed. Please try again.`);
+            } else {
+                setError(friendlyErrorMessage);
+            }
+
             onPurchaseError?.(friendlyErrorMessage);
             console.error("Purchase error detected:", purchase.error);
 
@@ -181,10 +195,44 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
 
     const handlePurchase = async () => {
         setError(null);
+        setPriceChangeWarning(null);
         console.log("Starting purchase with params:", purchaseParams);
         console.log("NFT Metadata URI:", nftMetadataUri);
 
         try {
+            // For native tokens, refresh the quote to get the latest price
+            const tokenConfig = getTokenConfig(selectedToken);
+            if (tokenConfig?.isNative && quote.quote?.tokenAmount) {
+                console.log("🔄 Refreshing quote for native token before purchase...");
+                const oldAmount = quote.quote.tokenAmount;
+
+                await quote.refetch();
+
+                // Wait a moment for the quote to update
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                if (quote.quote?.tokenAmount) {
+                    const newAmount = quote.quote.tokenAmount;
+                    console.log("✅ Quote refreshed, new amount:", newAmount);
+
+                    // Check for significant price change
+                    const difference = newAmount > oldAmount
+                        ? newAmount - oldAmount
+                        : oldAmount - newAmount;
+                    const percentDiff = Number(difference * BigInt(10000) / oldAmount) / 100;
+
+                    if (percentDiff > 2) {
+                        const warning = `Price changed by ${percentDiff.toFixed(2)}% since you started. New amount: ${formatPaymentAmount(
+                            newAmount,
+                            tokenConfig.decimals,
+                            tokenConfig.symbol
+                        )}`;
+                        setPriceChangeWarning(warning);
+                        console.warn(`⚠️ ${warning}`);
+                    }
+                }
+            }
+
             const result = await purchase.purchaseCourse(purchaseParams);
             console.log("Purchase result:", result);
 
@@ -339,6 +387,13 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                                             Network fee applies and will be paid in {gas.gasSymbol}.
                                         </div>
                                     )}
+                                    {tokenConfig?.isNative && (
+                                        <div className="pt-2 border-t border-gray-700 mt-2">
+                                            <p className="text-xs text-blue-400">
+                                                ℹ️ Price will be refreshed at checkout for accuracy
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -346,20 +401,20 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                         {/* Purchase button */}
                         <button
                             onClick={handlePurchase}
-                            disabled={purchase.isLoading || !quote.quote}
+                            disabled={purchase.isLoading || !quote.quote || quote.isLoading}
                             className="w-full py-4 px-6 rounded-lg font-semibold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                             style={{
                                 background:
-                                    purchase.isLoading || !quote.quote
+                                    purchase.isLoading || !quote.quote || quote.isLoading
                                         ? "#374151"
                                         : "linear-gradient(107.31deg, #00C9FF -30.5%, #4648FF 54.41%, #0D01F6 100%)",
                                 color: "white",
                             }}
                         >
-                            {purchase.isLoading ? (
+                            {purchase.isLoading || quote.isLoading ? (
                                 <>
                                     <Loader2 size={20} className="animate-spin" />
-                                    <span>Processing Purchase...</span>
+                                    <span>{quote.isLoading ? "Refreshing Price..." : "Processing Purchase..."}</span>
                                 </>
                             ) : (
                                 <>
@@ -439,6 +494,19 @@ export const SmartContractPurchase: React.FC<SmartContractPurchaseProps> = ({
                 <div className="flex items-center gap-2 text-gray-400">
                     <Loader2 size={16} className="animate-spin" />
                     <span>Loading purchase information...</span>
+                </div>
+            )}
+
+            {/* Price change warning */}
+            {priceChangeWarning && (
+                <div className="p-4 rounded-lg bg-yellow-600/20 border border-yellow-600/30">
+                    <div className="flex items-start gap-3">
+                        <AlertTriangle size={20} className="text-yellow-400 mt-0.5" />
+                        <div>
+                            <h4 className="text-yellow-400 font-medium mb-2">Price Updated</h4>
+                            <p className="text-yellow-300 text-sm">{priceChangeWarning}</p>
+                        </div>
+                    </div>
                 </div>
             )}
 
